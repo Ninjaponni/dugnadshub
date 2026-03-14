@@ -14,10 +14,11 @@ interface DugnadMapProps {
   onZoneClick: (zone: ZoneWithStatus) => void
   selectedZoneId?: string | null
   userId?: string | null
+  activeArea?: 'NORD' | 'SOR' | null
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -62,7 +63,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId }
       {mapLoaded && (
         <>
           <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
-          <DropPointMarkers />
+          <DropPointMarkers activeArea={activeArea} />
           <ZoneMarkers zones={zones} userId={userId || null} />
         </>
       )}

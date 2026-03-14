@@ -4,9 +4,15 @@ import { Marker } from 'react-map-gl/mapbox'
 import { Package } from 'lucide-react'
 import dropPointsGeoJson from '@/lib/map/drop-points-data'
 
-// Viser oppsamlingspunkter som markører på kartet
-export default function DropPointMarkers() {
-  const features = dropPointsGeoJson.features
+interface DropPointMarkersProps {
+  activeArea?: 'NORD' | 'SOR' | null
+}
+
+// Viser oppsamlingspunkter — filtrert på aktivt område
+export default function DropPointMarkers({ activeArea }: DropPointMarkersProps) {
+  const features = dropPointsGeoJson.features.filter(
+    (dp) => !activeArea || dp.properties.area === activeArea
+  )
 
   return (
     <>

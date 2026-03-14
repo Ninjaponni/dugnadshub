@@ -23,8 +23,18 @@ interface ZoneLayerProps {
 
 // Rendrer sonepolygoner med fargekoding basert på status
 export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerProps) {
+  // IDer for soner som har assignment (tilhører aktiv hendelse)
+  const activeZoneIds = useMemo(
+    () => new Set(zones.filter((z) => z.assignment_id).map((z) => z.id)),
+    [zones]
+  )
+  const hasActiveEvent = activeZoneIds.size > 0
+
   const geoJsonWithStatus = useMemo(() => {
-    const features = zonesGeoJson.features.map((feature) => {
+    const features = zonesGeoJson.features
+      // Skjul soner som ikke er med i hendelsen (når det finnes en hendelse)
+      .filter((feature) => !hasActiveEvent || activeZoneIds.has(feature.properties?.id as string))
+      .map((feature) => {
       const zoneId = feature.properties?.id
       const zone = zones.find((z) => z.id === zoneId)
       const claimCount = zone?.claims?.length || 0

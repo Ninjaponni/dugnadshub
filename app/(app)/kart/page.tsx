@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeZones, type ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import { useActiveEvent } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import MapLegend from '@/components/map/MapLegend'
+import type { ZoneArea } from '@/lib/supabase/types'
 
-// Dynamisk import av kartet (SSR-inkompatibelt pga. Mapbox GL)
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,
   loading: () => (
@@ -32,17 +32,32 @@ export default function MapPage() {
     })
   }, [supabase])
 
+  // Bestem aktivt område fra hendelsens soner (de som har assignment)
+  const activeArea = useMemo<ZoneArea | null>(() => {
+    if (!event) return null
+    const assignedZones = zones.filter((z) => z.assignment_id)
+    if (assignedZones.length === 0) return null
+    // Sjekk om alle tilhører ett område
+    const areas = new Set(assignedZones.map((z) => z.area))
+    if (areas.size === 1) return assignedZones[0].area
+    return null // Blandet — vis alt
+  }, [event, zones])
+
+  // Tell kun soner som er med i hendelsen
+  const assignedZones = zones.filter((z) => z.assignment_id)
+  const availableCount = assignedZones.filter((z) => z.status === 'available').length
+  const doneCount = assignedZones.filter((z) => z.status === 'completed' || z.status === 'picked_up').length
+
   return (
     <div className="fixed inset-0 z-0">
-      {/* Kart — fyller hele skjermen */}
       <DugnadMap
         zones={zones}
         onZoneClick={setSelectedZone}
         selectedZoneId={selectedZone?.id}
         userId={userId}
+        activeArea={activeArea}
       />
 
-      {/* Legende */}
       <MapLegend />
 
       {/* Status-header */}
@@ -58,20 +73,19 @@ export default function MapPage() {
                   <p className="text-sm font-semibold">{event.title}</p>
                 </div>
                 <div className="text-right text-xs text-text-secondary">
-                  <p>{zones.filter((z) => z.status === 'available').length} ledige</p>
-                  <p>{zones.filter((z) => z.status === 'completed' || z.status === 'picked_up').length} ferdige</p>
+                  <p>{availableCount} ledige</p>
+                  <p>{doneCount} ferdige</p>
                 </div>
               </div>
             ) : (
               <p className="text-sm text-text-secondary text-center">
-                Ingen aktiv hendelse — viser alle soner
+                Ingen kommende hendelser
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* Bottom sheet — sonedetaljer */}
       <ZoneClaimSheet
         zone={selectedZone}
         eventId={event?.id || null}
