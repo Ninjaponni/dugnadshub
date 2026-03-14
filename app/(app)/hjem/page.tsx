@@ -7,11 +7,11 @@ import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
 import { MapPin, ChevronRight, Check, Calendar } from 'lucide-react'
 import Link from 'next/link'
-import type { Profile, DugnadEvent, ZoneAssignment, ZoneClaim } from '@/lib/supabase/types'
+import type { Profile, DugnadEvent } from '@/lib/supabase/types'
 
 interface EventWithProgress extends DugnadEvent {
   totalZones: number
-  claimedZones: number  // Antall soner med minst én claim
+  claimedZones: number
   completedZones: number
 }
 
@@ -34,93 +34,74 @@ export default function HomePage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) { setLoading(false); return }
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      if (profileData) setProfile(profileData as unknown as Profile)
+      // Parallelle kall i stedet for sekvensielle
+      const [profileRes, eventsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single() as unknown as Promise<{ data: unknown }>,
+        supabase.from('events').select('*').in('status', ['upcoming', 'active']).order('date', { ascending: true }) as unknown as Promise<{ data: unknown[] | null }>,
+      ])
 
-      const { data: eventData } = await supabase
-        .from('events')
-        .select('*')
-        .in('status', ['upcoming', 'active'])
-        .order('date', { ascending: true })
-      if (!eventData) { setLoading(false); return }
+      if (profileRes.data) setProfile(profileRes.data as Profile)
+      const allEvents = (eventsRes.data || []) as unknown as DugnadEvent[]
+      if (allEvents.length === 0) { setLoading(false); return }
 
-      const eventsWithProgress: EventWithProgress[] = []
-      const allMyZones: MyZone[] = []
+      // Hent ALLE assignments og claims i to kall (ikke per event/per sone)
+      const eventIds = allEvents.map(e => e.id)
 
-      for (const event of eventData as unknown as DugnadEvent[]) {
-        const { data: assignments } = await supabase
-          .from('zone_assignments')
-          .select('*')
-          .eq('event_id', event.id)
-        const assigns = (assignments || []) as unknown as ZoneAssignment[]
+      const [assignRes, claimRes, zonesRes] = await Promise.all([
+        supabase.from('zone_assignments').select('*').in('event_id', eventIds),
+        supabase.from('zone_claims').select('*, profiles(full_name)').in(
+          'assignment_id',
+          // Trenger assignment IDer — hent alle
+          (await supabase.from('zone_assignments').select('id').in('event_id', eventIds))
+            .data?.map((a: { id: string }) => a.id) || []
+        ),
+        supabase.from('zones').select('id, name, area'),
+      ])
 
-        // Tell soner med minst én claim (uavhengig av assignment-status)
+      const assignments = (assignRes.data || []) as unknown as Array<{ id: string; event_id: string; zone_id: string; status: string }>
+      const claims = (claimRes.data || []) as unknown as Array<{ id: string; assignment_id: string; user_id: string; profiles: { full_name: string } | null }>
+      const zoneMap = new Map((zonesRes.data || []).map((z: { id: string; name: string; area: string }) => [z.id, z]))
+
+      // Bygg progresjon per event
+      const eventsWithProgress: EventWithProgress[] = allEvents.map(event => {
+        const eventAssignments = assignments.filter(a => a.event_id === event.id)
+        const total = eventAssignments.length
+
+        // Tell soner som har minst én claim
         let zonesWithClaims = 0
-        for (const a of assigns) {
-          const { count } = await supabase
-            .from('zone_claims')
-            .select('*', { count: 'exact', head: true })
-            .eq('assignment_id', a.id)
-          if (count && count > 0) zonesWithClaims++
+        let completed = 0
+        for (const a of eventAssignments) {
+          const hasClaims = claims.some(c => c.assignment_id === a.id)
+          if (hasClaims) zonesWithClaims++
+          if (a.status === 'completed' || a.status === 'picked_up') completed++
         }
 
-        const total = assigns.length
-        const completed = assigns.filter(a =>
-          a.status === 'completed' || a.status === 'picked_up'
-        ).length
+        return { ...event, totalZones: total, claimedZones: zonesWithClaims, completedZones: completed }
+      })
 
-        eventsWithProgress.push({
-          ...event,
-          totalZones: total,
-          claimedZones: zonesWithClaims,
-          completedZones: completed,
-        })
+      // Bygg mine soner
+      const myClaims = claims.filter(c => c.user_id === user.id)
+      const allMyZones: MyZone[] = myClaims.map(claim => {
+        const assignment = assignments.find(a => a.id === claim.assignment_id)
+        if (!assignment) return null
 
-        // Hent mine claims
-        if (assigns.length > 0) {
-          const { data: myClaims } = await supabase
-            .from('zone_claims')
-            .select('*, zone_assignments(zone_id, status)')
-            .eq('user_id', user.id)
-            .in('assignment_id', assigns.map(a => a.id))
+        const zone = zoneMap.get(assignment.zone_id) as { id: string; name: string; area: string } | undefined
+        const event = allEvents.find(e => e.id === assignment.event_id)
 
-          if (myClaims) {
-            for (const claim of myClaims as unknown as Array<ZoneClaim & { zone_assignments: { zone_id: string; status: string } }>) {
-              const zoneId = claim.zone_assignments?.zone_id
-              if (!zoneId) continue
+        // Finn partner (andre claims på samme assignment)
+        const partner = claims.find(c => c.assignment_id === claim.assignment_id && c.user_id !== user.id)
 
-              const { data: zone } = await supabase
-                .from('zones')
-                .select('name, area')
-                .eq('id', zoneId)
-                .single()
-
-              const { data: partnerClaims } = await supabase
-                .from('zone_claims')
-                .select('*, profiles(full_name)')
-                .eq('assignment_id', claim.assignment_id)
-                .neq('user_id', user.id)
-
-              const partner = (partnerClaims as unknown as Array<{ profiles: { full_name: string } }>)?.[0]
-
-              allMyZones.push({
-                zoneId,
-                zoneName: (zone as unknown as { name: string; area: string })?.name || zoneId,
-                area: (zone as unknown as { name: string; area: string })?.area || '',
-                status: claim.zone_assignments?.status || 'claimed',
-                eventTitle: event.title,
-                partnerName: partner?.profiles?.full_name || null,
-              })
-            }
-          }
+        return {
+          zoneId: assignment.zone_id,
+          zoneName: zone?.name || assignment.zone_id,
+          area: zone?.area || '',
+          status: assignment.status,
+          eventTitle: event?.title || '',
+          partnerName: partner?.profiles?.full_name || null,
         }
-      }
+      }).filter(Boolean) as MyZone[]
 
       setEvents(eventsWithProgress)
       setMyZones(allMyZones)
@@ -155,13 +136,11 @@ export default function HomePage() {
     return formatted
   }
 
-  // Første hendelse er "aktiv" (kan velge soner), resten er "kommende"
   const activeEvent = events[0] || null
   const futureEvents = events.slice(1)
 
   return (
     <div className="px-4 pt-14 safe-top">
-      {/* Hilsning */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -175,7 +154,6 @@ export default function HomePage() {
         )}
       </motion.div>
 
-      {/* Skeleton */}
       {loading && (
         <div className="space-y-3 mb-5 animate-pulse">
           <div className="h-4 w-32 bg-black/5 rounded" />
@@ -190,7 +168,6 @@ export default function HomePage() {
 
       {!loading && (
         <>
-          {/* Mine soner */}
           {myZones.length > 0 && (
             <div className="mb-5">
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
@@ -224,7 +201,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Aktiv dugnad (den nærmeste — kan velge soner) */}
           {activeEvent && (
             <div className="mb-5">
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
@@ -248,7 +224,6 @@ export default function HomePage() {
                   </span>
                 </div>
 
-                {/* Progresjon — teller claims, ikke assignment-status */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
                     <span>{activeEvent.claimedZones}/{activeEvent.totalZones} soner tatt</span>
@@ -274,7 +249,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Kommende dugnader (minimalt — kun dato og nedtelling) */}
           {futureEvents.length > 0 && (
             <div className="mb-5">
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
@@ -299,7 +273,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Ingen hendelser */}
           {events.length === 0 && (
             <Card className="p-5">
               <p className="text-text-secondary text-center py-2">
