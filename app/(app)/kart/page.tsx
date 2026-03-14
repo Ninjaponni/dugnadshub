@@ -47,9 +47,10 @@ export default function MapPage() {
 function MapPageContent() {
   const searchParams = useSearchParams()
   const focusZoneId = searchParams.get('sone')
+  const showAll = searchParams.get('alle') === '1'
 
   const { event, loading: eventLoading } = useActiveEvent()
-  const { zones, loading: zonesLoading, refetch } = useRealtimeZones(event?.id || null)
+  const { zones, loading: zonesLoading, refetch } = useRealtimeZones(showAll ? null : (event?.id || null))
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
@@ -82,7 +83,7 @@ function MapPageContent() {
 
   // Bestem aktivt område fra hendelsens soner
   const activeArea = useMemo<ZoneArea | null>(() => {
-    if (!event) return null
+    if (!event || showAll) return null
     const assignedZones = zones.filter((z) => z.assignment_id)
     if (assignedZones.length === 0) return null
     const areas = new Set(assignedZones.map((z) => z.area))
