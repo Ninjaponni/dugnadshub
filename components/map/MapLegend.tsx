@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 
-const items = [
+const items: Array<{ color: string; label: string; border?: boolean }> = [
   { color: '#EF4444', label: 'Ledig' },
-  { color: '#F59E0B', label: 'Delvis tatt' },
-  { color: '#22C55E', label: 'Ferdig' },
-  { color: '#8B5CF6', label: 'Hentet' },
+  { color: '#F59E0B', label: 'Noen plukkere' },
+  { color: '#22C55E', label: 'Fullt / Ferdig' },
+  { color: '#007AFF', label: 'Din sone', border: true },
 ]
 
 // Kompakt kartlegende med toggle
@@ -40,11 +40,15 @@ export default function MapLegend() {
               className="px-3 pb-2"
             >
               <div className="space-y-1.5">
-                {items.map(({ color, label }) => (
+                {items.map(({ color, label, border }) => (
                   <div key={label} className="flex items-center gap-2 text-xs">
                     <div
                       className="w-3 h-3 rounded-sm"
-                      style={{ backgroundColor: color, opacity: 0.6 }}
+                      style={{
+                        backgroundColor: border ? 'transparent' : color,
+                        opacity: border ? 1 : 0.6,
+                        border: border ? `2px solid ${color}` : 'none',
+                      }}
                     />
                     <span>{label}</span>
                   </div>

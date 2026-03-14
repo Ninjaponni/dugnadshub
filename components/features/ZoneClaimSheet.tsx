@@ -58,37 +58,28 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
 
   return (
     <BottomSheet open={!!zone} onClose={onClose} title={zone.name}>
-      {/* Status og område */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* Status, område og nøkkelinfo — kompakt rad */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <StatusDot status={zone.status} showLabel />
-        <span className="text-sm text-text-secondary">
-          {zone.area === 'NORD' ? 'Nord' : 'Sør'} · {zone.id}
-        </span>
+        <span className="text-xs text-text-tertiary">·</span>
+        <span className="text-sm text-text-secondary">{zone.area === 'NORD' ? 'Nord' : 'Sør'} {zone.id}</span>
+        <span className="text-xs text-text-tertiary">·</span>
+        <span className="text-sm text-text-secondary">{zone.claims.length}/{zone.collectors_needed} samlere</span>
+        {zone.households > 0 && (
+          <>
+            <span className="text-xs text-text-tertiary">·</span>
+            <span className="text-sm text-text-secondary">{zone.households} hus</span>
+          </>
+        )}
       </div>
 
-      {/* Detaljer */}
-      <div className="space-y-3 mb-5">
-        <div className="flex items-center gap-3 text-sm">
-          <Home size={16} className="text-text-tertiary shrink-0" />
-          <span>{zone.households} husstander</span>
+      {/* Notater (kun hvis finnes) */}
+      {zone.notes && (
+        <div className="flex items-center gap-2 text-sm text-text-secondary mb-3">
+          <StickyNote size={14} className="text-text-tertiary shrink-0" />
+          <span>{zone.notes}</span>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <Users size={16} className="text-text-tertiary shrink-0" />
-          <span>
-            {zone.claims.length} / {zone.collectors_needed} samlere
-          </span>
-        </div>
-        {zone.notes && (
-          <div className="flex items-start gap-3 text-sm">
-            <StickyNote size={16} className="text-text-tertiary shrink-0 mt-0.5" />
-            <span className="text-text-secondary">{zone.notes}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-3 text-sm">
-          <MapPin size={16} className="text-text-tertiary shrink-0" />
-          <span>Henger-gruppe {zone.trailer_group}</span>
-        </div>
-      </div>
+      )}
 
       {/* Hvem har tatt sonen */}
       {zone.claims.length > 0 && (

@@ -45,7 +45,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl max-h-[85dvh] overflow-auto safe-bottom"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl max-h-[85dvh] overflow-auto pb-20"
           >
             {/* Drag-håndtak */}
             <div

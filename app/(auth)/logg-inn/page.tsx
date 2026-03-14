@@ -1,19 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
-import { Mail, CheckCircle } from 'lucide-react'
+import { Mail, CheckCircle, Lock } from 'lucide-react'
 
-// Magic link innlogging — ingen passord
+// Innlogging — magic link + passord (for dev/testing)
 export default function LoginPage() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const [usePassword, setUsePassword] = useState(false)
+  const router = useRouter()
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -34,6 +38,28 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  async function handlePasswordLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError('Feil e-post eller passord.')
+    } else {
+      router.replace('/hjem')
+    }
+    setLoading(false)
+  }
+
+  const inputClass = `w-full pl-10 pr-4 py-3 rounded-xl bg-bg border-0 text-[17px]
+    placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30`
+
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6">
       <motion.div
@@ -51,7 +77,6 @@ export default function LoginPage() {
         </div>
 
         {sent ? (
-          // Bekreftelse
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -70,36 +95,59 @@ export default function LoginPage() {
               Bruk en annen e-post
             </button>
           </motion.div>
-        ) : (
-          // Skjema
-          <form onSubmit={handleLogin} className="card p-6">
-            <label className="block mb-4">
-              <span className="text-sm font-medium text-text-secondary mb-1.5 block">
-                E-postadresse
-              </span>
+        ) : usePassword ? (
+          // Passord-login
+          <form onSubmit={handlePasswordLogin} className="card p-6">
+            <label className="block mb-3">
+              <span className="text-sm font-medium text-text-secondary mb-1.5 block">E-postadresse</span>
               <div className="relative">
                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="forelder@eksempel.no"
-                  required
-                  autoFocus
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg border-0 text-[17px]
-                    placeholder:text-text-tertiary
-                    focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="forelder@eksempel.no" required autoFocus className={inputClass} />
+              </div>
+            </label>
+            <label className="block mb-4">
+              <span className="text-sm font-medium text-text-secondary mb-1.5 block">Passord</span>
+              <div className="relative">
+                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••" required className={inputClass} />
               </div>
             </label>
 
-            {error && (
-              <p className="text-danger text-sm mb-3">{error}</p>
-            )}
+            {error && <p className="text-danger text-sm mb-3">{error}</p>}
+
+            <Button type="submit" size="lg" loading={loading} className="w-full">
+              Logg inn
+            </Button>
+
+            <button type="button" onClick={() => { setUsePassword(false); setError('') }}
+              className="text-accent text-sm mt-4 w-full text-center">
+              Bruk magic link i stedet
+            </button>
+          </form>
+        ) : (
+          // Magic link
+          <form onSubmit={handleMagicLink} className="card p-6">
+            <label className="block mb-4">
+              <span className="text-sm font-medium text-text-secondary mb-1.5 block">E-postadresse</span>
+              <div className="relative">
+                <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="forelder@eksempel.no" required autoFocus className={inputClass} />
+              </div>
+            </label>
+
+            {error && <p className="text-danger text-sm mb-3">{error}</p>}
 
             <Button type="submit" size="lg" loading={loading} className="w-full">
               Send innloggingslenke
             </Button>
+
+            <button type="button" onClick={() => { setUsePassword(true); setError('') }}
+              className="text-accent text-sm mt-4 w-full text-center">
+              Logg inn med passord
+            </button>
           </form>
         )}
       </motion.div>

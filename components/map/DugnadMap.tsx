@@ -4,6 +4,7 @@ import { useRef, useCallback, useState } from 'react'
 import Map, { NavigationControl, GeolocateControl, type MapRef } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import ZoneLayer from './ZoneLayer'
+import ZoneMarkers from './ZoneMarkers'
 import DropPointMarkers from './DropPointMarkers'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import { MAP_CONFIG } from '@/lib/map/config'
@@ -12,10 +13,11 @@ interface DugnadMapProps {
   zones: ZoneWithStatus[]
   onZoneClick: (zone: ZoneWithStatus) => void
   selectedZoneId?: string | null
+  userId?: string | null
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -59,8 +61,9 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId }: Dugnad
 
       {mapLoaded && (
         <>
-          <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} />
+          <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
           <DropPointMarkers />
+          <ZoneMarkers zones={zones} userId={userId || null} />
         </>
       )}
     </Map>

@@ -39,6 +39,7 @@ export default function MapPage() {
         zones={zones}
         onZoneClick={setSelectedZone}
         selectedZoneId={selectedZone?.id}
+        userId={userId}
       />
 
       {/* Legende */}
@@ -46,8 +47,8 @@ export default function MapPage() {
 
       {/* Status-header */}
       {!eventLoading && (
-        <div className="absolute top-14 left-4 right-4 z-10 safe-top">
-          <div className="glass rounded-xl px-4 py-2.5 shadow-lg">
+        <div className="absolute top-14 left-4 right-16 z-10 safe-top">
+          <div className="glass rounded-xl px-3 py-2 shadow-lg">
             {event ? (
               <div className="flex items-center justify-between">
                 <div>
