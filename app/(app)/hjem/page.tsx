@@ -128,7 +128,7 @@ export default function HomePage() {
     return 'God kveld'
   }
 
-  const firstName = profile?.full_name?.split(' ')[0] || ''
+  const firstName = profile?.full_name || ''
 
   // Nedtelling til neste hendelse
   function daysUntil(dateStr: string): number {
