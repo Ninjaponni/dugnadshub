@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import Map, { NavigationControl, GeolocateControl, type MapRef } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import ZoneLayer from './ZoneLayer'
@@ -15,12 +15,26 @@ interface DugnadMapProps {
   selectedZoneId?: string | null
   userId?: string | null
   activeArea?: 'NORD' | 'SOR' | null
+  initialCenter?: [number, number] | null
+  initialZoom?: number | null
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, initialCenter, initialZoom }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [hasFlown, setHasFlown] = useState(false)
+
+  // Fly til fokus-sone når kartet er lastet
+  useEffect(() => {
+    if (!mapLoaded || !initialCenter || hasFlown) return
+    mapRef.current?.flyTo({
+      center: initialCenter,
+      zoom: initialZoom || 15,
+      duration: 1200,
+    })
+    setHasFlown(true)
+  }, [mapLoaded, initialCenter, initialZoom, hasFlown])
 
   const handleZoneClick = useCallback(
     (zoneId: string) => {

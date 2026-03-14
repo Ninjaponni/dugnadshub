@@ -28,6 +28,7 @@ export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [events, setEvents] = useState<EventWithProgress[]>([])
   const [myZones, setMyZones] = useState<MyZone[]>([])
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
@@ -114,6 +115,7 @@ export default function HomePage() {
 
       setEvents(eventsWithProgress)
       setMyZones(allMyZones)
+      setLoading(false)
     }
 
     load()
@@ -161,15 +163,34 @@ export default function HomePage() {
         </h1>
       </motion.div>
 
+      {/* Skeleton mens data lastes */}
+      {loading && (
+        <div className="space-y-3 mb-5 animate-pulse">
+          <div className="h-4 w-32 bg-black/5 rounded" />
+          <div className="card p-4 space-y-3">
+            <div className="h-5 w-48 bg-black/5 rounded" />
+            <div className="h-4 w-36 bg-black/5 rounded" />
+            <div className="h-1.5 bg-black/5 rounded-full" />
+            <div className="h-10 bg-black/5 rounded-xl" />
+          </div>
+          <div className="card p-4 space-y-3">
+            <div className="h-5 w-40 bg-black/5 rounded" />
+            <div className="h-4 w-36 bg-black/5 rounded" />
+            <div className="h-1.5 bg-black/5 rounded-full" />
+            <div className="h-10 bg-black/5 rounded-xl" />
+          </div>
+        </div>
+      )}
+
       {/* Mine soner (hvis noen er valgt) */}
-      {myZones.length > 0 && (
+      {!loading && myZones.length > 0 && (
         <div className="mb-5">
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
             Mine soner
           </h2>
           <div className="space-y-2">
             {myZones.map((zone) => (
-              <Link key={zone.zoneId} href="/kart">
+              <Link key={zone.zoneId} href={`/kart?sone=${zone.zoneId}`}>
                 <Card className="p-3 flex items-center gap-3 mb-0">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                     zone.status === 'completed' ? 'bg-success/10' : 'bg-accent/10'
@@ -196,7 +217,7 @@ export default function HomePage() {
       )}
 
       {/* Hendelser */}
-      <div className="mb-5">
+      {!loading && <div className="mb-5">
         <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
           {events.length > 1 ? 'Kommende dugnader' : 'Neste dugnad'}
         </h2>
@@ -258,7 +279,7 @@ export default function HomePage() {
             </Card>
           )
         })}
-      </div>
+      </div>}
     </div>
   )
 }

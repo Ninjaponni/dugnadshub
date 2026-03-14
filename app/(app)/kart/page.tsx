@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeZones, type ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
@@ -8,6 +9,7 @@ import { useActiveEvent } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea } from '@/lib/supabase/types'
+import zonesGeoJson from '@/lib/map/zones-data'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,
@@ -18,12 +20,40 @@ const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ),
 })
 
-// Fullskjerms kartside med soner og claiming
+// Beregn senterpunkt av polygon
+function getPolygonCenter(coordinates: number[][][]): [number, number] {
+  const ring = coordinates[0]
+  let sumLng = 0, sumLat = 0
+  for (const [lng, lat] of ring) {
+    sumLng += lng
+    sumLat += lat
+  }
+  return [sumLng / ring.length, sumLat / ring.length]
+}
+
+// Wrapper med Suspense for useSearchParams
 export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="fixed inset-0 flex items-center justify-center bg-bg">
+        <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
+  )
+}
+
+function MapPageContent() {
+  const searchParams = useSearchParams()
+  const focusZoneId = searchParams.get('sone')
+
   const { event, loading: eventLoading } = useActiveEvent()
   const { zones, loading: zonesLoading, refetch } = useRealtimeZones(event?.id || null)
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
+  const [initialZoom, setInitialZoom] = useState<number | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -32,18 +62,34 @@ export default function MapPage() {
     })
   }, [supabase])
 
-  // Bestem aktivt område fra hendelsens soner (de som har assignment)
+  // Når soner er lastet og vi har en fokus-sone, åpne den og sentrer kartet
+  useEffect(() => {
+    if (!focusZoneId || zonesLoading || zones.length === 0) return
+
+    const zone = zones.find((z) => z.id === focusZoneId)
+    if (zone) {
+      setSelectedZone(zone)
+
+      // Finn polygon-senter for kart-sentrering
+      const feature = zonesGeoJson.features.find((f) => f.properties?.id === focusZoneId)
+      if (feature) {
+        const [lng, lat] = getPolygonCenter(feature.geometry.coordinates as number[][][])
+        setInitialCenter([lng, lat])
+        setInitialZoom(15)
+      }
+    }
+  }, [focusZoneId, zones, zonesLoading])
+
+  // Bestem aktivt område fra hendelsens soner
   const activeArea = useMemo<ZoneArea | null>(() => {
     if (!event) return null
     const assignedZones = zones.filter((z) => z.assignment_id)
     if (assignedZones.length === 0) return null
-    // Sjekk om alle tilhører ett område
     const areas = new Set(assignedZones.map((z) => z.area))
     if (areas.size === 1) return assignedZones[0].area
-    return null // Blandet — vis alt
+    return null
   }, [event, zones])
 
-  // Tell kun soner som er med i hendelsen
   const assignedZones = zones.filter((z) => z.assignment_id)
   const availableCount = assignedZones.filter((z) => z.status === 'available').length
   const doneCount = assignedZones.filter((z) => z.status === 'completed' || z.status === 'picked_up').length
@@ -56,11 +102,12 @@ export default function MapPage() {
         selectedZoneId={selectedZone?.id}
         userId={userId}
         activeArea={activeArea}
+        initialCenter={initialCenter}
+        initialZoom={initialZoom}
       />
 
       <MapLegend />
 
-      {/* Status-header */}
       {!eventLoading && (
         <div className="absolute top-14 left-4 right-16 z-10 safe-top">
           <div className="glass rounded-xl px-3 py-2 shadow-lg">
