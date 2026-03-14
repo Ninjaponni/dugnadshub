@@ -158,9 +158,11 @@ export default function HomePage() {
         className="mb-6"
       >
         <p className="text-text-secondary text-[15px]">{greeting()}</p>
-        <h1 className="text-[34px] font-bold tracking-tight">
-          {firstName || 'Dugnadshub'}
-        </h1>
+        {loading ? (
+          <div className="h-10 w-40 bg-black/5 rounded animate-pulse mt-1" />
+        ) : (
+          <h1 className="text-[34px] font-bold tracking-tight">{firstName}</h1>
+        )}
       </motion.div>
 
       {/* Skeleton mens data lastes */}
