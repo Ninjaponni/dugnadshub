@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { DugnadEvent } from '@/lib/supabase/types'
 
@@ -8,12 +8,11 @@ import type { DugnadEvent } from '@/lib/supabase/types'
 export function useActiveEvent() {
   const [event, setEvent] = useState<DugnadEvent | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
 
   useEffect(() => {
     async function fetch() {
-      // Prøv aktivt event først, deretter kommende
-      const { data } = await supabase
+      const { data } = await supabaseRef.current
         .from('events')
         .select('*')
         .in('status', ['active', 'upcoming'])
@@ -26,7 +25,7 @@ export function useActiveEvent() {
     }
 
     fetch()
-  }, [supabase])
+  }, [])
 
   return { event, loading }
 }

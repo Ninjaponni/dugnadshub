@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneAssignment, ZoneClaim, Zone } from '@/lib/supabase/types'
 
-// Utvidet sone med assignment-status og claims
 export interface ZoneWithStatus extends Zone {
   assignment_id: string | null
   status: ZoneAssignment['status']
@@ -15,11 +14,11 @@ export interface ZoneWithStatus extends Zone {
 export function useRealtimeZones(eventId: string | null) {
   const [zones, setZones] = useState<ZoneWithStatus[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
 
-  // Hent alle soner med status for et event
   const fetchZones = useCallback(async () => {
-    // Hent soner
+    const supabase = supabaseRef.current
+
     const { data: allZones } = await supabase
       .from('zones')
       .select('*')
@@ -27,7 +26,6 @@ export function useRealtimeZones(eventId: string | null) {
 
     if (!allZones) return
 
-    // Hent assignments for eventet
     let assignments: ZoneAssignment[] = []
     let claims: (ZoneClaim & { profiles?: { full_name: string | null } })[] = []
 
@@ -39,16 +37,16 @@ export function useRealtimeZones(eventId: string | null) {
 
       if (assignData) assignments = assignData as unknown as ZoneAssignment[]
 
-      // Hent claims med brukernavn
-      const { data: claimData } = await supabase
-        .from('zone_claims')
-        .select('*, profiles(full_name)')
-        .in('assignment_id', assignments.map(a => a.id))
+      if (assignments.length > 0) {
+        const { data: claimData } = await supabase
+          .from('zone_claims')
+          .select('*, profiles(full_name)')
+          .in('assignment_id', assignments.map(a => a.id))
 
-      if (claimData) claims = claimData as unknown as typeof claims
+        if (claimData) claims = claimData as unknown as typeof claims
+      }
     }
 
-    // Kombiner soner med status
     const zonesWithStatus: ZoneWithStatus[] = (allZones as unknown as Zone[]).map(zone => {
       const assignment = assignments.find(a => a.zone_id === zone.id)
       const zoneClaims = assignment
@@ -68,16 +66,17 @@ export function useRealtimeZones(eventId: string | null) {
 
     setZones(zonesWithStatus)
     setLoading(false)
-  }, [eventId, supabase])
+  }, [eventId])
 
   useEffect(() => {
     fetchZones()
 
     if (!eventId) return
 
-    // Lytt på endringer i zone_assignments
+    const supabase = supabaseRef.current
+
     const assignChannel = supabase
-      .channel('zone-assignments')
+      .channel(`zone-assignments-${eventId}`)
       .on(
         'postgres_changes',
         {
@@ -90,9 +89,8 @@ export function useRealtimeZones(eventId: string | null) {
       )
       .subscribe()
 
-    // Lytt på endringer i zone_claims
     const claimChannel = supabase
-      .channel('zone-claims')
+      .channel(`zone-claims-${eventId}`)
       .on(
         'postgres_changes',
         {
@@ -108,7 +106,7 @@ export function useRealtimeZones(eventId: string | null) {
       supabase.removeChannel(assignChannel)
       supabase.removeChannel(claimChannel)
     }
-  }, [eventId, fetchZones, supabase])
+  }, [eventId, fetchZones])
 
   return { zones, loading, refetch: fetchZones }
 }
