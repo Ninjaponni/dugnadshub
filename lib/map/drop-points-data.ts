@@ -439,14 +439,14 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Tiller-ringen Oppsamling",
         "description": "",
-        "id": "DP-S-1",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-1"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          10.4041364,
-          63.3535269
+          10.3937509,
+          63.3552013
         ]
       }
     },
@@ -455,8 +455,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Hårstad Minde Oppsamling",
         "description": "",
-        "id": "DP-S-2",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-2"
       },
       "geometry": {
         "type": "Point",
@@ -471,8 +471,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Brauta Oppsamling",
         "description": "",
-        "id": "DP-S-3",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-3"
       },
       "geometry": {
         "type": "Point",
@@ -487,8 +487,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Torvtaket Oppsamling",
         "description": "",
-        "id": "DP-S-4",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-4"
       },
       "geometry": {
         "type": "Point",
@@ -503,8 +503,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Gjerlov Oppsamling",
         "description": "",
-        "id": "DP-S-5",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-5"
       },
       "geometry": {
         "type": "Point",
@@ -517,26 +517,10 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
     {
       "type": "Feature",
       "properties": {
-        "name": "Martin Kregnes Oppsamling",
-        "description": "",
-        "id": "DP-S-6",
-        "area": "SOR"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.393969,
-          63.3552008
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "name": "Hårstadhaugen Oppsamling",
         "description": "",
-        "id": "DP-S-7",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-6"
       },
       "geometry": {
         "type": "Point",
@@ -551,8 +535,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Rognbudalen Oppsamling",
         "description": "",
-        "id": "DP-S-8",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-7"
       },
       "geometry": {
         "type": "Point",
@@ -567,8 +551,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Koieflata/Eyvind Løkken Oppsamling",
         "description": "",
-        "id": "DP-S-9",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-8"
       },
       "geometry": {
         "type": "Point",
@@ -583,8 +567,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Svartholtet Oppsamling",
         "description": "",
-        "id": "DP-S-10",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-9"
       },
       "geometry": {
         "type": "Point",
@@ -599,8 +583,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Arne Solberg Oppsamling",
         "description": "",
-        "id": "DP-S-11",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-10"
       },
       "geometry": {
         "type": "Point",
@@ -615,8 +599,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Ole Ross Oppsamling",
         "description": "",
-        "id": "DP-S-12",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-11"
       },
       "geometry": {
         "type": "Point",
@@ -631,8 +615,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Oppsamling",
         "description": "Tømmerlunna, Tillerbruvegen, Tiller-ringen rest",
-        "id": "DP-S-13",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-12"
       },
       "geometry": {
         "type": "Point",
@@ -647,8 +631,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Hårstadreina/ringen Oppsamling",
         "description": "",
-        "id": "DP-S-14",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-13"
       },
       "geometry": {
         "type": "Point",
@@ -663,8 +647,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Tømmerlunna/Sagflata Oppsamling",
         "description": "",
-        "id": "DP-S-15",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-14"
       },
       "geometry": {
         "type": "Point",
@@ -679,8 +663,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Hårstadryggen Oppsamling",
         "description": "+ Tiller-ringen rest",
-        "id": "DP-S-16",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-15"
       },
       "geometry": {
         "type": "Point",
@@ -695,8 +679,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Tiller-ringen Oppsamling",
         "description": "",
-        "id": "DP-S-17",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-16"
       },
       "geometry": {
         "type": "Point",
@@ -711,8 +695,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Hølbekken Oppsamling",
         "description": "",
-        "id": "DP-S-18",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-17"
       },
       "geometry": {
         "type": "Point",
@@ -727,8 +711,8 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "Hårstadreina Oppsamling",
         "description": "",
-        "id": "DP-S-19",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-18"
       },
       "geometry": {
         "type": "Point",
@@ -743,14 +727,30 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
       "properties": {
         "name": "John Bjørgums Oppsamling",
         "description": "",
-        "id": "DP-S-20",
-        "area": "SOR"
+        "area": "SOR",
+        "id": "DP-S-19"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
           10.3817357,
           63.3533866
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tiller-ringen rest Oppsamling",
+        "description": "",
+        "area": "SOR",
+        "id": "DP-S-20"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3910942,
+          63.3527778
         ]
       }
     }
