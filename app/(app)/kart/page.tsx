@@ -145,16 +145,28 @@ function MapPageContent() {
         <div className="absolute top-14 left-4 right-16 z-10 safe-top">
           <div className="glass rounded-xl px-3 py-2 shadow-lg">
             {event ? (
-              <div className="flex items-center justify-between">
-                <div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-medium text-accent uppercase tracking-wide">
                     {event.status === 'active' ? 'Pågår nå' : 'Kommende'}
                   </p>
-                  <p className="text-sm font-semibold">{event.title}</p>
                 </div>
-                <div className="text-right text-xs text-text-secondary">
-                  <p>{availableCount} ledige</p>
-                  <p>{takenCount} tatt</p>
+                <p className="text-sm font-semibold mb-1.5">{event.title}</p>
+                <div className="flex items-center gap-3 text-xs text-text-secondary">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-zone-available" />
+                    {availableCount} ledige
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+                    {takenCount} tatt
+                  </span>
+                  {doneCount > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                      {doneCount} ferdig
+                    </span>
+                  )}
                 </div>
               </div>
             ) : (
