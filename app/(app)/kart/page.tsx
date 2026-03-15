@@ -83,6 +83,7 @@ function MapPageContent() {
   const [userId, setUserId] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
   const [initialZoom, setInitialZoom] = useState<number | null>(null)
+  const [flyTarget, setFlyTarget] = useState<{ lng: number; lat: number; zoom: number } | null>(null)
 
   useEffect(() => {
     supabaseRef.current.auth.getUser().then(({ data: { user } }) => {
@@ -134,6 +135,8 @@ function MapPageContent() {
         activeArea={activeArea}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
+        flyTarget={flyTarget}
+        onFlyComplete={() => setFlyTarget(null)}
       />
 
       <MapLegend />
@@ -171,6 +174,9 @@ function MapPageContent() {
         onAction={() => {
           refetch()
           setSelectedZone(null)
+        }}
+        onFlyTo={(lng, lat, zoom) => {
+          setFlyTarget({ lng, lat, zoom: zoom || 16 })
         }}
       />
     </div>

@@ -17,10 +17,12 @@ interface DugnadMapProps {
   activeArea?: 'NORD' | 'SOR' | null
   initialCenter?: [number, number] | null
   initialZoom?: number | null
+  flyTarget?: { lng: number; lat: number; zoom: number } | null
+  onFlyComplete?: () => void
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, initialCenter, initialZoom }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, initialCenter, initialZoom, flyTarget, onFlyComplete }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [hasFlown, setHasFlown] = useState(false)
@@ -35,6 +37,17 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
     })
     setHasFlown(true)
   }, [mapLoaded, initialCenter, initialZoom, hasFlown])
+
+  // Fly til oppsamlingspunkt eller annet mål
+  useEffect(() => {
+    if (!mapLoaded || !flyTarget) return
+    mapRef.current?.flyTo({
+      center: [flyTarget.lng, flyTarget.lat],
+      zoom: flyTarget.zoom,
+      duration: 1000,
+    })
+    onFlyComplete?.()
+  }, [mapLoaded, flyTarget, onFlyComplete])
 
   const handleZoneClick = useCallback(
     (zoneId: string) => {
