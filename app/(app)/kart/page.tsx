@@ -119,7 +119,9 @@ function MapPageContent() {
   }, [event, zones])
 
   const assignedZones = zones.filter((z) => z.assignment_id)
-  const availableCount = assignedZones.filter((z) => z.status === 'available').length
+  // Tell basert på claims, ikke assignment-status
+  const availableCount = assignedZones.filter((z) => z.claims.length === 0).length
+  const takenCount = assignedZones.filter((z) => z.claims.length > 0).length
   const doneCount = assignedZones.filter((z) => z.status === 'completed' || z.status === 'picked_up').length
 
   return (
@@ -149,7 +151,7 @@ function MapPageContent() {
                 </div>
                 <div className="text-right text-xs text-text-secondary">
                   <p>{availableCount} ledige</p>
-                  <p>{doneCount} ferdige</p>
+                  <p>{takenCount} tatt</p>
                 </div>
               </div>
             ) : (
