@@ -4,438 +4,6 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "Tonstadbrinken Oppsamling 3",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-1",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3874401,
-          63.367203
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstadbrinken Oppsamling 5",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-2",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3841786,
-          63.3656592
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstadbrinken Oppsamling 4",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-3",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3847257,
-          63.3672848
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Porsmyra Oppsamling",
-        "description": "",
-        "id": "DP-N-4",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3950238,
-          63.3601139
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Ivar Reitens Oppsamling",
-        "description": "",
-        "id": "DP-N-5",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3977475,
-          63.359268
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Torvmyra Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-6",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3917056,
-          63.3624205
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Harald Torps Oppsamling",
-        "description": "",
-        "id": "DP-N-7",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.40064,
-          63.359749
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Starrmyra Oppsamling",
-        "description": "",
-        "id": "DP-N-8",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.390305,
-          63.36035
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Romemyra Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-9",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3853676,
-          63.3605104
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Romemyra Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-10",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3855534,
-          63.361157
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Ingeborg Ofstads Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-11",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.397597,
-          63.3569257
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Ingeborg Ofstads Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-12",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3958624,
-          63.3571424
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstadgrenda Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-13",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.387048,
-          63.3644411
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstadgrenda Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-14",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3862151,
-          63.363183
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Rostengrenda Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-15",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.382012,
-          63.3634562
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Rostengrenda Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-16",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3821899,
-          63.3645212
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Movollen Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-17",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.4001967,
-          63.3566334
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Movollen Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-18",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.4021708,
-          63.3564674
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Torvmyra Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-19",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3917378,
-          63.3633705
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Moltmyra Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-20",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3963237,
-          63.362783
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Moltmyra Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-21",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3959727,
-          63.3620821
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Moltmyra Oppsamling 3",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-22",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3957397,
-          63.3615456
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstad Park Oppsamling",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-23",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3906159,
-          63.367102
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstadbrinken Oppsamling 1",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-24",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3904442,
-          63.3653273
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstadbrinken Oppsamling 2",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-25",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3872577,
-          63.3653032
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Movollflata Oppsamling",
-        "description": "",
-        "id": "DP-N-26",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.4076936,
-          63.3578389
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Tonstad Park Oppsamling",
-        "description": "Flasker kan settes her",
-        "id": "DP-N-27",
-        "area": "NORD"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          10.3927749,
-          63.3651457
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "name": "Tiller-ringen Oppsamling",
         "description": "",
         "area": "SOR",
@@ -750,6 +318,438 @@
         "coordinates": [
           10.3910942,
           63.3527778
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadbrinken Oppsamling 3",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-1"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3874401,
+          63.367203
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadbrinken Oppsamling 5",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3841786,
+          63.3656592
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadbrinken Oppsamling 4",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-3"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3847257,
+          63.3672848
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Porsmyra Oppsamling",
+        "description": "",
+        "area": "NORD",
+        "id": "DP-N-4"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3950238,
+          63.3601139
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ivar Reitens Oppsamling",
+        "description": "",
+        "area": "NORD",
+        "id": "DP-N-5"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3977475,
+          63.359268
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Torvmyra Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-6"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3917056,
+          63.3624205
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Harald Torps Oppsamling",
+        "description": "",
+        "area": "NORD",
+        "id": "DP-N-7"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.40064,
+          63.359749
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Starrmyra Oppsamling",
+        "description": "",
+        "area": "NORD",
+        "id": "DP-N-8"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.390305,
+          63.36035
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Romemyra Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-9"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3853676,
+          63.3605104
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Romemyra Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-10"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3855534,
+          63.361157
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ingeborg Ofstads Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-11"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.397597,
+          63.3569257
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ingeborg Ofstads Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-12"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3958624,
+          63.3571424
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadgrenda Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-13"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.387048,
+          63.3644411
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadgrenda Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-14"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3862151,
+          63.363183
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rostengrenda Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.382012,
+          63.3634562
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rostengrenda Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-16"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3821899,
+          63.3645212
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Movollen Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-17"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.4001967,
+          63.3566334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Movollen Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-18"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.4021708,
+          63.3564674
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Torvmyra Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-19"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3917378,
+          63.3633705
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Moltmyra Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-20"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3963237,
+          63.362783
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Moltmyra Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3959727,
+          63.3620821
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Moltmyra Oppsamling 3",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-22"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3957397,
+          63.3615456
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstad Park Oppsamling",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-23"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3906159,
+          63.367102
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadbrinken Oppsamling 1",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-24"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3904442,
+          63.3653273
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstadbrinken Oppsamling 2",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-25"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3872577,
+          63.3653032
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Movollflata Oppsamling",
+        "description": "",
+        "area": "NORD",
+        "id": "DP-N-26"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.4076936,
+          63.3578389
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tonstad Park Oppsamling",
+        "description": "Flasker kan settes her",
+        "area": "NORD",
+        "id": "DP-N-27"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.3927749,
+          63.3651457
         ]
       }
     }
