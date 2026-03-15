@@ -255,7 +255,8 @@ export default function HomePage() {
                 Kommer senere
               </h2>
               {futureEvents.map((event) => (
-                <Card key={event.id} className="p-3 flex items-center gap-3 mb-2">
+                <Link key={event.id} href={`/kart?event=${event.id}`}>
+                <Card className="p-3 flex items-center gap-3 mb-2">
                   <div className="w-9 h-9 rounded-full bg-text-secondary/5 flex items-center justify-center shrink-0">
                     <Calendar size={18} className="text-text-secondary" />
                   </div>
@@ -269,6 +270,7 @@ export default function HomePage() {
                     om {daysUntil(event.date)} dager
                   </span>
                 </Card>
+                </Link>
               ))}
             </div>
           )}

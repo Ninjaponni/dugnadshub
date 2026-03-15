@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
@@ -8,7 +8,7 @@ import { useRealtimeZones, type ZoneWithStatus } from '@/lib/hooks/useRealtimeZo
 import { useActiveEvent } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import MapLegend from '@/components/map/MapLegend'
-import type { ZoneArea } from '@/lib/supabase/types'
+import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import zonesGeoJson from '@/lib/map/zones-data'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
@@ -47,21 +47,41 @@ export default function MapPage() {
 function MapPageContent() {
   const searchParams = useSearchParams()
   const focusZoneId = searchParams.get('sone')
+  const overrideEventId = searchParams.get('event')
   const showAll = searchParams.get('alle') === '1'
 
-  const { event, loading: eventLoading } = useActiveEvent()
-  const { zones, loading: zonesLoading, refetch } = useRealtimeZones(showAll ? null : (event?.id || null))
+  const { event: autoEvent, loading: eventLoading } = useActiveEvent()
+
+  // Bruk override-event fra URL, ellers den automatiske (nærmeste)
+  const [overrideEvent, setOverrideEvent] = useState<DugnadEvent | null>(null)
+  const supabaseRef = useRef(createClient())
+
+  useEffect(() => {
+    if (!overrideEventId) return
+    supabaseRef.current
+      .from('events')
+      .select('*')
+      .eq('id', overrideEventId)
+      .single()
+      .then(({ data }) => {
+        if (data) setOverrideEvent(data as unknown as DugnadEvent)
+      })
+  }, [overrideEventId])
+
+  const event = overrideEventId ? overrideEvent : autoEvent
+  const effectiveEventId = showAll ? null : (event?.id || null)
+
+  const { zones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
   const [initialZoom, setInitialZoom] = useState<number | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabaseRef.current.auth.getUser().then(({ data: { user } }) => {
       if (user) setUserId(user.id)
     })
-  }, [supabase])
+  }, [])
 
   // Når soner er lastet og vi har en fokus-sone, åpne den og sentrer kartet
   useEffect(() => {
