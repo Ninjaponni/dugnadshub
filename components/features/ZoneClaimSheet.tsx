@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useRef } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import { MapPin, StickyNote, Navigation } from 'lucide-react'
@@ -40,6 +40,7 @@ function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string 
 
 export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction }: ZoneClaimSheetProps) {
   const [loading, setLoading] = useState(false)
+  const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const supabaseRef = useRef(createClient())
 
   if (!zone) return null
@@ -157,10 +158,25 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               Marker som ferdig
             </Button>
           )}
-          {canUnclaim && (
-            <Button size="md" variant="danger" loading={loading} onClick={handleUnclaim} className="w-full">
+          {canUnclaim && !showUnclaimConfirm && (
+            <Button size="md" variant="danger" loading={loading} onClick={() => setShowUnclaimConfirm(true)} className="w-full">
               Gi opp sonen
             </Button>
+          )}
+          {showUnclaimConfirm && (
+            <div className="card p-4 bg-warning/5 border border-warning/20 rounded-xl space-y-3">
+              <p className="text-sm text-text-primary">
+                Hvis du er forhindret fra å delta, setter vi stor pris på om du kan finne noen andre til å ta sonen din.
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="secondary" onClick={() => setShowUnclaimConfirm(false)} className="flex-1">
+                  Avbryt
+                </Button>
+                <Button size="sm" variant="danger" loading={loading} onClick={handleUnclaim} className="flex-1">
+                  Gi opp
+                </Button>
+              </div>
+            </div>
           )}
           {isFull && !userHasClaimed && !isFinished && (
             <p className="text-sm text-text-tertiary text-center py-2">
