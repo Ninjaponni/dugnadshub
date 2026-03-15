@@ -1,5 +1,5 @@
 // Auto-generert fra zones.geojson
-const zonesData: { type: string; features: Array<{ type: string; properties: Record<string, string>; geometry: { type: string; coordinates: number[][][] | number[][][][] } }> } = {
+const data: { type: string; features: Array<{ type: string; properties: Record<string, string>; geometry: { type: string; coordinates: number[][][] | number[][][][] } }> } = {
   "type": "FeatureCollection",
   "features": [
     {
@@ -1543,56 +1543,56 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
         "coordinates": [
           [
             [
-              10.4008725,
-              63.360032
+              10.4004541,
+              63.3596592
             ],
             [
-              10.4003789,
-              63.3590073
+              10.3999605,
+              63.3586345
             ],
             [
-              10.4011729,
-              63.3589977
+              10.4007545,
+              63.3586249
             ],
             [
-              10.4011943,
-              63.3592863
+              10.4007759,
+              63.3589135
             ],
             [
-              10.4024412,
-              63.3592587
+              10.4020228,
+              63.3588859
             ],
             [
-              10.4025563,
-              63.3590882
+              10.4021379,
+              63.3587154
             ],
             [
-              10.4030524,
-              63.359091
+              10.402634,
+              63.3587182
             ],
             [
-              10.4030575,
-              63.3593259
+              10.4026391,
+              63.3589531
             ],
             [
-              10.4039908,
-              63.3593395
+              10.4035724,
+              63.3589667
             ],
             [
-              10.4051532,
-              63.3596095
+              10.4047348,
+              63.3592367
             ],
             [
-              10.4063675,
-              63.3599466
+              10.405949,
+              63.3595738
             ],
             [
-              10.4052857,
-              63.3607119
+              10.4048672,
+              63.3603391
             ],
             [
-              10.4008725,
-              63.360032
+              10.4004541,
+              63.3596592
             ]
           ]
         ]
@@ -2220,4 +2220,4 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
     }
   ]
 };
-export default zonesData;
+export default data;

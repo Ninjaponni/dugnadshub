@@ -1,5 +1,5 @@
 // Auto-generert fra drop-points.geojson
-const dropPointsData: { type: string; features: Array<{ type: string; properties: Record<string, string>; geometry: { type: string; coordinates: number[] } }> } = {
+const data: { type: string; features: Array<{ type: string; properties: Record<string, string>; geometry: { type: string; coordinates: number[] } }> } = {
   "type": "FeatureCollection",
   "features": [
     {
@@ -756,4 +756,4 @@ const dropPointsData: { type: string; features: Array<{ type: string; properties
     }
   ]
 };
-export default dropPointsData;
+export default data;
