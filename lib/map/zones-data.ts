@@ -1,5 +1,5 @@
 // Auto-generert fra zones.geojson
-const zonesData: { type: string; features: Array<{ type: string; properties: Record<string, string>; geometry: { type: string; coordinates: number[][][] } }> } = {
+const zonesData: { type: string; features: Array<{ type: string; properties: Record<string, string>; geometry: { type: string; coordinates: number[][][] | number[][][][] } }> } = {
   "type": "FeatureCollection",
   "features": [
     {
@@ -1509,122 +1509,112 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
     {
       "type": "Feature",
       "properties": {
-        "name": "Hølbekken øst",
+        "name": "Hølbekken",
         "description": "",
         "id": "S13",
         "area": "SOR"
       },
       "geometry": {
-        "type": "Polygon",
+        "type": "MultiPolygon",
         "coordinates": [
           [
             [
-              10.385808,
-              63.3527731
-            ],
-            [
-              10.385776,
-              63.3521667
-            ],
-            [
-              10.3855454,
-              63.3518779
-            ],
-            [
-              10.3853416,
-              63.3517576
-            ],
-            [
-              10.3857975,
-              63.351647
-            ],
-            [
-              10.3862855,
-              63.3521139
-            ],
-            [
-              10.3876427,
-              63.3521283
-            ],
-            [
-              10.3885868,
-              63.3526192
-            ],
-            [
-              10.3887316,
-              63.352802
-            ],
-            [
-              10.3882649,
-              63.3528068
-            ],
-            [
-              10.3882488,
-              63.3526673
-            ],
-            [
-              10.3879538,
-              63.3525638
-            ],
-            [
-              10.3874388,
-              63.352701
-            ],
-            [
-              10.385808,
-              63.3527731
+              [
+                10.385808,
+                63.3527731
+              ],
+              [
+                10.385776,
+                63.3521667
+              ],
+              [
+                10.3855454,
+                63.3518779
+              ],
+              [
+                10.3853416,
+                63.3517576
+              ],
+              [
+                10.3857975,
+                63.351647
+              ],
+              [
+                10.3862855,
+                63.3521139
+              ],
+              [
+                10.3876427,
+                63.3521283
+              ],
+              [
+                10.3885868,
+                63.3526192
+              ],
+              [
+                10.3887316,
+                63.352802
+              ],
+              [
+                10.3882649,
+                63.3528068
+              ],
+              [
+                10.3882488,
+                63.3526673
+              ],
+              [
+                10.3879538,
+                63.3525638
+              ],
+              [
+                10.3874388,
+                63.352701
+              ],
+              [
+                10.385808,
+                63.3527731
+              ]
             ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Hølbekken vest",
-        "description": "",
-        "id": "S14",
-        "area": "SOR"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
+          ],
           [
             [
-              10.3855866,
-              63.3528868
-            ],
-            [
-              10.3844278,
-              63.3529373
-            ],
-            [
-              10.3833442,
-              63.3530551
-            ],
-            [
-              10.3827005,
-              63.3526173
-            ],
-            [
-              10.3819173,
-              63.3518041
-            ],
-            [
-              10.3835159,
-              63.3514095
-            ],
-            [
-              10.3850823,
-              63.3518089
-            ],
-            [
-              10.3855007,
-              63.3520639
-            ],
-            [
-              10.3855866,
-              63.3528868
+              [
+                10.3855866,
+                63.3528868
+              ],
+              [
+                10.3844278,
+                63.3529373
+              ],
+              [
+                10.3833442,
+                63.3530551
+              ],
+              [
+                10.3827005,
+                63.3526173
+              ],
+              [
+                10.3819173,
+                63.3518041
+              ],
+              [
+                10.3835159,
+                63.3514095
+              ],
+              [
+                10.3850823,
+                63.3518089
+              ],
+              [
+                10.3855007,
+                63.3520639
+              ],
+              [
+                10.3855866,
+                63.3528868
+              ]
             ]
           ]
         ]
@@ -1635,7 +1625,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Sagflata",
         "description": "",
-        "id": "S15",
+        "id": "S14",
         "area": "SOR"
       },
       "geometry": {
@@ -1695,7 +1685,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Tømmerlunna",
         "description": "",
-        "id": "S16",
+        "id": "S15",
         "area": "SOR"
       },
       "geometry": {
@@ -1763,7 +1753,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Tillerringen",
         "description": "Rekkehus + stort gult hus",
-        "id": "S17",
+        "id": "S16",
         "area": "SOR"
       },
       "geometry": {
@@ -1815,7 +1805,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Tillerringen rest",
         "description": "",
-        "id": "S18",
+        "id": "S17",
         "area": "SOR"
       },
       "geometry": {
@@ -1919,7 +1909,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Torvtaket",
         "description": "",
-        "id": "S19",
+        "id": "S18",
         "area": "SOR"
       },
       "geometry": {
@@ -1967,7 +1957,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Ole Ross' veg",
         "description": "",
-        "id": "S20",
+        "id": "S19",
         "area": "SOR"
       },
       "geometry": {
@@ -2011,7 +2001,7 @@ const zonesData: { type: string; features: Array<{ type: string; properties: Rec
       "properties": {
         "name": "Svartholtet",
         "description": "",
-        "id": "S21",
+        "id": "S20",
         "area": "SOR"
       },
       "geometry": {
