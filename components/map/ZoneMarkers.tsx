@@ -10,15 +10,24 @@ interface ZoneMarkersProps {
   userId: string | null
 }
 
-// Beregner senterpunkt av en polygon
-function getPolygonCenter(coordinates: number[][][]): [number, number] {
-  const ring = coordinates[0]
+// Beregner senterpunkt av Polygon eller MultiPolygon
+function getGeometryCenter(geometry: { type: string; coordinates: number[][][] | number[][][][] }): [number, number] {
+  let allPoints: number[][] = []
+
+  if (geometry.type === 'MultiPolygon') {
+    for (const polygon of geometry.coordinates as number[][][][]) {
+      allPoints = allPoints.concat(polygon[0])
+    }
+  } else {
+    allPoints = (geometry.coordinates as number[][][])[0]
+  }
+
   let sumLng = 0, sumLat = 0
-  for (const [lng, lat] of ring) {
+  for (const [lng, lat] of allPoints) {
     sumLng += lng
     sumLat += lat
   }
-  return [sumLng / ring.length, sumLat / ring.length]
+  return [sumLng / allPoints.length, sumLat / allPoints.length]
 }
 
 // Viser "Du"-merke på brukerens soner og hake på ferdige soner
@@ -35,7 +44,7 @@ export default function ZoneMarkers({ zones, userId }: ZoneMarkersProps) {
         // Finn polygon-senteret fra GeoJSON
         const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
         if (!feature) return null
-        const [lng, lat] = getPolygonCenter(feature.geometry.coordinates as number[][][])
+        const [lng, lat] = getGeometryCenter(feature.geometry)
 
         return (
           <Marker key={zone.id} longitude={lng} latitude={lat} anchor="center">

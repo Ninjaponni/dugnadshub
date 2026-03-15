@@ -20,15 +20,22 @@ const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ),
 })
 
-// Beregn senterpunkt av polygon
-function getPolygonCenter(coordinates: number[][][]): [number, number] {
-  const ring = coordinates[0]
+// Beregner senterpunkt av Polygon eller MultiPolygon
+function getGeometryCenter(geometry: { type: string; coordinates: number[][][] | number[][][][] }): [number, number] {
+  let allPoints: number[][] = []
+  if (geometry.type === 'MultiPolygon') {
+    for (const polygon of geometry.coordinates as number[][][][]) {
+      allPoints = allPoints.concat(polygon[0])
+    }
+  } else {
+    allPoints = (geometry.coordinates as number[][][])[0]
+  }
   let sumLng = 0, sumLat = 0
-  for (const [lng, lat] of ring) {
+  for (const [lng, lat] of allPoints) {
     sumLng += lng
     sumLat += lat
   }
-  return [sumLng / ring.length, sumLat / ring.length]
+  return [sumLng / allPoints.length, sumLat / allPoints.length]
 }
 
 // Wrapper med Suspense for useSearchParams
@@ -94,7 +101,7 @@ function MapPageContent() {
       // Finn polygon-senter for kart-sentrering
       const feature = zonesGeoJson.features.find((f) => f.properties?.id === focusZoneId)
       if (feature) {
-        const [lng, lat] = getPolygonCenter(feature.geometry.coordinates as number[][][])
+        const [lng, lat] = getGeometryCenter(feature.geometry)
         setInitialCenter([lng, lat])
         setInitialZoom(15)
       }
