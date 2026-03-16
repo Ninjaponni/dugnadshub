@@ -120,10 +120,11 @@ function MapPageContent() {
   }, [event, zones])
 
   const assignedZones = zones.filter((z) => z.assignment_id)
-  // Tell basert på claims, ikke assignment-status
   const availableCount = assignedZones.filter((z) => z.claims.length === 0).length
-  const takenCount = assignedZones.filter((z) => z.claims.length > 0).length
-  const doneCount = assignedZones.filter((z) => z.status === 'completed' || z.status === 'picked_up').length
+  const partialCount = assignedZones.filter((z) => z.claims.length > 0 && z.claims.length < z.collectors_needed && z.status !== 'completed' && z.status !== 'picked_up').length
+  const fullCount = assignedZones.filter((z) => z.claims.length >= z.collectors_needed && z.status !== 'completed' && z.status !== 'picked_up').length
+  const doneCount = assignedZones.filter((z) => z.status === 'completed').length
+  const pickedUpCount = assignedZones.filter((z) => z.status === 'picked_up').length
 
   return (
     <div className="fixed inset-0 z-0">
@@ -152,21 +153,27 @@ function MapPageContent() {
                   </p>
                 </div>
                 <p className="text-sm font-semibold mb-1.5">{event.title}</p>
-                <div className="flex items-center gap-3 text-xs text-text-secondary">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-zone-available" />
-                    {availableCount} ledige
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-warning" />
-                    {takenCount} tatt
-                  </span>
-                  {doneCount > 0 && (
-                    <span className="inline-flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                      {doneCount} ferdig
-                    </span>
-                  )}
+                <div className="flex items-center gap-2 flex-wrap text-xs text-text-secondary">
+                  {availableCount > 0 && <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#EF4444' }} />
+                    {availableCount}
+                  </span>}
+                  {partialCount > 0 && <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
+                    {partialCount}
+                  </span>}
+                  {fullCount > 0 && <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#007AFF' }} />
+                    {fullCount}
+                  </span>}
+                  {doneCount > 0 && <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#22C55E' }} />
+                    {doneCount}
+                  </span>}
+                  {pickedUpCount > 0 && <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
+                    {pickedUpCount}
+                  </span>}
                 </div>
               </div>
             ) : (

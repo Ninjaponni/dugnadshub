@@ -26,9 +26,9 @@ function findDropPoint(zoneName: string, area: string) {
 
 // Visuell status basert på claims
 function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string } {
-  if (zone.status === 'completed') return { label: 'Ferdig', color: 'bg-success' }
-  if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple' }
-  if (zone.claims.length >= zone.collectors_needed) return { label: 'Fullt', color: 'bg-success' }
+  if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple-500' }
+  if (zone.status === 'completed') return { label: 'Ferdigplukket', color: 'bg-success' }
+  if (zone.claims.length >= zone.collectors_needed) return { label: 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
   return { label: 'Ledig', color: 'bg-zone-available' }
 }

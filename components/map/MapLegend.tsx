@@ -6,9 +6,10 @@ import { useState } from 'react'
 
 const items: Array<{ color: string; label: string; border?: boolean }> = [
   { color: '#EF4444', label: 'Ledig' },
-  { color: '#F59E0B', label: 'Noen plukkere' },
-  { color: '#22C55E', label: 'Fullt / Ferdig' },
-  { color: '#007AFF', label: 'Din sone', border: true },
+  { color: '#F59E0B', label: 'Delvis tatt' },
+  { color: '#007AFF', label: 'Fullt bemannet' },
+  { color: '#22C55E', label: 'Ferdigplukket' },
+  { color: '#8B5CF6', label: 'Hentet' },
 ]
 
 // Kompakt kartlegende med toggle

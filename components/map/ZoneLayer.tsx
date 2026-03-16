@@ -5,14 +5,15 @@ import { Source, Layer } from 'react-map-gl/mapbox'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import zonesGeoJson from '@/lib/map/zones-data'
 
-// Farger: Rød=ingen, Gul=delvis, Grønn=fullt/ferdig, Lilla=hentet
+// Fargekoder for sonestatus
+// Rød=ledig, Gul=delvis tatt, Blå=fullt bemannet, Grønn=ferdigplukket, Lilla=hentet
 const COLORS = {
-  empty: '#EF4444',
-  partial: '#F59E0B',
-  full: '#22C55E',
-  completed: '#22C55E',
-  picked_up: '#8B5CF6',
-  mine: '#007AFF',
+  empty: '#EF4444',      // Rød — ingen har tatt
+  partial: '#F59E0B',    // Gul — noen plukkere, ikke nok
+  full: '#007AFF',       // Blå — alle plasser fylt, klar for plukking
+  completed: '#22C55E',  // Grønn — ferdigplukket, venter på henting
+  picked_up: '#8B5CF6',  // Lilla — sjåfør har hentet
+  mine_border: '#007AFF', // Blå kant for din sone
 }
 
 interface ZoneLayerProps {
@@ -21,9 +22,7 @@ interface ZoneLayerProps {
   userId?: string | null
 }
 
-// Rendrer sonepolygoner med fargekoding basert på status
 export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerProps) {
-  // IDer for soner som har assignment (tilhører aktiv hendelse)
   const activeZoneIds = useMemo(
     () => new Set(zones.filter((z) => z.assignment_id).map((z) => z.id)),
     [zones]
@@ -32,7 +31,6 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
 
   const geoJsonWithStatus = useMemo(() => {
     const features = zonesGeoJson.features
-      // Skjul soner som ikke er med i hendelsen (når det finnes en hendelse)
       .filter((feature) => !hasActiveEvent || activeZoneIds.has(feature.properties?.id as string))
       .map((feature) => {
       const zoneId = feature.properties?.id
@@ -40,12 +38,13 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
       const claimCount = zone?.claims?.length || 0
       const collectorsNeeded = zone?.collectors_needed || 2
       const isMine = userId ? zone?.claims?.some((c) => c.user_id === userId) || false : false
-      const isCompleted = zone?.status === 'completed' || zone?.status === 'picked_up'
 
-      // Bestem farge basert på claims vs needed
+      // Fargerekkefølge: ledig → delvis → fullt → ferdig → hentet
       let colorKey = 'empty'
-      if (isCompleted) {
-        colorKey = zone?.status === 'picked_up' ? 'picked_up' : 'completed'
+      if (zone?.status === 'picked_up') {
+        colorKey = 'picked_up'
+      } else if (zone?.status === 'completed') {
+        colorKey = 'completed'
       } else if (claimCount >= collectorsNeeded) {
         colorKey = 'full'
       } else if (claimCount > 0) {
@@ -58,21 +57,17 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
           ...feature.properties,
           colorKey,
           isMine,
-          isCompleted: zone?.status === 'completed',
-          isPickedUp: zone?.status === 'picked_up',
           isSelected: zoneId === selectedZoneId,
-          claimCount,
-          collectorsNeeded,
         },
       }
     })
 
     return { type: 'FeatureCollection' as const, features }
-  }, [zones, selectedZoneId, userId])
+  }, [zones, selectedZoneId, userId, activeZoneIds, hasActiveEvent])
 
   return (
     <Source id="zones" type="geojson" data={geoJsonWithStatus as unknown as GeoJSON.FeatureCollection}>
-      {/* Fyll — fargekoding */}
+      {/* Fyll */}
       <Layer
         id="zone-fill"
         type="fill"
@@ -95,14 +90,14 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
         }}
       />
 
-      {/* Kanter — standard */}
+      {/* Kanter */}
       <Layer
         id="zone-line"
         type="line"
         paint={{
           'line-color': [
             'case',
-            ['get', 'isMine'], COLORS.mine,
+            ['get', 'isMine'], COLORS.mine_border,
             ['match',
               ['get', 'colorKey'],
               'empty', COLORS.empty,
@@ -123,20 +118,20 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
         }}
       />
 
-      {/* Blå glow for brukerens soner */}
+      {/* Glow for din sone */}
       <Layer
         id="zone-mine-glow"
         type="line"
         filter={['==', ['get', 'isMine'], true]}
         paint={{
-          'line-color': COLORS.mine,
+          'line-color': COLORS.mine_border,
           'line-width': 8,
           'line-opacity': 0.2,
           'line-blur': 6,
         }}
       />
 
-      {/* Glow for valgt sone (klikket) */}
+      {/* Glow for valgt sone */}
       <Layer
         id="zone-selected-glow"
         type="line"
