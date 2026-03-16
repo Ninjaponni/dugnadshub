@@ -53,7 +53,8 @@ function Confetti() {
 }
 
 export default function BadgesPage() {
-  const [earnedBadgeIds, setEarnedBadgeIds] = useState<Set<number>>(new Set())
+  // Map: badge_id → count (for aktivitetsmerker som kan gis flere ganger)
+  const [badgeCounts, setBadgeCounts] = useState<Map<number, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [selectedBadge, setSelectedBadge] = useState<typeof badgeDefinitions[0] | null>(null)
   const [revealBadge, setRevealBadge] = useState<typeof badgeDefinitions[0] | null>(null)
@@ -70,8 +71,14 @@ export default function BadgesPage() {
         .select('badge_id')
         .eq('user_id', user.id) as unknown as { data: Array<{ badge_id: number }> | null }
 
+      // Tell antall per badge
+      const counts = new Map<number, number>()
+      for (const b of (data || [])) {
+        counts.set(b.badge_id, (counts.get(b.badge_id) || 0) + 1)
+      }
+      setBadgeCounts(counts)
+
       const ids = new Set((data || []).map(b => b.badge_id))
-      setEarnedBadgeIds(ids)
 
       // Sjekk om det er nye merker brukeren ikke har sett
       const seenKey = `seen_badges_${user.id}`
@@ -99,6 +106,7 @@ export default function BadgesPage() {
     load()
   }, [])
 
+  const earnedBadgeIds = new Set(badgeCounts.keys())
   const totalEarned = earnedBadgeIds.size
   const totalBadges = badgeDefinitions.length
 
@@ -164,6 +172,8 @@ export default function BadgesPage() {
               {badges.map((badge, i) => {
                 const earned = earnedBadgeIds.has(badge.id)
                 const isNew = newBadgeIds.has(badge.id)
+                const count = badgeCounts.get(badge.id) || 0
+                const isActivity = badge.category === 'aktivitet'
 
                 return (
                   <motion.button
@@ -179,8 +189,14 @@ export default function BadgesPage() {
                         ? 'ring-2 ring-accent/30 bg-accent/[0.04]'
                         : 'opacity-35'
                     }`}>
-                      {/* Hake for opptjente */}
-                      {earned && (
+                      {/* Teller for aktivitetsmerker */}
+                      {earned && isActivity && count > 1 && (
+                        <div className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-accent flex items-center justify-center shadow-sm">
+                          <span className="text-[10px] font-bold text-white">×{count}</span>
+                        </div>
+                      )}
+                      {/* Hake for vanlige opptjente (ikke aktivitet med teller) */}
+                      {earned && (!isActivity || count <= 1) && (
                         <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center shadow-sm">
                           <Check size={12} className="text-white" strokeWidth={3} />
                         </div>
@@ -236,7 +252,9 @@ export default function BadgesPage() {
                 {earnedBadgeIds.has(selectedBadge.id) ? (
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium mb-3">
                     <Check size={14} strokeWidth={3} />
-                    Opptjent
+                    {(badgeCounts.get(selectedBadge.id) || 0) > 1
+                      ? `Opptjent ×${badgeCounts.get(selectedBadge.id)}`
+                      : 'Opptjent'}
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 text-text-tertiary text-sm font-medium mb-3">

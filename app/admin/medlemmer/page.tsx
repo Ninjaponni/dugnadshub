@@ -64,11 +64,16 @@ export default function MembersAdminPage() {
     setUpdatingRole(null)
   }
 
-  // Tildel merke
+  // Tildel merke — aktivitetsmerker kan gis flere ganger
   async function handleAwardBadge(userId: string, badgeId: number) {
-    // Sjekk om brukeren allerede har merket
-    const alreadyHas = userBadges.some(ub => ub.user_id === userId && ub.badge_id === badgeId)
-    if (alreadyHas) return
+    const badge = badgeDefinitions.find(b => b.id === badgeId)
+    const isActivity = badge?.category === 'aktivitet'
+
+    // Vanlige merker: blokker om allerede har
+    if (!isActivity) {
+      const alreadyHas = userBadges.some(ub => ub.user_id === userId && ub.badge_id === badgeId)
+      if (alreadyHas) return
+    }
 
     setAwardingBadge(`${userId}-${badgeId}`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,9 +100,14 @@ export default function MembersAdminPage() {
     setAwardingBadge(null)
   }
 
-  // Hent merker for en bruker
+  // Tell antall ganger en bruker har fått et badge
+  function getBadgeCount(userId: string, badgeId: number): number {
+    return userBadges.filter(ub => ub.user_id === userId && ub.badge_id === badgeId).length
+  }
+
+  // Hent unike merker for en bruker
   function getBadgesForUser(userId: string) {
-    const badgeIds = userBadges.filter(ub => ub.user_id === userId).map(ub => ub.badge_id)
+    const badgeIds = [...new Set(userBadges.filter(ub => ub.user_id === userId).map(ub => ub.badge_id))]
     return badgeDefinitions.filter(b => badgeIds.includes(b.id))
   }
 
@@ -260,15 +270,23 @@ export default function MembersAdminPage() {
                             <div className="flex flex-wrap gap-2">
                               {manualBadges.map(badge => {
                                 const hasBadge = userBadgeList.some(b => b.id === badge.id)
+                                const isActivity = badge.category === 'aktivitet'
+                                const count = getBadgeCount(profile.id, badge.id)
                                 const isAwarding = awardingBadge === `${profile.id}-${badge.id}`
 
                                 return (
                                   <button
                                     key={badge.id}
-                                    onClick={() => hasBadge
-                                      ? handleRemoveBadge(profile.id, badge.id)
-                                      : handleAwardBadge(profile.id, badge.id)
-                                    }
+                                    onClick={() => {
+                                      if (isActivity) {
+                                        // Aktivitetsmerker: alltid gi (legg til +1)
+                                        handleAwardBadge(profile.id, badge.id)
+                                      } else {
+                                        hasBadge
+                                          ? handleRemoveBadge(profile.id, badge.id)
+                                          : handleAwardBadge(profile.id, badge.id)
+                                      }
+                                    }}
                                     disabled={isAwarding}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                                       hasBadge
@@ -277,8 +295,9 @@ export default function MembersAdminPage() {
                                     } ${isAwarding ? 'opacity-50' : ''}`}
                                   >
                                     <span>{badge.icon}</span>
-                                    <span>{badge.name}</span>
-                                    {hasBadge && <X size={12} />}
+                                    <span>{badge.name}{isActivity && count > 0 ? ` ×${count}` : ''}</span>
+                                    {isActivity && hasBadge ? <span className="text-accent">+1</span> : null}
+                                    {!isActivity && hasBadge && <X size={12} />}
                                   </button>
                                 )
                               })}
