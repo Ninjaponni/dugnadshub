@@ -9,7 +9,7 @@ import { useActiveEvent } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
-import zonesGeoJson from '@/lib/map/zones-data'
+import zonesGeoJson from '@/lib/map/combined-zones-data'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,

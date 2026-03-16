@@ -3,7 +3,7 @@
 import { Marker } from 'react-map-gl/mapbox'
 import { Check } from 'lucide-react'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
-import zonesGeoJson from '@/lib/map/zones-data'
+import zonesGeoJson from '@/lib/map/combined-zones-data'
 
 interface ZoneMarkersProps {
   zones: ZoneWithStatus[]

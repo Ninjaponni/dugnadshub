@@ -25,10 +25,11 @@ function findDropPoint(zoneName: string, area: string) {
   return areaPoints.find(f => f.properties.name.toLowerCase().includes(nameKey)) || null
 }
 
-// Visuell status basert på claims
+// Visuell status basert på claims og sonetype
 function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string } {
+  const isLapper = zone.zone_type === 'lapper'
   if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple-500' }
-  if (zone.status === 'completed') return { label: 'Ferdigplukket', color: 'bg-success' }
+  if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : 'Ferdigplukket', color: 'bg-success' }
   if (zone.claims.length >= zone.collectors_needed) return { label: 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
   return { label: 'Ledig', color: 'bg-zone-available' }
@@ -103,8 +104,18 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         <span className="text-xs text-text-tertiary">·</span>
         <span className="text-sm text-text-secondary">{zone.area === 'NORD' ? 'Nord' : 'Sør'} {zone.id}</span>
         <span className="text-xs text-text-tertiary">·</span>
-        <span className="text-sm text-text-secondary">{zone.claims.length}/{zone.collectors_needed} samlere</span>
-        {zone.households > 0 && (
+        <span className="text-sm text-text-secondary">
+          {zone.claims.length}/{zone.collectors_needed} {zone.zone_type === 'lapper' ? 'frivillige' : 'samlere'}
+        </span>
+        {zone.zone_type === 'lapper' && zone.flyers != null && (
+          <>
+            <span className="text-xs text-text-tertiary">·</span>
+            <span className="text-sm text-text-secondary">
+              {zone.flyers} lapper{zone.posters ? `, ${zone.posters} plakater` : ''}
+            </span>
+          </>
+        )}
+        {zone.zone_type !== 'lapper' && zone.households > 0 && (
           <>
             <span className="text-xs text-text-tertiary">·</span>
             <span className="text-sm text-text-secondary">{zone.households} hus</span>
@@ -120,8 +131,8 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         </div>
       )}
 
-      {/* Oppsamlingspunkt — klikkbart */}
-      {dropPoint && (
+      {/* Oppsamlingspunkt — klikkbart (kun for flaskeinnsamling) */}
+      {zone.zone_type !== 'lapper' && dropPoint && (
         <button
           onClick={handleDropPointClick}
           className="flex items-center gap-2 text-sm text-accent mb-3 active:opacity-70"
@@ -178,7 +189,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                 <CheckCircle size={32} className="text-success mx-auto mb-2" />
                 <p className="text-[15px] font-medium mb-1">Er du helt ferdig med sonen?</p>
                 <p className="text-sm text-text-secondary">
-                  Sjåførene får varsel om at panten er klar for henting.
+                  {zone.zone_type === 'lapper'
+                    ? 'Alle lapper og plakater er levert i sonen.'
+                    : 'Sjåførene får varsel om at panten er klar for henting.'}
                 </p>
               </div>
               <div className="flex border-t border-success/20">

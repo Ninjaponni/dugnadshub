@@ -2,7 +2,8 @@
 export type Role = 'admin' | 'collector' | 'driver' | 'strapper'
 export type ChildGroup = 'Aspirant' | 'Junior' | 'Hovedkorps'
 export type ZoneArea = 'NORD' | 'SOR'
-export type EventType = 'bottle_collection' | 'lottery' | 'baking' | 'other'
+export type EventType = 'bottle_collection' | 'lapper' | 'lottery' | 'baking' | 'other'
+export type ZoneType = 'bottle' | 'lapper'
 export type EventStatus = 'upcoming' | 'active' | 'completed'
 export type ZoneStatus = 'available' | 'claimed' | 'in_progress' | 'completed' | 'picked_up'
 
@@ -22,11 +23,14 @@ export interface Zone {
   id: string
   name: string
   area: ZoneArea
+  zone_type: ZoneType
   households: number
   collectors_needed: number
   trailer_group: number
   geometry: Record<string, unknown>
   notes: string | null
+  flyers: number | null
+  posters: number | null
 }
 
 export interface DropPoint {

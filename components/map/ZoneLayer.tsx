@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
-import zonesGeoJson from '@/lib/map/zones-data'
+import zonesGeoJson from '@/lib/map/combined-zones-data'
 
 // Fargekoder for sonestatus
 // Rød=ledig, Gul=delvis tatt, Blå=fullt bemannet, Grønn=ferdigplukket, Lilla=hentet

@@ -57,6 +57,7 @@ const statusColors: Record<EventStatus, string> = {
 
 const typeLabels: Record<EventType, string> = {
   bottle_collection: 'Flaskeinnsamling',
+  lapper: 'Lappeutdeling',
   lottery: 'Lotteri',
   baking: 'Bakesalg',
   other: 'Annet',
@@ -132,9 +133,11 @@ export default function EventsAdminPage() {
 
   useEffect(() => { loadEvents() }, [loadEvents])
 
-  // Hjelpefunksjon — tildel soner basert pa omrade
-  async function assignZonesForEvent(eventId: string, area: EventArea) {
-    const { data: zones } = await supabaseRef.current.from('zones').select('id, area') as unknown as { data: Array<Pick<Zone, 'id' | 'area'>> | null }
+  // Hjelpefunksjon — tildel soner basert pa omrade og hendelsestype
+  async function assignZonesForEvent(eventId: string, area: EventArea, eventType: EventType) {
+    // Velg riktig sonetype basert pa hendelsestype
+    const zoneType = eventType === 'lapper' ? 'lapper' : 'bottle'
+    const { data: zones } = await supabaseRef.current.from('zones').select('id, area, zone_type').eq('zone_type', zoneType) as unknown as { data: Array<Pick<Zone, 'id' | 'area' | 'zone_type'>> | null }
 
     if (!zones || zones.length === 0) return
 
@@ -184,7 +187,7 @@ export default function EventsAdminPage() {
       return
     }
 
-    await assignZonesForEvent(newEvent.id, form.area)
+    await assignZonesForEvent(newEvent.id, form.area, form.type)
 
     setForm({ ...emptyForm })
     setShowForm(false)
