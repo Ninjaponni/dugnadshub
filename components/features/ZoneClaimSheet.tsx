@@ -7,6 +7,7 @@ import { StickyNote, Navigation, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import dropPointsData from '@/lib/map/drop-points-data'
+import { evaluateBadges } from '@/lib/badges/evaluator'
 
 interface ZoneClaimSheetProps {
   zone: ZoneWithStatus | null
@@ -56,6 +57,8 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseRef.current.rpc as any)('claim_zone', { p_event_id: eventId, p_zone_id: zone!.id })
+    // Evaluer badges etter claiming
+    if (userId) evaluateBadges(userId).catch(() => {})
     onAction()
     setLoading(false)
   }
@@ -75,6 +78,8 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseRef.current.rpc as any)('mark_zone_complete', { p_assignment_id: zone.assignment_id })
+    // Evaluer badges etter ferdigmarkering
+    if (userId) evaluateBadges(userId).catch(() => {})
     setShowCompleteConfirm(false)
     onAction()
     setLoading(false)
