@@ -186,7 +186,7 @@ export default function BadgesPage() {
                   >
                     <Card animate={false} className={`p-3 text-center relative transition-all ${
                       earned
-                        ? 'ring-2 ring-accent/30 bg-accent/[0.04]'
+                        ? 'bg-gradient-to-b from-amber-50 to-amber-100/60 ring-1 ring-amber-200/60 shadow-sm'
                         : 'opacity-35'
                     }`}>
                       {/* Teller for aktivitetsmerker */}

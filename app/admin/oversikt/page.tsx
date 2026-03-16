@@ -150,7 +150,7 @@ export default function AdminOverviewPage() {
           )}
 
           {/* Kombinert statistikk + navigasjon */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Link href="/admin/hendelser">
               <Card className="p-4 flex items-center gap-4 mb-0">
                 <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">

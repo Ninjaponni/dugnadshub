@@ -134,6 +134,7 @@ function MapPageContent() {
         selectedZoneId={selectedZone?.id}
         userId={userId}
         activeArea={activeArea}
+        eventType={event?.type || null}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
         flyTarget={flyTarget}

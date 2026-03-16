@@ -7,6 +7,7 @@ import ZoneLayer from './ZoneLayer'
 import ZoneMarkers from './ZoneMarkers'
 import DropPointMarkers from './DropPointMarkers'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
+import type { EventType } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 
 interface DugnadMapProps {
@@ -15,6 +16,7 @@ interface DugnadMapProps {
   selectedZoneId?: string | null
   userId?: string | null
   activeArea?: 'NORD' | 'SOR' | null
+  eventType?: EventType | null
   initialCenter?: [number, number] | null
   initialZoom?: number | null
   flyTarget?: { lng: number; lat: number; zoom: number } | null
@@ -22,7 +24,7 @@ interface DugnadMapProps {
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, initialCenter, initialZoom, flyTarget, onFlyComplete }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, flyTarget, onFlyComplete }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [hasFlown, setHasFlown] = useState(false)
@@ -90,7 +92,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
       {mapLoaded && (
         <>
           <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
-          <DropPointMarkers activeArea={activeArea} />
+          {eventType !== 'lapper' && <DropPointMarkers activeArea={activeArea} />}
           <ZoneMarkers zones={zones} userId={userId || null} />
         </>
       )}

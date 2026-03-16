@@ -70,7 +70,7 @@ const areaLabels: Record<EventArea, string> = {
 }
 
 // Inputfelt-klasse brukt gjennomgaende
-const inputClass = 'w-full px-3 py-2 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30'
+const inputClass = 'w-full min-w-0 px-3 py-2 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30'
 
 // Hendelsesadministrasjon — opprett, rediger og slett dugnader
 export default function EventsAdminPage() {
@@ -98,7 +98,7 @@ export default function EventsAdminPage() {
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
-      supabaseRef.current.from('events').select('*').order('date', { ascending: false }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
+      supabaseRef.current.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
       supabaseRef.current.from('zone_assignments').select('*') as unknown as Promise<{ data: ZoneAssignment[] | null }>,
       supabaseRef.current.from('zone_claims').select('assignment_id') as unknown as Promise<{ data: Array<{ assignment_id: string }> | null }>,
     ])
@@ -284,7 +284,7 @@ export default function EventsAdminPage() {
             type="text"
             value={data.title}
             onChange={e => setData(prev => ({ ...prev, title: e.target.value }))}
-            placeholder="F.eks. Varinnsamling Nord"
+            placeholder="F.eks. Flaskeinnsamling Nord"
             required
             className={inputClass}
           />
@@ -331,9 +331,9 @@ export default function EventsAdminPage() {
         </div>
 
         {/* Starttid + Sluttid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-text-secondary block mb-1">Starttid (valgfritt)</label>
+        <div className="grid grid-cols-2 gap-3 overflow-hidden">
+          <div className="min-w-0">
+            <label className="text-xs font-medium text-text-secondary block mb-1">Start (valgfritt)</label>
             <input
               type="time"
               value={data.startTime}
@@ -341,8 +341,8 @@ export default function EventsAdminPage() {
               className={inputClass}
             />
           </div>
-          <div>
-            <label className="text-xs font-medium text-text-secondary block mb-1">Sluttid (valgfritt)</label>
+          <div className="min-w-0">
+            <label className="text-xs font-medium text-text-secondary block mb-1">Slutt (valgfritt)</label>
             <input
               type="time"
               value={data.endTime}

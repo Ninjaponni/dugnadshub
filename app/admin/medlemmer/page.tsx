@@ -4,11 +4,20 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft } from 'lucide-react'
+import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
-import type { Profile, Role, UserBadge } from '@/lib/supabase/types'
+import type { Profile, Role, UserBadge, ZoneClaim, DugnadEvent } from '@/lib/supabase/types'
+
+type SortMode = 'alpha' | 'badges' | 'claims' | 'least'
+
+const sortLabels: Record<SortMode, string> = {
+  alpha: 'A–Å',
+  badges: 'Flest merker',
+  claims: 'Mest aktiv',
+  least: 'Minst deltatt',
+}
 
 // Merker som kan tildeles manuelt av admin
 const manualBadges = badgeDefinitions.filter(b => b.auto_criteria === null)
@@ -24,36 +33,73 @@ const roleLabels: Record<Role, string> = {
 export default function MembersAdminPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userBadges, setUserBadges] = useState<UserBadge[]>([])
+  const [allClaims, setAllClaims] = useState<ZoneClaim[]>([])
+  const [events, setEvents] = useState<DugnadEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortMode, setSortMode] = useState<SortMode>('alpha')
+  const [filterEventId, setFilterEventId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
   const supabase = createClient()
 
   async function loadData() {
-    const [profilesRes, badgesRes] = await Promise.all([
+    const [profilesRes, badgesRes, claimsRes, eventsRes] = await Promise.all([
       supabase.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
       supabase.from('user_badges').select('*') as unknown as Promise<{ data: UserBadge[] | null }>,
+      supabase.from('zone_claims').select('*') as unknown as Promise<{ data: ZoneClaim[] | null }>,
+      supabase.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
     ])
 
     setProfiles(profilesRes.data || [])
     setUserBadges(badgesRes.data || [])
+    setAllClaims(claimsRes.data || [])
+    setEvents(eventsRes.data || [])
     setLoading(false)
   }
 
   useEffect(() => { loadData() }, [supabase])
 
-  // Filtrer profiler basert pa sok
-  const filtered = profiles.filter(p => {
-    if (!searchQuery) return true
-    const q = searchQuery.toLowerCase()
-    return (
-      (p.full_name || '').toLowerCase().includes(q) ||
-      p.email.toLowerCase().includes(q) ||
-      (p.child_name || '').toLowerCase().includes(q)
-    )
-  })
+  // Hjelpefunksjoner for sortering
+  function getClaimCount(userId: string): number {
+    return allClaims.filter(c => c.user_id === userId).length
+  }
+
+  function getBadgeCountForUser(userId: string): number {
+    return userBadges.filter(ub => ub.user_id === userId).length
+  }
+
+  // Filtrer og sorter profiler
+  const filtered = profiles
+    .filter(p => {
+      if (!searchQuery) return true
+      const q = searchQuery.toLowerCase()
+      return (
+        (p.full_name || '').toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
+        (p.child_name || '').toLowerCase().includes(q)
+      )
+    })
+    .filter(p => {
+      if (!filterEventId) return true
+      // Vis kun medlemmer som har claims i valgt hendelse
+      // TODO: trenger assignment_id → event_id mapping for full filtrering
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortMode) {
+        case 'badges':
+          return getBadgeCountForUser(b.id) - getBadgeCountForUser(a.id)
+        case 'claims':
+          return getClaimCount(b.id) - getClaimCount(a.id)
+        case 'least':
+          return getClaimCount(a.id) - getClaimCount(b.id)
+        case 'alpha':
+        default:
+          return (a.full_name || '').localeCompare(b.full_name || '', 'nb')
+      }
+    })
 
   // Endre rolle
   async function handleRoleChange(userId: string, newRole: Role) {
@@ -89,14 +135,23 @@ export default function MembersAdminPage() {
     setAwardingBadge(null)
   }
 
-  // Fjern merke
+  // Fjern ett merke (siste instans)
   async function handleRemoveBadge(userId: string, badgeId: number) {
-    const badge = userBadges.find(ub => ub.user_id === userId && ub.badge_id === badgeId)
+    const badges = userBadges.filter(ub => ub.user_id === userId && ub.badge_id === badgeId)
+    const badge = badges[badges.length - 1]
     if (!badge) return
 
     setAwardingBadge(`${userId}-${badgeId}`)
     await supabase.from('user_badges').delete().eq('id', badge.id)
     setUserBadges(prev => prev.filter(ub => ub.id !== badge.id))
+    setAwardingBadge(null)
+  }
+
+  // Fjern alle merker for en bruker
+  async function handleResetBadges(userId: string) {
+    setAwardingBadge(`${userId}-reset`)
+    await supabase.from('user_badges').delete().eq('user_id', userId)
+    setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
     setAwardingBadge(null)
   }
 
@@ -142,6 +197,26 @@ export default function MembersAdminPage() {
           </button>
         )}
       </div>
+
+      {/* Sortering */}
+      {!loading && profiles.length > 1 && (
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar">
+          <ArrowUpDown size={14} className="text-text-tertiary shrink-0" />
+          {(Object.keys(sortLabels) as SortMode[]).map(mode => (
+            <button
+              key={mode}
+              onClick={() => setSortMode(mode)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                sortMode === mode
+                  ? 'bg-accent text-white'
+                  : 'bg-black/5 text-text-secondary active:bg-black/10'
+              }`}
+            >
+              {sortLabels[mode]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Skeleton loading */}
       {loading && (
@@ -265,7 +340,7 @@ export default function MembersAdminPage() {
                           <div>
                             <label className="text-xs font-medium text-text-secondary block mb-1.5">
                               <Award size={12} className="inline mr-1" />
-                              Manuelle merker
+                              Merker
                             </label>
                             <div className="flex flex-wrap gap-2">
                               {manualBadges.map(badge => {
@@ -275,55 +350,55 @@ export default function MembersAdminPage() {
                                 const isAwarding = awardingBadge === `${profile.id}-${badge.id}`
 
                                 return (
-                                  <button
-                                    key={badge.id}
-                                    onClick={() => {
-                                      if (isActivity) {
-                                        // Aktivitetsmerker: alltid gi (legg til +1)
-                                        handleAwardBadge(profile.id, badge.id)
-                                      } else {
+                                  <div key={badge.id} className="flex items-center gap-0.5">
+                                    {/* Minus-knapp for aktivitetsmerker */}
+                                    {isActivity && count > 0 && (
+                                      <button
+                                        onClick={() => handleRemoveBadge(profile.id, badge.id)}
+                                        disabled={isAwarding}
+                                        className="w-6 h-6 rounded-full bg-danger/10 text-danger flex items-center justify-center text-xs font-bold active:bg-danger/20"
+                                      >
+                                        −
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        if (isActivity) {
+                                          handleAwardBadge(profile.id, badge.id)
+                                        } else {
+                                          hasBadge
+                                            ? handleRemoveBadge(profile.id, badge.id)
+                                            : handleAwardBadge(profile.id, badge.id)
+                                        }
+                                      }}
+                                      disabled={isAwarding}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                                         hasBadge
-                                          ? handleRemoveBadge(profile.id, badge.id)
-                                          : handleAwardBadge(profile.id, badge.id)
-                                      }
-                                    }}
-                                    disabled={isAwarding}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                      hasBadge
-                                        ? 'bg-accent/10 text-accent ring-1 ring-accent/20'
-                                        : 'bg-black/5 text-text-secondary hover:bg-black/10'
-                                    } ${isAwarding ? 'opacity-50' : ''}`}
-                                  >
-                                    <span>{badge.icon}</span>
-                                    <span>{badge.name}{isActivity && count > 0 ? ` ×${count}` : ''}</span>
-                                    {isActivity && hasBadge ? <span className="text-accent">+1</span> : null}
-                                    {!isActivity && hasBadge && <X size={12} />}
-                                  </button>
+                                          ? 'bg-accent/10 text-accent ring-1 ring-accent/20'
+                                          : 'bg-black/5 text-text-secondary hover:bg-black/10'
+                                      } ${isAwarding ? 'opacity-50' : ''}`}
+                                    >
+                                      <span>{badge.icon}</span>
+                                      <span>{badge.name}{isActivity && count > 0 ? ` ×${count}` : ''}</span>
+                                      {isActivity ? <span className="text-accent">+</span> : null}
+                                      {!isActivity && hasBadge && <X size={12} />}
+                                    </button>
+                                  </div>
                                 )
                               })}
                             </div>
-                          </div>
 
-                          {/* Alle merker brukeren har */}
-                          {userBadgeList.length > 0 && (
-                            <div>
-                              <label className="text-xs font-medium text-text-secondary block mb-1.5">
-                                Alle merker ({userBadgeList.length})
-                              </label>
-                              <div className="flex flex-wrap gap-1.5">
-                                {userBadgeList.map(badge => (
-                                  <span
-                                    key={badge.id}
-                                    title={badge.description}
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-black/5 text-xs"
-                                  >
-                                    <span>{badge.icon}</span>
-                                    <span>{badge.name}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                            {/* Nullstill alle merker */}
+                            {userBadgeList.length > 0 && (
+                              <button
+                                onClick={() => handleResetBadges(profile.id)}
+                                disabled={awardingBadge === `${profile.id}-reset`}
+                                className="mt-2 text-xs text-danger/70 active:text-danger"
+                              >
+                                {awardingBadge === `${profile.id}-reset` ? 'Fjerner...' : 'Nullstill alle merker'}
+                              </button>
+                            )}
+                          </div>
 
                           {/* Detaljer */}
                           <div className="text-xs text-text-tertiary space-y-0.5">
