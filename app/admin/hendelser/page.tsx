@@ -64,7 +64,7 @@ const typeLabels: Record<EventType, string> = {
 
 const areaLabels: Record<EventArea, string> = {
   nord: 'Nord',
-  sor: 'Sor',
+  sor: 'Sør',
   begge: 'Begge',
 }
 
@@ -96,23 +96,32 @@ export default function EventsAdminPage() {
 
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
-    const [eventsRes, assignmentsRes] = await Promise.all([
+    const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
       supabaseRef.current.from('events').select('*').order('date', { ascending: false }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
       supabaseRef.current.from('zone_assignments').select('*') as unknown as Promise<{ data: ZoneAssignment[] | null }>,
+      supabaseRef.current.from('zone_claims').select('assignment_id') as unknown as Promise<{ data: Array<{ assignment_id: string }> | null }>,
     ])
 
     const allEvents = eventsRes.data || []
     const allAssignments = assignmentsRes.data || []
+    const allClaims = claimsRes.data || []
 
     const eventsWithZones: EventWithZones[] = allEvents.map(event => {
       const eventAssignments = allAssignments.filter(a => a.event_id === event.id)
+      // Tell basert på claims, ikke assignment-status
+      const zonesWithClaims = eventAssignments.filter(a =>
+        allClaims.some(c => c.assignment_id === a.id)
+      )
+      const completed = eventAssignments.filter(a => a.status === 'completed' || a.status === 'picked_up')
+      const available = eventAssignments.length - zonesWithClaims.length
+
       return {
         ...event,
         zoneStats: {
           total: eventAssignments.length,
-          available: eventAssignments.filter(a => a.status === 'available').length,
-          claimed: eventAssignments.filter(a => a.status === 'claimed' || a.status === 'in_progress').length,
-          completed: eventAssignments.filter(a => a.status === 'completed' || a.status === 'picked_up').length,
+          available,
+          claimed: zonesWithClaims.length - completed.length,
+          completed: completed.length,
         },
       }
     })
@@ -278,7 +287,7 @@ export default function EventsAdminPage() {
           />
         </div>
 
-        {/* Type + Omrade */}
+        {/* Type + Område */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-medium text-text-secondary block mb-1">Type</label>
@@ -293,7 +302,7 @@ export default function EventsAdminPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-text-secondary block mb-1">Omrade</label>
+            <label className="text-xs font-medium text-text-secondary block mb-1">Område</label>
             <select
               value={data.area}
               onChange={e => setData(prev => ({ ...prev, area: e.target.value as EventArea }))}
