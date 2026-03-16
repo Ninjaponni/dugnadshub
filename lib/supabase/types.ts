@@ -37,12 +37,16 @@ export interface DropPoint {
   lng: number
 }
 
+export type EventArea = 'nord' | 'sor' | 'begge'
+
 export interface DugnadEvent {
   id: string
   title: string
   type: EventType
   date: string
   start_time: string | null
+  end_time: string | null
+  area: EventArea
   status: EventStatus
   description: string | null
   created_by: string

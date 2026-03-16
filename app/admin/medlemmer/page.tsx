@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Users, Search, Award, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import type { Profile, Role, UserBadge } from '@/lib/supabase/types'
@@ -102,8 +103,11 @@ export default function MembersAdminPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Medlemmer</h2>
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center">
+          <ArrowLeft size={18} className="text-text-secondary" />
+        </Link>
+        <h2 className="text-xl font-semibold flex-1">Medlemmer</h2>
         <span className="text-sm text-text-secondary">
           {loading ? '...' : `${profiles.length} totalt`}
         </span>

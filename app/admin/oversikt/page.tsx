@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Users, Calendar, ChevronRight, Zap, Map } from 'lucide-react'
+import { Users, Calendar, ChevronRight, Zap, Map, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { DugnadEvent } from '@/lib/supabase/types'
 
@@ -27,7 +27,7 @@ export default function AdminOverviewPage() {
       const [profilesRes, eventsRes, assignmentsRes, claimsRes] = await Promise.all([
         sb.from('profiles').select('id', { count: 'exact', head: true }),
         sb.from('events').select('*').in('status', ['upcoming', 'active']).order('date') as unknown as Promise<{ data: DugnadEvent[] | null }>,
-        sb.from('zone_assignments').select('id, event_id, zone_id') as unknown as Promise<{ data: Array<{ id: string; event_id: string; zone_id: string }> | null }>,
+        sb.from('zone_assignments').select('id, event_id') as unknown as Promise<{ data: Array<{ id: string; event_id: string }> | null }>,
         sb.from('zone_claims').select('assignment_id') as unknown as Promise<{ data: Array<{ assignment_id: string }> | null }>,
       ])
 
@@ -73,6 +73,14 @@ export default function AdminOverviewPage() {
 
   return (
     <div>
+      {/* Header med tilbake til hjem */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/hjem" className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center">
+          <ArrowLeft size={18} className="text-text-secondary" />
+        </Link>
+        <h1 className="text-[28px] font-bold">Administrasjon</h1>
+      </div>
+
       {/* Skeleton */}
       {loading && (
         <div className="space-y-4 animate-pulse">
@@ -81,10 +89,8 @@ export default function AdminOverviewPage() {
             <div className="h-4 w-36 bg-black/5 rounded" />
             <div className="h-10 bg-black/5 rounded-xl" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="card p-4 h-20" />
-            <div className="card p-4 h-20" />
-          </div>
+          <div className="card p-4 h-16" />
+          <div className="card p-4 h-16" />
         </div>
       )}
 
@@ -113,7 +119,6 @@ export default function AdminOverviewPage() {
                 </span>
               </div>
 
-              {/* Progresjon */}
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
                   <span>{nextEvent.claimedZones}/{nextEvent.totalZones} soner tatt</span>
@@ -127,14 +132,9 @@ export default function AdminOverviewPage() {
                 </div>
               </div>
 
-              {/* Hurtighandling */}
               {nextEvent.status === 'upcoming' && (
-                <Button
-                  size="sm"
-                  className="w-full"
-                  loading={activating === nextEvent.id}
-                  onClick={() => handleActivate(nextEvent.id)}
-                >
+                <Button size="sm" className="w-full" loading={activating === nextEvent.id}
+                  onClick={() => handleActivate(nextEvent.id)}>
                   <Zap size={14} />
                   Aktiver hendelse
                 </Button>
@@ -142,51 +142,42 @@ export default function AdminOverviewPage() {
               {nextEvent.status === 'active' && (
                 <Link href="/kart">
                   <Button size="sm" variant="secondary" className="w-full">
-                    <Map size={14} />
-                    Se kart
+                    <Map size={14} /> Se kart
                   </Button>
                 </Link>
               )}
             </Card>
           )}
 
-          {/* Statistikk */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <Card animate={false} className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Users size={16} className="text-text-secondary" />
-                <span className="text-xs text-text-secondary">Medlemmer</span>
-              </div>
-              <p className="text-2xl font-bold font-mono">{memberCount}</p>
-            </Card>
-            <Card animate={false} className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar size={16} className="text-text-secondary" />
-                <span className="text-xs text-text-secondary">Hendelser</span>
-              </div>
-              <p className="text-2xl font-bold font-mono">{events.length}</p>
-            </Card>
-          </div>
+          {/* Kombinert statistikk + navigasjon */}
+          <div className="space-y-2">
+            <Link href="/admin/hendelser">
+              <Card className="p-4 flex items-center gap-4 mb-0">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Calendar size={20} className="text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Hendelser</p>
+                  <p className="text-sm text-text-secondary">Opprett og administrer</p>
+                </div>
+                <span className="text-lg font-bold font-mono text-text-secondary mr-1">{events.length}</span>
+                <ChevronRight size={16} className="text-text-tertiary shrink-0" />
+              </Card>
+            </Link>
 
-          {/* Navigasjon */}
-          <div className="space-y-3">
-            {[
-              { href: '/admin/hendelser', icon: Calendar, label: 'Hendelser', desc: 'Opprett og administrer dugnader' },
-              { href: '/admin/medlemmer', icon: Users, label: 'Medlemmer', desc: 'Roller, merker og oversikt' },
-            ].map(({ href, icon: Icon, label, desc }) => (
-              <Link key={href} href={href}>
-                <Card className="p-4 flex items-center gap-4 mb-0">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                    <Icon size={20} className="text-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">{label}</p>
-                    <p className="text-sm text-text-secondary">{desc}</p>
-                  </div>
-                  <ChevronRight size={16} className="text-text-tertiary shrink-0" />
-                </Card>
-              </Link>
-            ))}
+            <Link href="/admin/medlemmer">
+              <Card className="p-4 flex items-center gap-4 mb-0">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Users size={20} className="text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Medlemmer</p>
+                  <p className="text-sm text-text-secondary">Roller, merker og oversikt</p>
+                </div>
+                <span className="text-lg font-bold font-mono text-text-secondary mr-1">{memberCount}</span>
+                <ChevronRight size={16} className="text-text-tertiary shrink-0" />
+              </Card>
+            </Link>
           </div>
         </>
       )}
