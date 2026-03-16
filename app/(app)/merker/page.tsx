@@ -7,20 +7,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import { Check, Lock, X } from 'lucide-react'
 
-const categoryLabels = {
+const categoryLabels: Record<string, string> = {
   starter: 'Startermerker',
   vanlig: 'Vanlige merker',
   veteran: 'Veteranmerker',
   elite: 'Elitemerker',
   rolle: 'Rollemerker',
+  aktivitet: 'Aktivitetsmerker',
 }
 
-const categoryDescriptions = {
+const categoryDescriptions: Record<string, string> = {
   starter: 'Kom i gang med din første dugnad',
   vanlig: 'For den faste dugnadsgåer',
   veteran: 'For de mest erfarne',
   elite: 'De aller gjeveste',
   rolle: 'Spesialroller i dugnaden',
+  aktivitet: 'For alt det andre du gjør',
 }
 
 // Konfetti-partikkel
@@ -142,7 +144,7 @@ export default function BadgesPage() {
       )}
 
       {/* Kategorier */}
-      {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'rolle'] as const).map((category) => {
+      {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'rolle', 'aktivitet'] as const).map((category) => {
         const badges = badgeDefinitions.filter((b) => b.category === category)
         const earnedInCategory = badges.filter(b => earnedBadgeIds.has(b.id)).length
 
@@ -175,7 +177,7 @@ export default function BadgesPage() {
                     <Card animate={false} className={`p-3 text-center relative transition-all ${
                       earned
                         ? 'ring-2 ring-accent/30 bg-accent/[0.04]'
-                        : 'opacity-50'
+                        : 'opacity-35'
                     }`}>
                       {/* Hake for opptjente */}
                       {earned && (
