@@ -27,19 +27,15 @@ export default function PushPrompt() {
     setSubscribing(true)
     try {
       const registration = await navigator.serviceWorker.ready
-      console.log('[Push] SW ready:', registration.scope)
       const subscription = await subscribeToPush(registration)
-      console.log('[Push] Subscription:', subscription ? 'OK' : 'FAILED')
       if (subscription) {
         const { data: { session } } = await supabaseRef.current.auth.getSession()
-        console.log('[Push] Session:', session ? 'OK' : 'MISSING')
         if (session) {
-          const ok = await saveSubscription(subscription, session.access_token)
-          console.log('[Push] Saved:', ok)
+          await saveSubscription(subscription, session.access_token)
         }
       }
-    } catch (err) {
-      console.error('[Push] Error:', err)
+    } catch {
+      // Push-registrering feilet stille
     }
     setShow(false)
     setSubscribing(false)
