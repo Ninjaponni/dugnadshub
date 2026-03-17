@@ -42,6 +42,10 @@ export async function saveSubscription(subscription: PushSubscription, accessTok
       keys_auth: keys.auth,
     }),
   })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    console.error('[Push] Subscribe failed:', res.status, err)
+  }
   return res.ok
 }
 

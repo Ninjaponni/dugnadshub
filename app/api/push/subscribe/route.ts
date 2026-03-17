@@ -9,43 +9,56 @@ function getSupabase() {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error: authError } = await getSupabase().auth.getUser(token)
-  if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await getSupabase().auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Auth failed', detail: authError?.message }, { status: 401 })
+    }
 
-  const { endpoint, keys_p256dh, keys_auth } = await request.json()
-  if (!endpoint || !keys_p256dh || !keys_auth) {
-    return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+    const body = await request.json()
+    const { endpoint, keys_p256dh, keys_auth } = body
+    if (!endpoint || !keys_p256dh || !keys_auth) {
+      return NextResponse.json({ error: 'Missing fields', received: Object.keys(body) }, { status: 400 })
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (getSupabase().from('push_subscriptions') as any).upsert({
+      user_id: user.id,
+      endpoint,
+      keys_p256dh,
+      keys_auth,
+    }, { onConflict: 'user_id,endpoint' })
+
+    if (error) {
+      return NextResponse.json({ error: 'DB error', detail: error.message, code: error.code }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    return NextResponse.json({ error: 'Unexpected error', detail: String(err) }, { status: 500 })
   }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (getSupabase().from('push_subscriptions') as any).upsert({
-    user_id: user.id,
-    endpoint,
-    keys_p256dh,
-    keys_auth,
-  }, { onConflict: 'user_id,endpoint' })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error: authError } = await getSupabase().auth.getUser(token)
-  if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await getSupabase().auth.getUser(token)
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { endpoint } = await request.json()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (getSupabase().from('push_subscriptions') as any).delete()
-    .eq('user_id', user.id)
-    .eq('endpoint', endpoint)
+    const { endpoint } = await request.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (getSupabase().from('push_subscriptions') as any).delete()
+      .eq('user_id', user.id)
+      .eq('endpoint', endpoint)
 
-  return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    return NextResponse.json({ error: 'Unexpected error', detail: String(err) }, { status: 500 })
+  }
 }
