@@ -11,6 +11,7 @@ import type { DugnadEvent } from '@/lib/supabase/types'
 
 interface DriverZone {
   assignmentId: string
+  eventId: string
   zoneId: string
   zoneName: string
   area: string
@@ -99,6 +100,7 @@ export default function DriverPage() {
 
       return {
         assignmentId: a.id,
+        eventId: a.event_id,
         zoneId: a.zone_id,
         zoneName: zone?.name || a.zone_id,
         area: zone?.area || '',
@@ -207,7 +209,7 @@ export default function DriverPage() {
                         {zone.households > 0 && ` · ${zone.households} hus`}
                       </p>
                     </div>
-                    <Link href={`/kart?sone=${zone.zoneId}`}>
+                    <Link href={`/kart?event=${zone.eventId}&sone=${zone.zoneId}`}>
                       <span className="text-xs text-accent font-medium flex items-center gap-1">
                         <MapPin size={12} /> Kart
                       </span>
