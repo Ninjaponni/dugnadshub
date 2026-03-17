@@ -276,7 +276,7 @@ export default function EventsAdminPage() {
             body: JSON.stringify({
               title: 'Dugnad er i gang!',
               body: `${event.title} er nå aktiv — ta en sone!`,
-              url: '/kart',
+              url: `/kart?event=${eventId}`,
               filter: { all: true },
             }),
           }).catch(() => {})
@@ -336,7 +336,7 @@ export default function EventsAdminPage() {
       body: JSON.stringify({
         title: `${event.title} trenger hjelp!`,
         body: `${available} soner mangler folk — kan du ta en?`,
-        url: '/kart',
+        url: `/kart?event=${event.id}`,
         filter: { all: true },
       }),
     }).catch(() => {})
