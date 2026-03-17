@@ -184,10 +184,10 @@ export default function BadgesPage() {
                     onClick={() => setSelectedBadge(badge)}
                     className="text-left"
                   >
-                    <Card animate={false} className={`p-3 text-center relative transition-all ${
+                    <div className={`rounded-2xl p-3 text-center relative transition-all ${
                       earned
-                        ? 'bg-gradient-to-b from-amber-50 to-amber-100/60 ring-1 ring-amber-200/60 shadow-sm'
-                        : 'opacity-35'
+                        ? 'bg-gradient-to-b from-amber-50 to-amber-100 ring-1 ring-amber-300/50 shadow-md'
+                        : 'card opacity-35'
                     }`}>
                       {/* Teller for aktivitetsmerker */}
                       {earned && isActivity && count > 1 && (
@@ -211,7 +211,7 @@ export default function BadgesPage() {
                       )}
                       <div className="text-2xl mb-1">{badge.icon}</div>
                       <p className="text-xs font-medium leading-tight">{badge.name}</p>
-                    </Card>
+                    </div>
                   </motion.button>
                 )
               })}
