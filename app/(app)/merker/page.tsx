@@ -184,33 +184,37 @@ export default function BadgesPage() {
                     onClick={() => setSelectedBadge(badge)}
                     className="text-left"
                   >
-                    <div className={`rounded-2xl p-3 text-center relative transition-all ${
-                      earned
-                        ? 'bg-gradient-to-b from-amber-50 to-amber-100 ring-1 ring-amber-300/50 shadow-md'
-                        : 'card opacity-35'
-                    }`}>
-                      {/* Teller for aktivitetsmerker */}
-                      {earned && isActivity && count > 1 && (
-                        <div className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-accent flex items-center justify-center shadow-sm">
-                          <span className="text-[10px] font-bold text-white">×{count}</span>
-                        </div>
-                      )}
-                      {/* Hake for vanlige opptjente (ikke aktivitet med teller) */}
-                      {earned && (!isActivity || count <= 1) && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center shadow-sm">
-                          <Check size={12} className="text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                      {/* Ny-indikator */}
-                      {isNew && (
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: 3, duration: 0.6 }}
-                          className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-danger"
-                        />
-                      )}
-                      <img src={badge.icon} alt={badge.name} className={`w-10 h-10 mx-auto mb-1 ${earned ? '' : 'grayscale'}`} />
-                      <p className="text-xs font-medium leading-tight">{badge.name}</p>
+                    <div className="text-center relative">
+                      {/* Ikon-boks med rounded corners, outline og skygge */}
+                      <div className={`aspect-square rounded-[20px] flex items-center justify-center p-4 transition-all ${
+                        earned
+                          ? 'bg-gradient-to-b from-amber-50 to-amber-100 ring-1 ring-amber-300/50 shadow-md'
+                          : 'bg-white ring-1 ring-black/8 shadow-sm'
+                      }`}>
+                        {/* Teller for aktivitetsmerker */}
+                        {earned && isActivity && count > 1 && (
+                          <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
+                            <span className="text-[10px] font-bold text-white">×{count}</span>
+                          </div>
+                        )}
+                        {/* Hake for vanlige opptjente */}
+                        {earned && (!isActivity || count <= 1) && (
+                          <div className="absolute -top-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
+                            <Check size={12} className="text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                        {/* Ny-indikator */}
+                        {isNew && (
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ repeat: 3, duration: 0.6 }}
+                            className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-danger z-10"
+                          />
+                        )}
+                        <img src={badge.icon} alt={badge.name} className={`w-14 h-14 ${earned ? '' : 'grayscale opacity-40'}`} />
+                      </div>
+                      {/* Navn under boksen */}
+                      <p className={`text-xs font-medium leading-tight mt-2 ${earned ? 'text-text-primary' : 'text-text-tertiary'}`}>{badge.name}</p>
                     </div>
                   </motion.button>
                 )
