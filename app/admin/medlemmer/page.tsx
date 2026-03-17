@@ -288,9 +288,11 @@ export default function MembersAdminPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       {/* Merke-ikoner */}
                       {userBadgeList.length > 0 && (
-                        <span className="text-sm" title={userBadgeList.map(b => b.name).join(', ')}>
-                          {userBadgeList.slice(0, 3).map(b => b.icon).join('')}
-                          {userBadgeList.length > 3 && `+${userBadgeList.length - 3}`}
+                        <span className="flex items-center gap-0.5" title={userBadgeList.map(b => b.name).join(', ')}>
+                          {userBadgeList.slice(0, 3).map(b => (
+                            <img key={b.id} src={b.icon} alt={b.name} className="w-5 h-5" />
+                          ))}
+                          {userBadgeList.length > 3 && <span className="text-xs text-text-secondary">+{userBadgeList.length - 3}</span>}
                         </span>
                       )}
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -378,7 +380,7 @@ export default function MembersAdminPage() {
                                           : 'bg-black/5 text-text-secondary hover:bg-black/10'
                                       } ${isAwarding ? 'opacity-50' : ''}`}
                                     >
-                                      <span>{badge.icon}</span>
+                                      <img src={badge.icon} alt={badge.name} className="w-4 h-4" />
                                       <span>{badge.name}{isActivity && count > 0 ? ` ×${count}` : ''}</span>
                                       {isActivity ? <span className="text-accent">+</span> : null}
                                       {!isActivity && hasBadge && <X size={12} />}

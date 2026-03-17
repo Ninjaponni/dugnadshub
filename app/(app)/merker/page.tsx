@@ -209,7 +209,7 @@ export default function BadgesPage() {
                           className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-danger"
                         />
                       )}
-                      <div className="text-2xl mb-1">{badge.icon}</div>
+                      <img src={badge.icon} alt={badge.name} className={`w-10 h-10 mx-auto mb-1 ${earned ? '' : 'grayscale'}`} />
                       <p className="text-xs font-medium leading-tight">{badge.name}</p>
                     </div>
                   </motion.button>
@@ -257,7 +257,7 @@ export default function BadgesPage() {
               </button>
 
               <div className="text-center relative">
-                <div className="text-5xl mb-3">{selectedBadge.icon}</div>
+                <img src={selectedBadge.icon} alt={selectedBadge.name} className="w-16 h-16 mx-auto mb-3" />
                 <h3 className="text-xl font-bold mb-1">{selectedBadge.name}</h3>
 
                 {earnedBadgeIds.has(selectedBadge.id) ? (
@@ -328,8 +328,8 @@ export default function BadgesPage() {
                   className="relative inline-block"
                 >
                   <div className="absolute inset-0 bg-accent/20 rounded-full blur-xl scale-150" />
-                  <div className="relative text-7xl py-4">
-                    {revealBadge.icon}
+                  <div className="relative py-4">
+                    <img src={revealBadge.icon} alt={revealBadge.name} className="w-20 h-20 mx-auto" />
                   </div>
                 </motion.div>
 
