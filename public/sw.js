@@ -22,16 +22,19 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  const url = event.notification.data?.url || '/'
+  const path = event.notification.data?.url || '/'
+  const fullUrl = new URL(path, self.location.origin).href
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Fokuser eksisterende vindu og naviger
       for (const client of windowClients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(url)
-          return client.focus()
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          return client.focus().then(() => client.navigate(fullUrl))
         }
       }
-      return clients.openWindow(url)
+      // Ellers åpne nytt vindu
+      return clients.openWindow(fullUrl)
     })
   )
 })
