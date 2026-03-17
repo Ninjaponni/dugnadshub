@@ -236,21 +236,32 @@ export default function BadgesPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="fixed left-6 right-6 top-1/3 z-50 bg-card rounded-2xl p-6 shadow-xl max-w-sm mx-auto"
+              className={`fixed left-6 right-6 top-1/3 z-50 rounded-2xl p-6 shadow-xl max-w-sm mx-auto overflow-hidden ${
+                earnedBadgeIds.has(selectedBadge.id)
+                  ? 'bg-gradient-to-b from-amber-50 to-amber-100'
+                  : 'bg-card'
+              }`}
             >
+              {/* Levende shine-effekt for opptjente merker */}
+              {earnedBadgeIds.has(selectedBadge.id) && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <div className="badge-shine" />
+                </div>
+              )}
+
               <button
                 onClick={() => setSelectedBadge(null)}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/5 flex items-center justify-center"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/5 flex items-center justify-center z-10"
               >
                 <X size={14} className="text-text-secondary" />
               </button>
 
-              <div className="text-center">
+              <div className="text-center relative">
                 <div className="text-5xl mb-3">{selectedBadge.icon}</div>
                 <h3 className="text-xl font-bold mb-1">{selectedBadge.name}</h3>
 
                 {earnedBadgeIds.has(selectedBadge.id) ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium mb-3">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-200/50 text-amber-700 text-sm font-medium mb-3">
                     <Check size={14} strokeWidth={3} />
                     {(badgeCounts.get(selectedBadge.id) || 0) > 1
                       ? `Opptjent ×${badgeCounts.get(selectedBadge.id)}`
