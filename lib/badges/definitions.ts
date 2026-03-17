@@ -23,9 +23,9 @@ export const badgeDefinitions = [
   { id: 12, name: 'Maskin', icon: '/badges/maskin.png', category: 'elite' as const, description: '20+ dugnader totalt', auto_criteria: 'events_20' },
   { id: 13, name: 'Legende', icon: '/badges/legende.png', category: 'elite' as const, description: 'Spesiell anerkjennelse', auto_criteria: null },
 
-  // Rollemerker
-  { id: 14, name: 'Sjåføren', icon: '/badges/sjaforen.png', category: 'rolle' as const, description: '10 hentinger som sjåfør', auto_criteria: 'driver_pickups_10' },
-  { id: 15, name: 'Stripsern', icon: '/badges/stripsern.png', category: 'rolle' as const, description: '5 ganger som stripser', auto_criteria: 'strapper_5' },
+  // Rollemerker (tildeles manuelt, kan gis flere ganger)
+  { id: 14, name: 'Sjåføren', icon: '/badges/sjaforen.png', category: 'aktivitet' as const, description: 'Kjørte henting som sjåfør', auto_criteria: null },
+  { id: 15, name: 'Stripsern', icon: '/badges/stripsern.png', category: 'aktivitet' as const, description: 'Stripset som stripser', auto_criteria: null },
 
   // Aktivitetsmerker (kan gis flere ganger — vises som ×N)
   { id: 17, name: 'Kakeboss', icon: '/badges/kakeboss.png', category: 'aktivitet' as const, description: 'Bakte kake til dugnad', auto_criteria: null },

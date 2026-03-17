@@ -12,7 +12,6 @@ const categoryLabels: Record<string, string> = {
   vanlig: 'Vanlige merker',
   veteran: 'Veteranmerker',
   elite: 'Elitemerker',
-  rolle: 'Rollemerker',
   aktivitet: 'Aktivitetsmerker',
 }
 
@@ -21,7 +20,6 @@ const categoryDescriptions: Record<string, string> = {
   vanlig: 'For den faste dugnadsgåer',
   veteran: 'For de mest erfarne',
   elite: 'De aller gjeveste',
-  rolle: 'Spesialroller i dugnaden',
   aktivitet: 'For alt det andre du gjør',
 }
 
@@ -152,7 +150,7 @@ export default function BadgesPage() {
       )}
 
       {/* Kategorier */}
-      {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'rolle', 'aktivitet'] as const).map((category) => {
+      {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet'] as const).map((category) => {
         const badges = badgeDefinitions.filter((b) => b.category === category)
         const earnedInCategory = badges.filter(b => earnedBadgeIds.has(b.id)).length
 
