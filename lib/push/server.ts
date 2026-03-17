@@ -1,4 +1,4 @@
-import { webpush } from './vapid'
+import { webpush, ensureVapid } from './vapid'
 import { createClient } from '@supabase/supabase-js'
 
 // Server-side push sending med filtrering
@@ -64,6 +64,7 @@ async function getSubscriptions(filter: SendFilter) {
 
 // Send push til filtrerte mottakere
 export async function sendPush(payload: PushPayload, filter: SendFilter): Promise<{ sent: number; failed: number }> {
+  ensureVapid()
   const subscriptions = await getSubscriptions(filter)
 
   let sent = 0

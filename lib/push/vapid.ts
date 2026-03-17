@@ -1,14 +1,18 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const webpush = require('web-push')
 
-// VAPID-konfig for Web Push
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+// Lazy VAPID-init — kjores kun ved forste kall, ikke ved modul-import
+let vapidInitialized = false
 
-webpush.setVapidDetails(
-  'mailto:tormartin@superponni.no',
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-)
+function ensureVapid() {
+  if (vapidInitialized) return
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  if (!publicKey || !privateKey) {
+    throw new Error('VAPID keys not configured')
+  }
+  webpush.setVapidDetails('mailto:tormartin@superponni.no', publicKey, privateKey)
+  vapidInitialized = true
+}
 
-export { webpush, VAPID_PUBLIC_KEY }
+export { webpush, ensureVapid }
