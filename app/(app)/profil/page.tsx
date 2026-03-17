@@ -200,10 +200,15 @@ export default function ProfilePage() {
             </Link>
           )}
 
+          {/* Versjon */}
+          <p className="text-center text-[11px] text-text-tertiary mt-8">
+            Tillerbyen Skolekorps Dugnadshub v 1.0
+          </p>
+
           {/* Logg ut */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 text-danger py-3 mt-4"
+            className="w-full flex items-center justify-center gap-2 text-danger py-3 mt-1"
           >
             <LogOut size={18} />
             <span>Logg ut</span>
