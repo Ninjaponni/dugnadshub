@@ -150,9 +150,9 @@ export default function AdminOverviewPage() {
           )}
 
           {/* Kombinert statistikk + navigasjon */}
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             <Link href="/admin/hendelser">
-              <Card className="p-4 flex items-center gap-4 mb-0">
+              <Card className="p-4 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                   <Calendar size={20} className="text-accent" />
                 </div>
@@ -166,7 +166,7 @@ export default function AdminOverviewPage() {
             </Link>
 
             <Link href="/admin/medlemmer">
-              <Card className="p-4 flex items-center gap-4 mb-0">
+              <Card className="p-4 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                   <Users size={20} className="text-accent" />
                 </div>

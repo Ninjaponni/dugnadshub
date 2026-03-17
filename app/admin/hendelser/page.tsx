@@ -70,7 +70,9 @@ const areaLabels: Record<EventArea, string> = {
 }
 
 // Inputfelt-klasse brukt gjennomgaende
-const inputClass = 'w-full min-w-0 px-3 py-2 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30'
+const inputClass = 'w-full min-w-0 px-3 py-2 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
+// Dato/tid-felt trenger ekstra styling for iOS Safari
+const dateTimeClass = `${inputClass} appearance-none max-w-full`
 
 // Hendelsesadministrasjon — opprett, rediger og slett dugnader
 export default function EventsAdminPage() {
@@ -326,28 +328,28 @@ export default function EventsAdminPage() {
             value={data.date}
             onChange={e => setData(prev => ({ ...prev, date: e.target.value }))}
             required
-            className={inputClass}
+            className={dateTimeClass}
           />
         </div>
 
         {/* Starttid + Sluttid */}
-        <div className="grid grid-cols-2 gap-3 overflow-hidden">
-          <div className="min-w-0">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0 overflow-hidden">
             <label className="text-xs font-medium text-text-secondary block mb-1">Start (valgfritt)</label>
             <input
               type="time"
               value={data.startTime}
               onChange={e => setData(prev => ({ ...prev, startTime: e.target.value }))}
-              className={inputClass}
+              className={dateTimeClass}
             />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 overflow-hidden">
             <label className="text-xs font-medium text-text-secondary block mb-1">Slutt (valgfritt)</label>
             <input
               type="time"
               value={data.endTime}
               onChange={e => setData(prev => ({ ...prev, endTime: e.target.value }))}
-              className={inputClass}
+              className={dateTimeClass}
             />
           </div>
         </div>
