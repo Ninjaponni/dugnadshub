@@ -1,11 +1,13 @@
 import { webpush, ensureVapid } from './vapid'
 import { createClient } from '@supabase/supabase-js'
 
-// Server-side push sending med filtrering
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy Supabase-init — env vars er ikke tilgjengelige ved build-time
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 interface PushPayload {
   title: string
@@ -24,7 +26,7 @@ interface SendFilter {
 async function getSubscriptions(filter: SendFilter) {
   // Spesifikke brukere (f.eks. badge-tildeling)
   if (filter.userIds && filter.userIds.length > 0) {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('push_subscriptions')
       .select('endpoint, keys_p256dh, keys_auth')
       .in('user_id', filter.userIds)
@@ -33,7 +35,7 @@ async function getSubscriptions(filter: SendFilter) {
 
   // Alle — hent alle subscriptions direkte
   if (filter.all && !filter.roles?.length && !filter.childGroups?.length) {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('push_subscriptions')
       .select('endpoint, keys_p256dh, keys_auth')
     return data || []
@@ -41,7 +43,7 @@ async function getSubscriptions(filter: SendFilter) {
 
   // Filtrer pa rolle og/eller barnegruppe
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let profileQuery: any = supabase.from('profiles').select('id')
+  let profileQuery: any = getSupabase().from('profiles').select('id')
 
   if (filter.roles && filter.roles.length > 0) {
     profileQuery = profileQuery.in('role', filter.roles)
@@ -54,7 +56,7 @@ async function getSubscriptions(filter: SendFilter) {
   if (!profiles || profiles.length === 0) return []
 
   const userIds = profiles.map((p: { id: string }) => p.id)
-  const { data } = await supabase
+  const { data } = await getSupabase()
     .from('push_subscriptions')
     .select('endpoint, keys_p256dh, keys_auth')
     .in('user_id', userIds)
@@ -88,7 +90,7 @@ export async function sendPush(payload: PushPayload, filter: SendFilter): Promis
       // Fjern ugyldige subscriptions (410 Gone = bruker har unsubscribet)
       const statusCode = (err as { statusCode?: number })?.statusCode
       if (statusCode === 410 || statusCode === 404) {
-        await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+        await getSupabase().from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
       }
     }
   }

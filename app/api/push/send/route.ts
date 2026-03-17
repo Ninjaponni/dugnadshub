@@ -3,12 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 import { sendPush } from '@/lib/push/server'
 
 // Send push-varsel — kun tilgjengelig for admin
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase()
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
