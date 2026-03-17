@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import { Users, Calendar, ChevronRight, Zap, Map, ArrowLeft, Bell } from 'lucide-react'
 import Link from 'next/link'
 import type { DugnadEvent } from '@/lib/supabase/types'
+import { formatDate, daysUntilLabel } from '@/lib/utils/date'
 
 interface EventSummary extends DugnadEvent {
   totalZones: number
@@ -58,18 +59,8 @@ export default function AdminOverviewPage() {
     setActivating(null)
   }
 
-  function daysUntil(dateStr: string): number {
-    return Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  }
-
-  function formatDate(dateStr: string, time: string | null): string {
-    const d = new Date(dateStr)
-    const formatted = d.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' })
-    if (time) return `${formatted} kl. ${time.slice(0, 5)}`
-    return formatted
-  }
-
-  const nextEvent = events[0] || null
+  const activeEvents = events.filter(e => e.status === 'active')
+  const upcomingEvents = events.filter(e => e.status === 'upcoming')
 
   return (
     <div>
@@ -96,58 +87,83 @@ export default function AdminOverviewPage() {
 
       {!loading && (
         <>
-          {/* Neste hendelse — hero */}
-          {nextEvent && (
-            <Card className="p-5 mb-5 bg-gradient-to-br from-accent/5 to-accent/10">
+          {/* Aktive hendelser */}
+          {activeEvents.map((event) => (
+            <Card key={event.id} className="p-5 mb-5 bg-gradient-to-br from-accent/5 to-accent/10">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <p className="text-xs font-medium text-accent uppercase tracking-wide">
-                    {nextEvent.status === 'active' ? 'Aktiv nå' : 'Neste hendelse'}
+                    Aktiv nå
                   </p>
-                  <p className="text-lg font-semibold mt-0.5">{nextEvent.title}</p>
+                  <p className="text-lg font-semibold mt-0.5">{event.title}</p>
                   <p className="text-sm text-text-secondary">
-                    {formatDate(nextEvent.date, nextEvent.start_time)}
+                    {formatDate(event.date, event.start_time)}
                   </p>
                 </div>
                 <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full shrink-0">
-                  {(() => {
-                    const d = daysUntil(nextEvent.date)
-                    if (d <= 0) return 'I dag!'
-                    if (d === 1) return 'I morgen'
-                    return `om ${d} dager`
-                  })()}
+                  {daysUntilLabel(event.date)}
                 </span>
               </div>
 
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
-                  <span>{nextEvent.claimedZones}/{nextEvent.totalZones} soner tatt</span>
-                  <span>{nextEvent.totalZones > 0 ? Math.round((nextEvent.claimedZones / nextEvent.totalZones) * 100) : 0}%</span>
+                  <span>{event.claimedZones}/{event.totalZones} soner tatt</span>
+                  <span>{event.totalZones > 0 ? Math.round((event.claimedZones / event.totalZones) * 100) : 0}%</span>
                 </div>
                 <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-accent rounded-full transition-all"
-                    style={{ width: `${nextEvent.totalZones > 0 ? (nextEvent.claimedZones / nextEvent.totalZones) * 100 : 0}%` }}
+                    style={{ width: `${event.totalZones > 0 ? (event.claimedZones / event.totalZones) * 100 : 0}%` }}
                   />
                 </div>
               </div>
 
-              {nextEvent.status === 'upcoming' && (
-                <Button size="sm" className="w-full" loading={activating === nextEvent.id}
-                  onClick={() => handleActivate(nextEvent.id)}>
-                  <Zap size={14} />
-                  Aktiver hendelse
+              <Link href={`/kart?event=${event.id}`}>
+                <Button size="sm" variant="secondary" className="w-full">
+                  <Map size={14} /> Se kart
                 </Button>
-              )}
-              {nextEvent.status === 'active' && (
-                <Link href="/kart">
-                  <Button size="sm" variant="secondary" className="w-full">
-                    <Map size={14} /> Se kart
-                  </Button>
-                </Link>
-              )}
+              </Link>
             </Card>
-          )}
+          ))}
+
+          {/* Kommende hendelser */}
+          {upcomingEvents.map((event) => (
+            <Card key={event.id} className="p-5 mb-5 bg-gradient-to-br from-accent/5 to-accent/10">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="text-xs font-medium text-accent uppercase tracking-wide">
+                    Neste hendelse
+                  </p>
+                  <p className="text-lg font-semibold mt-0.5">{event.title}</p>
+                  <p className="text-sm text-text-secondary">
+                    {formatDate(event.date, event.start_time)}
+                  </p>
+                </div>
+                <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full shrink-0">
+                  {daysUntilLabel(event.date)}
+                </span>
+              </div>
+
+              <div className="mb-3">
+                <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
+                  <span>{event.claimedZones}/{event.totalZones} soner tatt</span>
+                  <span>{event.totalZones > 0 ? Math.round((event.claimedZones / event.totalZones) * 100) : 0}%</span>
+                </div>
+                <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent rounded-full transition-all"
+                    style={{ width: `${event.totalZones > 0 ? (event.claimedZones / event.totalZones) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <Button size="sm" className="w-full" loading={activating === event.id}
+                onClick={() => handleActivate(event.id)}>
+                <Zap size={14} />
+                Aktiver hendelse
+              </Button>
+            </Card>
+          ))}
 
           {/* Kombinert statistikk + navigasjon */}
           <div className="flex flex-col gap-3">

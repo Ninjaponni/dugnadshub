@@ -9,6 +9,7 @@ import { MapPin, ChevronRight, Check, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import type { Profile, DugnadEvent } from '@/lib/supabase/types'
 import PushPrompt from '@/components/features/PushPrompt'
+import { formatDate, daysUntilLabel } from '@/lib/utils/date'
 
 interface EventWithProgress extends DugnadEvent {
   totalZones: number
@@ -121,24 +122,8 @@ export default function HomePage() {
 
   const fullName = profile?.full_name || ''
 
-  function daysUntil(dateStr: string): number {
-    const now = new Date()
-    const target = new Date(dateStr)
-    return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  }
-
-  function formatDate(dateStr: string, time: string | null): string {
-    const d = new Date(dateStr)
-    const formatted = d.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' })
-    if (time) {
-      const t = time.split(':').slice(0, 2).join(':')
-      return `${formatted} kl. ${t}`
-    }
-    return formatted
-  }
-
-  const activeEvent = events[0] || null
-  const futureEvents = events.slice(1)
+  const activeEvents = events.filter(e => e.status === 'active')
+  const futureEvents = events.filter(e => e.status === 'upcoming')
 
   return (
     <div className="px-4 pt-14 safe-top">
@@ -204,51 +189,50 @@ export default function HomePage() {
             </div>
           )}
 
-          {activeEvent && (
+          {activeEvents.length > 0 && (
             <div className="mb-5">
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-                Aktiv dugnad
+                {activeEvents.length === 1 ? 'Aktiv dugnad' : 'Aktive dugnader'}
               </h2>
-              <Card className="p-4 bg-gradient-to-br from-accent/5 to-accent/10">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="text-[15px] font-semibold">{activeEvent.title}</p>
-                    <p className="text-sm text-text-secondary">
-                      {formatDate(activeEvent.date, activeEvent.start_time)}
-                    </p>
-                  </div>
-                  <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full shrink-0">
-                    {(() => {
-                      const d = daysUntil(activeEvent.date)
-                      if (d <= 0) return 'I dag!'
-                      if (d === 1) return 'I morgen'
-                      return `om ${d} dager`
-                    })()}
-                  </span>
-                </div>
+              <div className="space-y-3">
+                {activeEvents.map((event) => (
+                  <Card key={event.id} className="p-4 bg-gradient-to-br from-accent/5 to-accent/10">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-[15px] font-semibold">{event.title}</p>
+                        <p className="text-sm text-text-secondary">
+                          {formatDate(event.date, event.start_time)}
+                        </p>
+                      </div>
+                      <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full shrink-0">
+                        {daysUntilLabel(event.date)}
+                      </span>
+                    </div>
 
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
-                    <span>{activeEvent.claimedZones}/{activeEvent.totalZones} soner tatt</span>
-                    <span>{activeEvent.totalZones > 0 ? Math.round((activeEvent.claimedZones / activeEvent.totalZones) * 100) : 0}%</span>
-                  </div>
-                  <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${activeEvent.totalZones > 0 ? (activeEvent.claimedZones / activeEvent.totalZones) * 100 : 0}%` }}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
-                      className="h-full bg-accent rounded-full"
-                    />
-                  </div>
-                </div>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
+                        <span>{event.claimedZones}/{event.totalZones} soner tatt</span>
+                        <span>{event.totalZones > 0 ? Math.round((event.claimedZones / event.totalZones) * 100) : 0}%</span>
+                      </div>
+                      <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${event.totalZones > 0 ? (event.claimedZones / event.totalZones) * 100 : 0}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                          className="h-full bg-accent rounded-full"
+                        />
+                      </div>
+                    </div>
 
-                <Link href="/kart">
-                  <Button size="sm" className="w-full">
-                    <MapPin size={14} />
-                    {activeEvent.status === 'active' ? 'Åpne kart' : 'Velg soner'}
-                  </Button>
-                </Link>
-              </Card>
+                    <Link href={`/kart?event=${event.id}`}>
+                      <Button size="sm" className="w-full">
+                        <MapPin size={14} />
+                        Åpne kart
+                      </Button>
+                    </Link>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
 
@@ -270,7 +254,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <span className="text-xs text-text-tertiary shrink-0">
-                    om {daysUntil(event.date)} dager
+                    {daysUntilLabel(event.date)}
                   </span>
                 </Card>
                 </Link>

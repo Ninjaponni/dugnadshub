@@ -43,6 +43,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Beskytt admin-ruter — kun brukere med admin-rolle
+  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/hjem'
+      return NextResponse.redirect(url)
+    }
+  }
+
   // Redirect innloggede brukere bort fra login
   if (user && request.nextUrl.pathname === '/logg-inn') {
     const url = request.nextUrl.clone()

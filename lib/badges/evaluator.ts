@@ -58,19 +58,19 @@ export async function evaluateBadges(userId: string) {
 
   // --- Badge 3: Lagspiller — fullførte sone med partner ---
   if (!earned.has(3)) {
-    for (const claim of userClaims) {
-      if (!claim.zone_assignments) continue
-      // Sjekk om andre har claimet samme assignment
-      const { data: partnerClaims } = await supabase
+    const assignmentIds = userClaims.map(c => c.assignment_id)
+    if (assignmentIds.length > 0) {
+      const { data: allPartnerClaims } = await supabase
         .from('zone_claims')
-        .select('user_id')
-        .eq('assignment_id', claim.assignment_id)
-        .neq('user_id', userId) as unknown as { data: Array<{ user_id: string }> | null }
+        .select('assignment_id, user_id')
+        .in('assignment_id', assignmentIds)
+        .neq('user_id', userId) as unknown as { data: Array<{ assignment_id: string; user_id: string }> | null }
 
-      if (partnerClaims && partnerClaims.length > 0 && claim.zone_assignments.status === 'completed') {
-        toAward.push(3)
-        break
-      }
+      const partnerAssignments = new Set((allPartnerClaims || []).map(c => c.assignment_id))
+      const hasPartnerCompletion = userClaims.some(c =>
+        c.zone_assignments?.status === 'completed' && partnerAssignments.has(c.assignment_id)
+      )
+      if (hasPartnerCompletion) toAward.push(3)
     }
   }
 

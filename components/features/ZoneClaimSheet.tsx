@@ -39,6 +39,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const [loading, setLoading] = useState(false)
   const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
 
   if (!zone) return null
@@ -56,9 +57,14 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   async function handleClaim() {
     if (!eventId) return
     setLoading(true)
+    setError(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.rpc as any)('claim_zone', { p_event_id: eventId, p_zone_id: zone!.id })
-    // Evaluer badges etter claiming
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('claim_zone', { p_event_id: eventId, p_zone_id: zone!.id })
+    if (rpcError) {
+      setError('Kunne ikke ta sonen. Prøv igjen.')
+      setLoading(false)
+      return
+    }
     if (userId) evaluateBadges(userId).catch(() => {})
     onAction()
     setLoading(false)
@@ -67,8 +73,14 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   async function handleUnclaim() {
     if (!eventId) return
     setLoading(true)
+    setError(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.rpc as any)('unclaim_zone', { p_event_id: eventId, p_zone_id: zone!.id })
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('unclaim_zone', { p_event_id: eventId, p_zone_id: zone!.id })
+    if (rpcError) {
+      setError('Kunne ikke gi opp sonen. Prøv igjen.')
+      setLoading(false)
+      return
+    }
     setShowUnclaimConfirm(false)
     onAction()
     setLoading(false)
@@ -77,9 +89,14 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   async function handleComplete() {
     if (!zone?.assignment_id) return
     setLoading(true)
+    setError(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.rpc as any)('mark_zone_complete', { p_assignment_id: zone.assignment_id })
-    // Evaluer badges etter ferdigmarkering
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('mark_zone_complete', { p_assignment_id: zone.assignment_id })
+    if (rpcError) {
+      setError('Kunne ikke markere som ferdig. Prøv igjen.')
+      setLoading(false)
+      return
+    }
     if (userId) evaluateBadges(userId).catch(() => {})
     setShowCompleteConfirm(false)
     onAction()
@@ -161,6 +178,13 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Feilmelding */}
+      {error && (
+        <div className="mb-3 p-3 rounded-xl bg-danger/10 text-danger text-sm text-center">
+          {error}
         </div>
       )}
 

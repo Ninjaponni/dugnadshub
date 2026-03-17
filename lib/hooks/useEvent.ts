@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { DugnadEvent } from '@/lib/supabase/types'
 
-// Henter aktivt eller kommende event
+// Henter første aktive event, eller første kommende hvis ingen er aktive
 export function useActiveEvent() {
   const [event, setEvent] = useState<DugnadEvent | null>(null)
   const [loading, setLoading] = useState(true)
@@ -17,10 +17,11 @@ export function useActiveEvent() {
         .select('*')
         .in('status', ['active', 'upcoming'])
         .order('date', { ascending: true })
-        .limit(1)
-        .single()
 
-      if (data) setEvent(data as unknown as DugnadEvent)
+      const events = (data || []) as unknown as DugnadEvent[]
+      // Prioriter aktive hendelser over kommende
+      const active = events.find(e => e.status === 'active')
+      setEvent(active || events[0] || null)
       setLoading(false)
     }
 
