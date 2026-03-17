@@ -83,11 +83,15 @@ export default function HomePage() {
         return { ...event, totalZones: total, claimedZones: zonesWithClaims, completedZones: completed }
       })
 
-      // Bygg mine soner
+      // Bygg mine soner — kun fra aktive hendelser
+      const activeEventIds = new Set(allEvents.filter(e => e.status === 'active').map(e => e.id))
       const myClaims = claims.filter(c => c.user_id === user.id)
       const allMyZones: MyZone[] = myClaims.map(claim => {
         const assignment = assignments.find(a => a.id === claim.assignment_id)
         if (!assignment) return null
+
+        // Vis kun soner fra aktive hendelser
+        if (!activeEventIds.has(assignment.event_id)) return null
 
         const zone = zoneMap.get(assignment.zone_id) as { id: string; name: string; area: string } | undefined
         const event = allEvents.find(e => e.id === assignment.event_id)

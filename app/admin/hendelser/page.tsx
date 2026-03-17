@@ -97,6 +97,13 @@ export default function EventsAdminPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Deaktiverings-bekreftelse (kun når det finnes claims)
+  const [deactivateConfirmId, setDeactivateConfirmId] = useState<string | null>(null)
+
+  // Nullstill claims
+  const [resetConfirmId, setResetConfirmId] = useState<string | null>(null)
+  const [resetting, setResetting] = useState(false)
+
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
@@ -279,6 +286,40 @@ export default function EventsAdminPage() {
 
     await loadEvents()
     setUpdatingId(null)
+  }
+
+  // Nullstill alle claims og reset assignments for en hendelse
+  async function handleResetClaims(eventId: string) {
+    setResetting(true)
+    // Hent assignments for denne hendelsen
+    const { data: assignments } = await supabaseRef.current
+      .from('zone_assignments')
+      .select('id')
+      .eq('event_id', eventId) as unknown as { data: Array<{ id: string }> | null }
+
+    if (assignments && assignments.length > 0) {
+      const assignmentIds = assignments.map(a => a.id)
+      // Slett alle claims
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseRef.current.from('zone_claims') as any).delete().in('assignment_id', assignmentIds)
+      // Reset assignment-status til available
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseRef.current.from('zone_assignments') as any).update({ status: 'available' }).eq('event_id', eventId)
+    }
+
+    setResetConfirmId(null)
+    setResetting(false)
+    await loadEvents()
+  }
+
+  // Deaktiver hendelse (med eller uten bekreftelse)
+  function handleDeactivateClick(event: EventWithZones) {
+    const hasClaims = event.zoneStats.claimed + event.zoneStats.completed > 0
+    if (hasClaims) {
+      setDeactivateConfirmId(event.id)
+    } else {
+      handleStatusChange(event.id, 'upcoming')
+    }
   }
 
   // Send hjelp-varsel for aktiv hendelse
@@ -635,8 +676,84 @@ export default function EventsAdminPage() {
                             )}
                           </AnimatePresence>
 
+                          {/* Deaktiverings-bekreftelse */}
+                          <AnimatePresence>
+                            {deactivateConfirmId === event.id && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-2xl overflow-hidden border border-warning/20">
+                                  <div className="bg-warning/5 p-4 text-center">
+                                    <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
+                                    <p className="text-[15px] font-medium mb-1">Deaktivere hendelsen?</p>
+                                    <p className="text-sm text-text-secondary">
+                                      {event.zoneStats.claimed + event.zoneStats.completed} soner er tatt av deltakere. Claims beholdes men skjules for brukerne.
+                                    </p>
+                                  </div>
+                                  <div className="flex border-t border-warning/20">
+                                    <button
+                                      onClick={() => setDeactivateConfirmId(null)}
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-black/5"
+                                    >
+                                      Avbryt
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setDeactivateConfirmId(null)
+                                        handleStatusChange(event.id, 'upcoming')
+                                      }}
+                                      className="flex-1 py-3 text-sm font-medium text-warning active:bg-warning/10"
+                                    >
+                                      Deaktiver
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* Nullstill claims-bekreftelse */}
+                          <AnimatePresence>
+                            {resetConfirmId === event.id && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-2xl overflow-hidden border border-danger/20">
+                                  <div className="bg-danger/5 p-4 text-center">
+                                    <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
+                                    <p className="text-[15px] font-medium mb-1">Nullstille alle claims?</p>
+                                    <p className="text-sm text-text-secondary">
+                                      Alle {event.zoneStats.claimed + event.zoneStats.completed} tatte soner slettes permanent. Deltakerne mister sine valgte soner.
+                                    </p>
+                                  </div>
+                                  <div className="flex border-t border-danger/20">
+                                    <button
+                                      onClick={() => setResetConfirmId(null)}
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-black/5"
+                                    >
+                                      Avbryt
+                                    </button>
+                                    <button
+                                      onClick={() => handleResetClaims(event.id)}
+                                      disabled={resetting}
+                                      className="flex-1 py-3 text-sm font-medium text-danger active:bg-danger/10"
+                                    >
+                                      {resetting ? 'Nullstiller...' : 'Nullstill'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
                           {/* Handlingsknapper — rediger, slett, statusendring */}
-                          {!isEditing && !isDeleteConfirm && (
+                          {!isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && (
                             <div className="space-y-2">
                               {/* Statusknapper tilpasset gjeldende status */}
                               {event.status === 'upcoming' && (
@@ -670,7 +787,7 @@ export default function EventsAdminPage() {
                                       size="sm"
                                       variant="secondary"
                                       loading={updatingId === event.id}
-                                      onClick={() => handleStatusChange(event.id, 'upcoming')}
+                                      onClick={() => handleDeactivateClick(event)}
                                     >
                                       Deaktiver
                                     </Button>
@@ -685,6 +802,22 @@ export default function EventsAdminPage() {
                                     </Button>
                                   </div>
                                 </div>
+                              )}
+
+                              {/* Nullstill claims */}
+                              {(event.zoneStats.claimed + event.zoneStats.completed) > 0 && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="w-full text-text-secondary"
+                                  onClick={() => {
+                                    setResetConfirmId(event.id)
+                                    setEditingId(null)
+                                    setDeleteConfirmId(null)
+                                  }}
+                                >
+                                  Nullstill alle claims ({event.zoneStats.claimed + event.zoneStats.completed})
+                                </Button>
                               )}
 
                               {/* Rediger + Slett */}
