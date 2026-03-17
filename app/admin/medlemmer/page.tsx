@@ -304,6 +304,15 @@ export default function MembersAdminPage() {
                         className="overflow-hidden"
                       >
                         <div className="border-t border-black/5 px-4 py-3 space-y-4">
+                          {/* Kontaktinfo */}
+                          <div className="text-xs text-text-tertiary space-y-0.5">
+                            <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
+                            {profile.phone && <p>Telefon: <a href={`tel:${profile.phone}`} className="text-accent">{profile.phone}</a></p>}
+                            {profile.child_name && <p>Barn: {profile.child_name}</p>}
+                            {profile.child_group && <p>Gruppe: {profile.child_group}</p>}
+                            <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
+                          </div>
+
                           {/* Rollevelger */}
                           <div>
                             <label className="text-xs font-medium text-text-secondary block mb-1.5">Rolle</label>
@@ -409,14 +418,6 @@ export default function MembersAdminPage() {
                             </div>
                           )}
 
-                          {/* Kontaktinfo */}
-                          <div className="text-xs text-text-tertiary space-y-0.5">
-                            <p>E-post: {profile.email}</p>
-                            {profile.phone && <p>Telefon: {profile.phone}</p>}
-                            {profile.child_name && <p>Barn: {profile.child_name}</p>}
-                            {profile.child_group && <p>Gruppe: {profile.child_group}</p>}
-                            <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
-                          </div>
                         </div>
                       </motion.div>
                     )}
