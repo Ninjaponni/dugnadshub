@@ -98,9 +98,28 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     if (userId) evaluateBadges(userId).catch(() => {})
+    // Auto-push til sjåfører
+    notifyDrivers(zone.name)
     setShowCompleteConfirm(false)
     onAction()
     setLoading(false)
+  }
+
+  async function notifyDrivers(zoneName: string) {
+    try {
+      const { data: { session } } = await supabaseRef.current.auth.getSession()
+      if (!session) return
+      await fetch('/api/push/notify-drivers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ zoneName }),
+      })
+    } catch {
+      // Push-feil er ikke kritisk — stille feil
+    }
   }
 
   function handleDropPointClick() {

@@ -2,22 +2,25 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Map, Award, User } from 'lucide-react'
+import { Home, Map, Award, User, Truck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-const tabs = [
+const baseTabs = [
   { href: '/hjem', label: 'Hjem', icon: Home },
   { href: '/kart', label: 'Kart', icon: Map },
   { href: '/merker', label: 'Merker', icon: Award },
   { href: '/profil', label: 'Profil', icon: User },
 ]
 
+const driverTab = { href: '/sjafor', label: 'Henting', icon: Truck }
+
 // iOS-stil tab bar med glassmorfisme + notification badge for merker
 export default function BottomNav() {
   const pathname = usePathname()
   const [unseenBadges, setUnseenBadges] = useState(0)
+  const [isDriver, setIsDriver] = useState(false)
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
@@ -25,6 +28,18 @@ export default function BottomNav() {
       const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) return
 
+      // Sjekk rolle for sjåfør-fane
+      const { data: profile } = await supabaseRef.current
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single() as unknown as { data: { role: string } | null }
+
+      if (profile && (profile.role === 'driver' || profile.role === 'admin')) {
+        setIsDriver(true)
+      }
+
+      // Sjekk usette merker
       const { data } = await supabaseRef.current
         .from('user_badges')
         .select('badge_id')
@@ -41,7 +56,12 @@ export default function BottomNav() {
     }
 
     check()
-  }, [pathname]) // Sjekk på nytt ved navigasjon
+  }, [pathname])
+
+  // Bygg faner — sjåfør-fane settes inn før Profil
+  const tabs = isDriver
+    ? [...baseTabs.slice(0, 3), driverTab, baseTabs[3]]
+    : baseTabs
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-30 glass border-t border-black/5 safe-bottom">

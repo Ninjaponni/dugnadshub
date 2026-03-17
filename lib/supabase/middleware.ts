@@ -35,7 +35,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/kart') ||
     request.nextUrl.pathname.startsWith('/merker') ||
     request.nextUrl.pathname.startsWith('/profil') ||
-    request.nextUrl.pathname.startsWith('/admin')
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname.startsWith('/sjafor')
 
   if (!user && isAppRoute) {
     const url = request.nextUrl.clone()
@@ -43,15 +44,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Beskytt admin-ruter — kun brukere med admin-rolle
-  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+  // Beskytt rollebaserte ruter
+  if (user && (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/sjafor'))) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
+    const role = profile?.role
+
+    // Admin-ruter — kun admin
+    if (request.nextUrl.pathname.startsWith('/admin') && role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/hjem'
+      return NextResponse.redirect(url)
+    }
+
+    // Sjåfør-ruter — driver eller admin
+    if (request.nextUrl.pathname.startsWith('/sjafor') && role !== 'driver' && role !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = '/hjem'
       return NextResponse.redirect(url)
