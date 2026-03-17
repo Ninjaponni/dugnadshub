@@ -62,22 +62,30 @@ export default function ProfilePage() {
 
   async function togglePush() {
     setPushLoading(true)
-    if (pushEnabled) {
-      const { data: { session } } = await supabase.auth.getSession()
-      await unsubscribeFromPush(session?.access_token || '')
-      setPushEnabled(false)
-    } else {
-      const registration = await navigator.serviceWorker?.ready
-      if (registration) {
-        const subscription = await subscribeToPush(registration)
-        if (subscription) {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            await saveSubscription(subscription, session.access_token)
-            setPushEnabled(true)
+    try {
+      if (pushEnabled) {
+        const { data: { session } } = await supabase.auth.getSession()
+        await unsubscribeFromPush(session?.access_token || '')
+        setPushEnabled(false)
+      } else {
+        console.log('[Push] Registering...')
+        const registration = await navigator.serviceWorker?.ready
+        console.log('[Push] SW ready:', registration?.scope)
+        if (registration) {
+          const subscription = await subscribeToPush(registration)
+          console.log('[Push] Subscription:', subscription ? 'OK' : 'FAILED (permission denied?)')
+          if (subscription) {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+              const ok = await saveSubscription(subscription, session.access_token)
+              console.log('[Push] Saved to server:', ok)
+              if (ok) setPushEnabled(true)
+            }
           }
         }
       }
+    } catch (err) {
+      console.error('[Push] Error:', err)
     }
     setPushLoading(false)
   }
@@ -262,7 +270,7 @@ export default function ProfilePage() {
 
           {/* Versjon */}
           <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 1.7
+            Tillerbyen Skolekorps Dugnadshub v 1.8
           </p>
 
           {/* Logg ut */}
