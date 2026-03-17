@@ -274,27 +274,14 @@ export default function MembersAdminPage() {
                       <p className="font-medium text-[15px] truncate">
                         {profile.full_name || 'Ukjent'}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-text-secondary">
-                        <span className="truncate">{profile.email}</span>
-                        {profile.child_name && (
-                          <>
-                            <span className="text-text-tertiary">·</span>
-                            <span className="shrink-0">{profile.child_name}</span>
-                          </>
-                        )}
+                      <div className="flex items-center gap-2 text-xs text-text-secondary mt-0.5">
+                        <span>{userBadgeList.length} merker</span>
+                        <span className="text-text-tertiary">·</span>
+                        <span>{getClaimCount(profile.id)} soner</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      {/* Merke-ikoner */}
-                      {userBadgeList.length > 0 && (
-                        <span className="flex items-center gap-0.5" title={userBadgeList.map(b => b.name).join(', ')}>
-                          {userBadgeList.slice(0, 3).map(b => (
-                            <img key={b.id} src={b.icon} alt={b.name} className="w-5 h-5" />
-                          ))}
-                          {userBadgeList.length > 3 && <span className="text-xs text-text-secondary">+{userBadgeList.length - 3}</span>}
-                        </span>
-                      )}
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         profile.role === 'admin' ? 'bg-purple-100 text-purple-700' :
                         profile.role === 'driver' ? 'bg-blue-100 text-blue-700' :
@@ -402,9 +389,31 @@ export default function MembersAdminPage() {
                             )}
                           </div>
 
-                          {/* Detaljer */}
+                          {/* Opptjente merker */}
+                          {userBadgeList.length > 0 && (
+                            <div>
+                              <label className="text-xs font-medium text-text-secondary block mb-1.5">
+                                Opptjente merker
+                              </label>
+                              <div className="flex flex-wrap gap-2">
+                                {userBadgeList.map(b => {
+                                  const count = getBadgeCount(profile.id, b.id)
+                                  return (
+                                    <div key={b.id} className="flex flex-col items-center gap-0.5">
+                                      <img src={b.icon} alt={b.name} className="w-10 h-10 rounded-[10px] ring-1 ring-amber-300/50 shadow-sm" />
+                                      <span className="text-[10px] text-text-secondary">{b.name}{count > 1 ? ` ×${count}` : ''}</span>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Kontaktinfo */}
                           <div className="text-xs text-text-tertiary space-y-0.5">
+                            <p>E-post: {profile.email}</p>
                             {profile.phone && <p>Telefon: {profile.phone}</p>}
+                            {profile.child_name && <p>Barn: {profile.child_name}</p>}
                             {profile.child_group && <p>Gruppe: {profile.child_group}</p>}
                             <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
                           </div>
