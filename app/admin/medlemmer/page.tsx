@@ -24,7 +24,7 @@ const manualBadges = badgeDefinitions.filter(b => b.auto_criteria === null)
 
 const roleLabels: Record<Role, string> = {
   collector: 'Samler',
-  driver: 'Sjåfor',
+  driver: 'Sjåfør',
   strapper: 'Stripser',
   admin: 'Admin',
 }
@@ -185,7 +185,7 @@ export default function MembersAdminPage() {
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Sok etter navn, e-post eller barn..."
+          placeholder="Søk etter navn, e-post eller barn..."
           className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30"
         />
         {searchQuery && (
@@ -275,9 +275,9 @@ export default function MembersAdminPage() {
                         {profile.full_name || 'Ukjent'}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-text-secondary mt-0.5">
-                        <span>{userBadgeList.length} merker</span>
+                        <span>{getBadgeCountForUser(profile.id)} {getBadgeCountForUser(profile.id) === 1 ? 'merke' : 'merker'}</span>
                         <span className="text-text-tertiary">·</span>
-                        <span>{getClaimCount(profile.id)} soner</span>
+                        <span>{getClaimCount(profile.id)} {getClaimCount(profile.id) === 1 ? 'sone' : 'soner'}</span>
                       </div>
                     </div>
 
