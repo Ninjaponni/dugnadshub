@@ -238,7 +238,7 @@ export default function MembersAdminPage() {
         <Card className="p-6 text-center">
           <Users size={32} className="text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary">
-            {searchQuery ? 'Ingen treff pa soket' : 'Ingen medlemmer registrert ennå'}
+            {searchQuery ? 'Ingen treff på søket' : 'Ingen medlemmer registrert ennå'}
           </p>
         </Card>
       )}

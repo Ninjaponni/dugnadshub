@@ -466,9 +466,9 @@ export default function EventsAdminPage() {
       {!loading && events.length === 0 && (
         <Card className="p-6 text-center">
           <Calendar size={32} className="text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-secondary">Ingen hendelser opprettet enna</p>
+          <p className="text-text-secondary">Ingen hendelser opprettet ennå</p>
           <p className="text-sm text-text-tertiary mt-1">
-            Opprett en hendelse for a starte planlegging
+            Opprett en hendelse for å starte planlegging
           </p>
         </Card>
       )}
@@ -681,7 +681,7 @@ export default function EventsAdminPage() {
                                       loading={updatingId === event.id}
                                       onClick={() => handleStatusChange(event.id, 'completed')}
                                     >
-                                      Merk som fullfort
+                                      Merk som fullført
                                     </Button>
                                   </div>
                                 </div>

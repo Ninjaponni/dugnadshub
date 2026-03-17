@@ -52,14 +52,14 @@ export default function PushPrompt() {
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm">Vil du ha push-varsler?</p>
         <p className="text-xs text-text-secondary mt-0.5">
-          Fa beskjed om dugnader og nye merker
+          Få beskjed om dugnader og nye merker
         </p>
         <div className="flex gap-2 mt-2">
           <Button size="sm" loading={subscribing} onClick={handleSubscribe}>
             Ja, aktiver
           </Button>
           <Button size="sm" variant="ghost" onClick={handleDismiss}>
-            Ikke na
+            Ikke nå
           </Button>
         </div>
       </div>
