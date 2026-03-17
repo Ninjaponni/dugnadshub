@@ -395,13 +395,13 @@ export default function MembersAdminPage() {
                               <label className="text-xs font-medium text-text-secondary block mb-1.5">
                                 Opptjente merker
                               </label>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="grid grid-cols-4 gap-3">
                                 {userBadgeList.map(b => {
                                   const count = getBadgeCount(profile.id, b.id)
                                   return (
-                                    <div key={b.id} className="flex flex-col items-center gap-0.5">
-                                      <img src={b.icon} alt={b.name} className="w-10 h-10 rounded-[10px] ring-1 ring-amber-300/50 shadow-sm" />
-                                      <span className="text-[10px] text-text-secondary">{b.name}{count > 1 ? ` ×${count}` : ''}</span>
+                                    <div key={b.id} className="flex flex-col items-center text-center">
+                                      <img src={b.icon} alt={b.name} className="w-12 h-12 rounded-[12px] ring-1 ring-amber-300/50 shadow-sm" />
+                                      <span className="text-[10px] text-text-secondary mt-1 leading-tight">{b.name}{count > 1 ? ` ×${count}` : ''}</span>
                                     </div>
                                   )
                                 })}
