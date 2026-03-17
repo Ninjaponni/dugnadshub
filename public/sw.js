@@ -25,18 +25,8 @@ self.addEventListener('notificationclick', (event) => {
   const path = event.notification.data?.url || '/'
   const fullUrl = new URL(path, self.location.origin).href
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Fokuser eksisterende vindu og naviger
-      for (const client of windowClients) {
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          return client.focus().then(() => client.navigate(fullUrl))
-        }
-      }
-      // Ellers åpne nytt vindu
-      return clients.openWindow(fullUrl)
-    })
-  )
+  // iOS støtter ikke client.navigate() i PWA — bruk alltid openWindow
+  event.waitUntil(clients.openWindow(fullUrl))
 })
 
 // Aktiver umiddelbart
