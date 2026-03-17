@@ -185,35 +185,36 @@ export default function BadgesPage() {
                     className="text-left"
                   >
                     <div className="text-center relative">
-                      {/* Ikon-boks med rounded corners, outline og skygge */}
-                      <div className={`aspect-square rounded-[20px] flex items-center justify-center p-4 transition-all ${
-                        earned
-                          ? 'bg-gradient-to-b from-amber-50 to-amber-100 ring-1 ring-amber-300/50 shadow-md'
-                          : 'bg-white ring-1 ring-black/8 shadow-sm'
-                      }`}>
-                        {/* Teller for aktivitetsmerker */}
-                        {earned && isActivity && count > 1 && (
-                          <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
-                            <span className="text-[10px] font-bold text-white">×{count}</span>
-                          </div>
-                        )}
-                        {/* Hake for vanlige opptjente */}
-                        {earned && (!isActivity || count <= 1) && (
-                          <div className="absolute -top-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
-                            <Check size={12} className="text-white" strokeWidth={3} />
-                          </div>
-                        )}
-                        {/* Ny-indikator */}
-                        {isNew && (
-                          <motion.div
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ repeat: 3, duration: 0.6 }}
-                            className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-danger z-10"
-                          />
-                        )}
-                        <img src={badge.icon} alt={badge.name} className={`w-14 h-14 ${earned ? '' : 'grayscale opacity-40'}`} />
-                      </div>
-                      {/* Navn under boksen */}
+                      {/* Teller for aktivitetsmerker */}
+                      {earned && isActivity && count > 1 && (
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
+                          <span className="text-[10px] font-bold text-white">×{count}</span>
+                        </div>
+                      )}
+                      {/* Hake for vanlige opptjente */}
+                      {earned && (!isActivity || count <= 1) && (
+                        <div className="absolute -top-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
+                          <Check size={12} className="text-white" strokeWidth={3} />
+                        </div>
+                      )}
+                      {/* Ny-indikator */}
+                      {isNew && (
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ repeat: 3, duration: 0.6 }}
+                          className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-danger z-10"
+                        />
+                      )}
+                      {/* Ikonet med rounded corners, outline og shadow direkte */}
+                      <img
+                        src={badge.icon}
+                        alt={badge.name}
+                        className={`w-full aspect-square rounded-[20px] ring-1 shadow-sm transition-all ${
+                          earned
+                            ? 'ring-amber-300/50 shadow-md'
+                            : 'ring-black/8 grayscale opacity-40'
+                        }`}
+                      />
                       <p className={`text-xs font-medium leading-tight mt-2 ${earned ? 'text-text-primary' : 'text-text-tertiary'}`}>{badge.name}</p>
                     </div>
                   </motion.button>

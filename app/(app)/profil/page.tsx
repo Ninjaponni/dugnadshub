@@ -266,7 +266,7 @@ export default function ProfilePage() {
 
           {/* Versjon */}
           <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 2.5
+            Tillerbyen Skolekorps Dugnadshub v 2.6
           </p>
 
           {/* Logg ut */}
