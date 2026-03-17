@@ -19,6 +19,7 @@ interface EventWithProgress extends DugnadEvent {
 
 interface MyZone {
   zoneId: string
+  eventId: string
   zoneName: string
   area: string
   status: string
@@ -101,6 +102,7 @@ export default function HomePage() {
 
         return {
           zoneId: assignment.zone_id,
+          eventId: assignment.event_id,
           zoneName: zone?.name || assignment.zone_id,
           area: zone?.area || '',
           status: assignment.status,
@@ -167,7 +169,7 @@ export default function HomePage() {
               </h2>
               <div className="space-y-2">
                 {myZones.map((zone) => (
-                  <Link key={zone.zoneId} href={`/kart?sone=${zone.zoneId}`}>
+                  <Link key={zone.zoneId} href={`/kart?event=${zone.eventId}&sone=${zone.zoneId}`}>
                     <Card className="p-3 flex items-center gap-3 mb-0">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                         zone.status === 'completed' ? 'bg-success/10' : 'bg-accent/10'
