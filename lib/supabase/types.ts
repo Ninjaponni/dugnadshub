@@ -104,6 +104,15 @@ export interface UserBadge {
   event_id: string | null
 }
 
+export interface PushSubscription {
+  id: string
+  user_id: string
+  endpoint: string
+  keys_p256dh: string
+  keys_auth: string
+  created_at: string
+}
+
 // Database typer for Supabase
 export interface Database {
   public: {

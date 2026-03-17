@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone } from '@/lib/supabase/types'
@@ -256,8 +256,49 @@ export default function EventsAdminPage() {
     setUpdatingId(eventId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
+
+    // Send push ved aktivering
+    if (newStatus === 'active') {
+      const event = events.find(e => e.id === eventId)
+      if (event) {
+        const { data: { session } } = await supabaseRef.current.auth.getSession()
+        if (session) {
+          await fetch('/api/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+            body: JSON.stringify({
+              title: 'Dugnad er i gang!',
+              body: `${event.title} er nå aktiv — ta en sone!`,
+              url: '/kart',
+              filter: { all: true },
+            }),
+          }).catch(() => {})
+        }
+      }
+    }
+
     await loadEvents()
     setUpdatingId(null)
+  }
+
+  // Send hjelp-varsel for aktiv hendelse
+  async function handleSendHelp(event: EventWithZones) {
+    const available = event.zoneStats.available
+    if (available === 0) return
+
+    const { data: { session } } = await supabaseRef.current.auth.getSession()
+    if (!session) return
+
+    await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({
+        title: `${event.title} trenger hjelp!`,
+        body: `${available} soner mangler folk — kan du ta en?`,
+        url: '/kart',
+        filter: { all: true },
+      }),
+    }).catch(() => {})
   }
 
   // Formater dato
@@ -612,24 +653,37 @@ export default function EventsAdminPage() {
                               )}
 
                               {event.status === 'active' && (
-                                <div className="grid grid-cols-2 gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    loading={updatingId === event.id}
-                                    onClick={() => handleStatusChange(event.id, 'upcoming')}
-                                  >
-                                    Deaktiver
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="bg-success/10 text-success hover:bg-success/20"
-                                    loading={updatingId === event.id}
-                                    onClick={() => handleStatusChange(event.id, 'completed')}
-                                  >
-                                    Merk som fullfort
-                                  </Button>
+                                <div className="space-y-2">
+                                  {event.zoneStats.available > 0 && (
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      className="w-full bg-warning/10 text-warning"
+                                      onClick={() => handleSendHelp(event)}
+                                    >
+                                      <Bell size={14} />
+                                      Send hjelp-varsel ({event.zoneStats.available} ledige)
+                                    </Button>
+                                  )}
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      loading={updatingId === event.id}
+                                      onClick={() => handleStatusChange(event.id, 'upcoming')}
+                                    >
+                                      Deaktiver
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      className="bg-success/10 text-success hover:bg-success/20"
+                                      loading={updatingId === event.id}
+                                      onClick={() => handleStatusChange(event.id, 'completed')}
+                                    >
+                                      Merk som fullfort
+                                    </Button>
+                                  </div>
                                 </div>
                               )}
 

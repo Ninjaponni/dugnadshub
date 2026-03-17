@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { MapPin, ChevronRight, Check, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import type { Profile, DugnadEvent } from '@/lib/supabase/types'
+import PushPrompt from '@/components/features/PushPrompt'
 
 interface EventWithProgress extends DugnadEvent {
   totalZones: number
@@ -168,6 +169,8 @@ export default function HomePage() {
 
       {!loading && (
         <>
+          <PushPrompt />
+
           {myZones.length > 0 && (
             <div className="mb-5">
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">

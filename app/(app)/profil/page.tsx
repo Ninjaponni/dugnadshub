@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { User, LogOut, Shield } from 'lucide-react'
+import { User, LogOut, Shield, Bell } from 'lucide-react'
+import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
 
@@ -15,6 +16,9 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ full_name: '', phone: '', child_name: '', child_group: '' })
   const [saving, setSaving] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
+  const [pushSupported, setPushSupported] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -47,6 +51,36 @@ export default function ProfilePage() {
 
     load()
   }, [supabase])
+
+  // Sjekk push-status
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      setPushSupported(true)
+      isPushSubscribed().then(setPushEnabled)
+    }
+  }, [])
+
+  async function togglePush() {
+    setPushLoading(true)
+    if (pushEnabled) {
+      const { data: { session } } = await supabase.auth.getSession()
+      await unsubscribeFromPush(session?.access_token || '')
+      setPushEnabled(false)
+    } else {
+      const registration = await navigator.serviceWorker?.ready
+      if (registration) {
+        const subscription = await subscribeToPush(registration)
+        if (subscription) {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            await saveSubscription(subscription, session.access_token)
+            setPushEnabled(true)
+          }
+        }
+      }
+    }
+    setPushLoading(false)
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -200,9 +234,35 @@ export default function ProfilePage() {
             </Link>
           )}
 
+          {/* Push-varsel toggle */}
+          {pushSupported && (
+            <Card className="p-4 mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell size={20} className="text-accent" />
+                <div>
+                  <p className="font-medium text-sm">Push-varsler</p>
+                  <p className="text-xs text-text-secondary">
+                    {pushEnabled ? 'Aktivert' : 'Deaktivert'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={togglePush}
+                disabled={pushLoading}
+                className={`w-12 h-7 rounded-full transition-colors relative ${
+                  pushEnabled ? 'bg-accent' : 'bg-black/10'
+                }`}
+              >
+                <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                  pushEnabled ? 'left-[22px]' : 'left-0.5'
+                }`} />
+              </button>
+            </Card>
+          )}
+
           {/* Versjon */}
           <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 1.3
+            Tillerbyen Skolekorps Dugnadshub v 1.4
           </p>
 
           {/* Logg ut */}

@@ -36,6 +36,11 @@ export default function RootLayout({
     <html lang="nb" className={inter.variable}>
       <body className="bg-bg min-h-dvh">
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`,
+          }}
+        />
       </body>
     </html>
   )

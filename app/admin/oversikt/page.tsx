@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Users, Calendar, ChevronRight, Zap, Map, ArrowLeft } from 'lucide-react'
+import { Users, Calendar, ChevronRight, Zap, Map, ArrowLeft, Bell } from 'lucide-react'
 import Link from 'next/link'
 import type { DugnadEvent } from '@/lib/supabase/types'
 
@@ -175,6 +175,19 @@ export default function AdminOverviewPage() {
                   <p className="text-sm text-text-secondary">Roller, merker og oversikt</p>
                 </div>
                 <span className="text-lg font-bold font-mono text-text-secondary mr-1">{memberCount}</span>
+                <ChevronRight size={16} className="text-text-tertiary shrink-0" />
+              </Card>
+            </Link>
+
+            <Link href="/admin/varsler">
+              <Card className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Bell size={20} className="text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Varsler</p>
+                  <p className="text-sm text-text-secondary">Send push-meldinger</p>
+                </div>
                 <ChevronRight size={16} className="text-text-tertiary shrink-0" />
               </Card>
             </Link>
