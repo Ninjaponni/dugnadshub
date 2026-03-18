@@ -30,6 +30,11 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
   const hasActiveEvent = activeZoneIds.size > 0
 
   const geoJsonWithStatus = useMemo(() => {
+    // Ingen soner å vise — returner tom FeatureCollection
+    if (zones.length === 0) {
+      return { type: 'FeatureCollection' as const, features: [] }
+    }
+
     const features = zonesGeoJson.features
       .filter((feature) => !hasActiveEvent || activeZoneIds.has(feature.properties?.id as string))
       .map((feature) => {
