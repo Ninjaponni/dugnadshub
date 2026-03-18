@@ -1,7 +1,7 @@
 'use client'
 
 import { Marker } from 'react-map-gl/mapbox'
-import { StickyNote } from 'lucide-react'
+import { Image } from 'lucide-react'
 import posterPointsGeoJson from '@/lib/map/poster-points-data'
 
 interface PosterMarkersProps {
@@ -24,10 +24,10 @@ export default function PosterMarkers({ activeArea }: PosterMarkersProps) {
           anchor="center"
         >
           <div
-            className="w-6 h-6 rounded bg-amber-500 shadow-md flex items-center justify-center border border-amber-600"
+            className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center border border-amber-400/50"
             title={p.properties.name}
           >
-            <StickyNote size={12} className="text-white" />
+            <Image size={12} className="text-amber-500" />
           </div>
         </Marker>
       ))}
