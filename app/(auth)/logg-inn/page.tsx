@@ -1,43 +1,90 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Button from '@/components/ui/Button'
+import OtpInput from '@/components/ui/OtpInput'
 import { motion } from 'framer-motion'
-import { Mail, CheckCircle, Lock } from 'lucide-react'
+import { Mail, Lock } from 'lucide-react'
 
-// Innlogging — magic link + passord (for dev/testing)
+type View = 'email' | 'otp' | 'password'
+
+// Innlogging — OTP-kode + passord (fallback)
 export default function LoginPage() {
+  const [view, setView] = useState<View>('email')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
-  const [usePassword, setUsePassword] = useState(false)
+  const [otpError, setOtpError] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
   const router = useRouter()
 
-  async function handleMagicLink(e: React.FormEvent) {
+  // Nedtelling for "Send ny kode"
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setTimeout(() => setCooldown(c => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [cooldown])
+
+  // Send OTP-kode til e-post
+  async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/bekreft`,
-      },
-    })
+    const { error } = await supabase.auth.signInWithOtp({ email })
 
     if (error) {
-      setError('Kunne ikke sende innloggingslenke. Prøv igjen.')
+      setError('Kunne ikke sende kode. Prøv igjen.')
     } else {
-      setSent(true)
+      setView('otp')
+      setCooldown(60)
     }
     setLoading(false)
   }
 
+  // Send kode på nytt
+  async function handleResend() {
+    if (cooldown > 0) return
+    setError('')
+    setOtpError(false)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOtp({ email })
+
+    if (error) {
+      setError('Kunne ikke sende ny kode. Prøv igjen.')
+    } else {
+      setCooldown(60)
+    }
+  }
+
+  // Verifiser OTP-kode
+  const handleVerifyOtp = useCallback(async (code: string) => {
+    setLoading(true)
+    setError('')
+    setOtpError(false)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'email',
+    })
+
+    if (error) {
+      setOtpError(true)
+      setError('Feil eller utløpt kode. Prøv igjen.')
+    } else {
+      router.replace('/hjem')
+    }
+    setLoading(false)
+  }, [email, router])
+
+  // Passord-login
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -76,27 +123,46 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {sent ? (
+        {view === 'otp' ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="card p-6 text-center"
           >
-            <CheckCircle size={48} className="text-success mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Sjekk e-posten din</h2>
-            <p className="text-text-secondary text-[15px]">
-              Vi har sendt en innloggingslenke til<br />
+            <h2 className="text-xl font-semibold mb-2">Skriv inn koden</h2>
+            <p className="text-text-secondary text-[15px] mb-6">
+              Vi sendte en 6-sifret kode til<br />
               <span className="font-medium text-text-primary">{email}</span>
             </p>
-            <button
-              onClick={() => setSent(false)}
-              className="text-accent text-sm mt-4"
-            >
-              Bruk en annen e-post
-            </button>
+
+            <OtpInput
+              onComplete={handleVerifyOtp}
+              disabled={loading}
+              error={otpError}
+            />
+
+            {error && (
+              <p className="text-danger text-sm mt-4">{error}</p>
+            )}
+
+            <div className="mt-6 space-y-2">
+              <button
+                onClick={handleResend}
+                disabled={cooldown > 0}
+                className="text-accent text-sm disabled:opacity-40"
+              >
+                {cooldown > 0 ? `Send ny kode (${cooldown}s)` : 'Send ny kode'}
+              </button>
+              <br />
+              <button
+                onClick={() => { setView('email'); setError(''); setOtpError(false) }}
+                className="text-text-tertiary text-sm"
+              >
+                Bruk en annen e-post
+              </button>
+            </div>
           </motion.div>
-        ) : usePassword ? (
-          // Passord-login
+        ) : view === 'password' ? (
           <form onSubmit={handlePasswordLogin} className="card p-6">
             <label className="block mb-3">
               <span className="text-sm font-medium text-text-secondary mb-1.5 block">E-postadresse</span>
@@ -121,14 +187,13 @@ export default function LoginPage() {
               Logg inn
             </Button>
 
-            <button type="button" onClick={() => { setUsePassword(false); setError('') }}
+            <button type="button" onClick={() => { setView('email'); setError('') }}
               className="text-accent text-sm mt-4 w-full text-center">
-              Bruk magic link i stedet
+              Bruk kode i stedet
             </button>
           </form>
         ) : (
-          // Magic link
-          <form onSubmit={handleMagicLink} className="card p-6">
+          <form onSubmit={handleSendOtp} className="card p-6">
             <label className="block mb-4">
               <span className="text-sm font-medium text-text-secondary mb-1.5 block">E-postadresse</span>
               <div className="relative">
@@ -141,10 +206,10 @@ export default function LoginPage() {
             {error && <p className="text-danger text-sm mb-3">{error}</p>}
 
             <Button type="submit" size="lg" loading={loading} className="w-full">
-              Send innloggingslenke
+              Send kode
             </Button>
 
-            <button type="button" onClick={() => { setUsePassword(true); setError('') }}
+            <button type="button" onClick={() => { setView('password'); setError('') }}
               className="text-accent text-sm mt-4 w-full text-center">
               Logg inn med passord
             </button>
