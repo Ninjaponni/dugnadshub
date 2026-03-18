@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   // Send e-post via Resend
   const resend = getResend()
   const { error: emailError } = await resend.emails.send({
-    from: 'Dugnadshub <noreply@superponni.no>',
+    from: 'Dugnadshub <onboarding@resend.dev>',
     to: email,
     subject: `Din innloggingskode: ${code}`,
     html: `
