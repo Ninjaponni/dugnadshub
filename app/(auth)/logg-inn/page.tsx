@@ -88,15 +88,15 @@ export default function LoginPage() {
       return
     }
 
-    // Bruk token_hash til å opprette klient-sesjon
-    const { token_hash, type } = await res.json()
+    // Sett sesjon med tokens fra serveren
+    const { access_token, refresh_token } = await res.json()
     const supabase = createClient()
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash,
-      type,
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token,
+      refresh_token,
     })
 
-    if (verifyError) {
+    if (sessionError) {
       setOtpError(true)
       setError('Kunne ikke logge inn. Prøv igjen.')
     } else {

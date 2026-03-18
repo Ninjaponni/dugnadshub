@@ -11,7 +11,7 @@ function getSupabase() {
   )
 }
 
-// Verifiser OTP-kode og opprett Supabase-sesjon
+// Verifiser OTP-kode og returner sesjon-tokens
 export async function POST(request: NextRequest) {
   const { email, code } = await request.json()
   if (!email || !code) {
@@ -43,30 +43,23 @@ export async function POST(request: NextRequest) {
     .update({ used: true })
     .eq('id', otpRow.id)
 
-  // Finn eller opprett bruker i Supabase Auth
   const emailLower = email.toLowerCase()
 
-  // Sjekk om bruker finnes
+  // Finn eller opprett bruker
   const { data: { users } } = await supabase.auth.admin.listUsers()
   const existingUser = users.find(u => u.email?.toLowerCase() === emailLower)
 
-  let userId: string
-
-  if (existingUser) {
-    userId = existingUser.id
-  } else {
-    // Opprett ny bruker med tilfeldig passord
-    const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+  if (!existingUser) {
+    const { error: createError } = await supabase.auth.admin.createUser({
       email: emailLower,
       email_confirm: true,
     })
-    if (createError || !newUser.user) {
+    if (createError) {
       return NextResponse.json({ error: 'Kunne ikke opprette bruker' }, { status: 500 })
     }
-    userId = newUser.user.id
   }
 
-  // Generer en magic link som brukeren kan bruke for å opprette sesjon
+  // Generer magic link og hent token-hash
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: 'magiclink',
     email: emailLower,
@@ -76,10 +69,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Kunne ikke opprette sesjon' }, { status: 500 })
   }
 
-  // Returner token-hash og type slik at klienten kan verifisere
-  const url = new URL(linkData.properties.action_link)
-  const tokenHash = url.searchParams.get('token_hash')
-  const type = url.searchParams.get('type')
+  // Bytt token_hash mot en ekte sesjon via Supabase auth endpoint
+  const verifyRes = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/verify`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      },
+      body: JSON.stringify({
+        token_hash: linkData.properties.hashed_token,
+        type: 'magiclink',
+      }),
+    },
+  )
 
-  return NextResponse.json({ token_hash: tokenHash, type })
+  if (!verifyRes.ok) {
+    return NextResponse.json({ error: 'Kunne ikke verifisere sesjon' }, { status: 500 })
+  }
+
+  const session = await verifyRes.json()
+
+  return NextResponse.json({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  })
 }
