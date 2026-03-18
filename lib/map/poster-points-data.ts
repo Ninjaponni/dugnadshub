@@ -36,6 +36,8 @@ const data: { type: string; features: Array<{ type: string; properties: Record<s
     { "type": "Feature", "properties": { "id": "PL-S-5", "name": "Hårstad mindes veg 12", "area": "SOR" }, "geometry": { "type": "Point", "coordinates": [10.401683, 63.354887] } },
     { "type": "Feature", "properties": { "id": "PL-S-6", "name": "Hårstad mindes veg 13", "area": "SOR" }, "geometry": { "type": "Point", "coordinates": [10.402267, 63.355478] } },
     { "type": "Feature", "properties": { "id": "PL-S-7", "name": "Hårstad mindes veg 14", "area": "SOR" }, "geometry": { "type": "Point", "coordinates": [10.401348, 63.355137] } },
+    { "type": "Feature", "properties": { "id": "PL-S-8", "name": "Tiller-ringen 13", "area": "SOR" }, "geometry": { "type": "Point", "coordinates": [10.380166, 63.347355] } },
+    { "type": "Feature", "properties": { "id": "PL-S-9", "name": "Tiller-ringen 15", "area": "SOR" }, "geometry": { "type": "Point", "coordinates": [10.379729, 63.347] } },
   ]
 };
 export default data;
