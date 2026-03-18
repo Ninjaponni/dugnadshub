@@ -9,6 +9,7 @@ import { MapPin, ChevronRight, Check, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import type { Profile, DugnadEvent } from '@/lib/supabase/types'
 import PushPrompt from '@/components/features/PushPrompt'
+import OnboardingWizard from '@/components/features/OnboardingWizard'
 import { formatDate, daysUntilLabel } from '@/lib/utils/date'
 
 interface EventWithProgress extends DugnadEvent {
@@ -32,7 +33,15 @@ export default function HomePage() {
   const [events, setEvents] = useState<EventWithProgress[]>([])
   const [myZones, setMyZones] = useState<MyZone[]>([])
   const [loading, setLoading] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const supabase = createClient()
+
+  // Sjekk onboarding-status ved mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('onboarding_complete')) {
+      setShowOnboarding(true)
+    }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -131,8 +140,23 @@ export default function HomePage() {
   const activeEvents = events.filter(e => e.status === 'active')
   const futureEvents = events.filter(e => e.status === 'upcoming')
 
+  // Lukk onboarding og marker som fullført
+  function completeOnboarding() {
+    localStorage.setItem('onboarding_complete', '1')
+    setShowOnboarding(false)
+    // Refresh profildata etter evt. lagring i onboarding
+    async function reload() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (data) setProfile(data as unknown as Profile)
+    }
+    reload()
+  }
+
   return (
     <div className="px-4 pt-14 safe-top">
+      {showOnboarding && <OnboardingWizard onComplete={completeOnboarding} />}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}

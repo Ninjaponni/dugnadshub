@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { User, LogOut, Shield, Bell } from 'lucide-react'
+import { User, LogOut, Shield, Bell, RotateCcw } from 'lucide-react'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
@@ -264,9 +264,26 @@ export default function ProfilePage() {
             </Card>
           )}
 
+          {/* Vis onboarding på nytt */}
+          <Card className="p-4 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <RotateCcw size={20} className="text-accent" />
+              <p className="font-medium text-sm">Vis velkomstguiden på nytt</p>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('onboarding_complete')
+                router.push('/hjem')
+              }}
+              className="text-accent text-sm font-medium"
+            >
+              Vis
+            </button>
+          </Card>
+
           {/* Versjon */}
           <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 3.9
+            Tillerbyen Skolekorps Dugnadshub v 4.0
           </p>
 
           {/* Logg ut */}
