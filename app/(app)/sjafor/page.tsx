@@ -36,11 +36,12 @@ export default function DriverPage() {
   async function loadData() {
     const sb = supabaseRef.current
 
-    // Hent aktive hendelser
+    // Hent aktive hendelser — kun flaskeinnsamling (andre typer har ikke henting)
     const { data: eventsData } = await sb
       .from('events')
       .select('*')
       .eq('status', 'active')
+      .eq('type', 'bottle_collection')
       .order('date') as unknown as { data: DugnadEvent[] | null }
 
     const activeEvents = eventsData || []
