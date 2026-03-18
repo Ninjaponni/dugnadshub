@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import OtpInput from '@/components/ui/OtpInput'
 import { motion } from 'framer-motion'
 import { Mail, Lock } from 'lucide-react'
+import Image from 'next/image'
 
 type View = 'email' | 'otp' | 'password'
 
@@ -137,6 +138,13 @@ export default function LoginPage() {
       >
         {/* Logo/tittel */}
         <div className="text-center mb-10">
+          <Image
+            src="/logo-korps.png"
+            alt="Tillerbyen Skolekorps"
+            width={80}
+            height={80}
+            className="mx-auto mb-4"
+          />
           <h1 className="text-[34px] font-bold tracking-tight">Dugnadshub</h1>
           <p className="text-text-secondary mt-2 text-[17px]">
             Tillerbyen Skolekorps
