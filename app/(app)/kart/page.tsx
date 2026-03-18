@@ -78,7 +78,10 @@ function MapPageContent() {
   const event = overrideEventId ? overrideEvent : autoEvent
   const effectiveEventId = showAll ? null : (event?.id || null)
 
-  const { zones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
+  // Vis ingen soner hvis det ikke er noen aktiv hendelse (og ingen override i URL)
+  const hasActiveEvent = !!event && (event.status === 'active' || !!overrideEventId || showAll)
+  const { zones: rawZones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
+  const zones = hasActiveEvent ? rawZones : []
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)

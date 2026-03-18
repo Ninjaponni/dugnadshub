@@ -266,37 +266,32 @@ export default function HomePage() {
             </div>
           )}
 
-          {futureEvents.length > 0 && (
-            <div className="mb-5">
-              <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-                Kommer senere
-              </h2>
-              {futureEvents.map((event) => (
-                <Link key={event.id} href={`/kart?event=${event.id}`}>
-                <Card className="p-3 flex items-center gap-3 mb-2">
-                  <div className="w-9 h-9 rounded-full bg-text-secondary/5 flex items-center justify-center shrink-0">
-                    <Calendar size={18} className="text-text-secondary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-[15px]">{event.title}</p>
-                    <p className="text-xs text-text-secondary">
-                      {formatDate(event.date, event.start_time)}
-                    </p>
-                  </div>
-                  <span className="text-xs text-text-tertiary shrink-0">
-                    {daysUntilLabel(event.date)}
-                  </span>
-                </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {events.length === 0 && (
-            <Card className="p-5">
-              <p className="text-text-secondary text-center py-2">
-                Ingen kommende dugnader
+          {activeEvents.length === 0 && (
+            <Card className="p-5 mb-5">
+              <p className="text-text-secondary text-center py-2 text-[15px]">
+                Akkurat nå er det ingen dugnad, så du kan ta livet helt med ro.
               </p>
+              {futureEvents.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-black/5">
+                  <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-2 text-center">
+                    Neste opp
+                  </p>
+                  {futureEvents.map((event) => (
+                    <div key={event.id} className="flex items-center gap-3 py-2">
+                      <Calendar size={16} className="text-text-tertiary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{event.title}</p>
+                        <p className="text-xs text-text-tertiary">
+                          {formatDate(event.date, event.start_time)}
+                        </p>
+                      </div>
+                      <span className="text-xs text-text-tertiary shrink-0">
+                        {daysUntilLabel(event.date)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
         </>
