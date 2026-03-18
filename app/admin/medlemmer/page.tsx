@@ -10,13 +10,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import type { Profile, Role, UserBadge, ZoneClaim, DugnadEvent } from '@/lib/supabase/types'
 
-type SortMode = 'alpha' | 'badges' | 'claims' | 'least'
+type SortMode = 'alpha' | 'badges'
 
 const sortLabels: Record<SortMode, string> = {
   alpha: 'A–Å',
   badges: 'Flest merker',
-  claims: 'Mest aktiv',
-  least: 'Minst deltatt',
 }
 
 // Merker som kan tildeles manuelt av admin
@@ -75,10 +73,13 @@ export default function MembersAdminPage() {
     .filter(p => {
       if (!searchQuery) return true
       const q = searchQuery.toLowerCase()
+      const roleLabel = roleLabels[p.role as Role] || ''
       return (
         (p.full_name || '').toLowerCase().includes(q) ||
         p.email.toLowerCase().includes(q) ||
-        (p.child_name || '').toLowerCase().includes(q)
+        (p.child_name || '').toLowerCase().includes(q) ||
+        roleLabel.toLowerCase().includes(q) ||
+        (p.role || '').toLowerCase().includes(q)
       )
     })
     .filter(p => {
@@ -91,10 +92,6 @@ export default function MembersAdminPage() {
       switch (sortMode) {
         case 'badges':
           return getBadgeCountForUser(b.id) - getBadgeCountForUser(a.id)
-        case 'claims':
-          return getClaimCount(b.id) - getClaimCount(a.id)
-        case 'least':
-          return getClaimCount(a.id) - getClaimCount(b.id)
         case 'alpha':
         default:
           return (a.full_name || '').localeCompare(b.full_name || '', 'nb')

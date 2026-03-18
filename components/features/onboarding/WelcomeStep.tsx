@@ -1,9 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Music } from 'lucide-react'
+import Image from 'next/image'
 
-// Steg 1: Velkomstskjerm med korps-ikon
+// Steg 1: Velkomstskjerm med korpslogo
 export default function WelcomeStep() {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
@@ -11,9 +11,9 @@ export default function WelcomeStep() {
         initial={{ scale: 0, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
-        className="w-24 h-24 rounded-[28px] bg-accent/10 flex items-center justify-center mb-8"
+        className="mb-8"
       >
-        <Music size={48} className="text-accent" />
+        <Image src="/logo-korps.png" alt="Tillerbyen Skolekorps" width={96} height={96} />
       </motion.div>
 
       <motion.h1
