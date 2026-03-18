@@ -78,8 +78,8 @@ function MapPageContent() {
   const event = overrideEventId ? overrideEvent : autoEvent
   const effectiveEventId = showAll ? null : (event?.id || null)
 
-  // Vis ingen soner hvis det ikke er noen aktiv hendelse (og ingen override i URL)
-  const hasActiveEvent = !!event && (event.status === 'active' || !!overrideEventId || showAll)
+  // Vis soner kun ved aktiv hendelse, eksplisitt event-ID i URL, eller "vis alle"
+  const hasActiveEvent = showAll || !!overrideEventId || (!!event && event.status === 'active')
   const { zones: rawZones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
   const zones = hasActiveEvent ? rawZones : []
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
@@ -149,7 +149,7 @@ function MapPageContent() {
       {!eventLoading && (
         <div className="absolute top-14 left-4 right-16 z-10 safe-top">
           <div className="glass rounded-xl px-3 py-2 shadow-lg">
-            {event ? (
+            {hasActiveEvent && event ? (
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-medium text-accent uppercase tracking-wide">
@@ -182,7 +182,7 @@ function MapPageContent() {
               </div>
             ) : (
               <p className="text-sm text-text-secondary text-center">
-                Ingen kommende hendelser
+                Ingen aktiv dugnad
               </p>
             )}
           </div>
