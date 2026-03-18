@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone } from '@/lib/supabase/types'
@@ -103,6 +103,11 @@ export default function EventsAdminPage() {
   // Nullstill claims
   const [resetConfirmId, setResetConfirmId] = useState<string | null>(null)
   const [resetting, setResetting] = useState(false)
+
+  // Tab-navigasjon
+  type Tab = 'active' | 'upcoming' | 'completed'
+  const [activeTab, setActiveTab] = useState<Tab>('active')
+  const [exporting, setExporting] = useState<string | null>(null)
 
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
@@ -342,6 +347,28 @@ export default function EventsAdminPage() {
     }).catch(() => {})
   }
 
+  // Eksporter hendelse som CSV
+  async function handleExportCSV(eventId: string) {
+    setExporting(eventId)
+    const { data: { session } } = await supabaseRef.current.auth.getSession()
+    if (!session) { setExporting(null); return }
+
+    const res = await fetch(`/api/export/event?id=${eventId}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    })
+
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'eksport.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+    setExporting(null)
+  }
+
   // Formater dato
   function formatDate(dateStr: string, startTime: string | null, endTime: string | null): string {
     const d = new Date(dateStr)
@@ -490,6 +517,29 @@ export default function EventsAdminPage() {
         )}
       </AnimatePresence>
 
+      {/* Tab-navigasjon */}
+      {!loading && events.length > 0 && (
+        <div className="flex gap-1 bg-black/5 rounded-xl p-1 mb-4">
+          {([
+            ['active', 'Aktive', events.filter(e => e.status === 'active').length],
+            ['upcoming', 'Kommende', events.filter(e => e.status === 'upcoming').length],
+            ['completed', 'Fullførte', events.filter(e => e.status === 'completed').length],
+          ] as const).map(([tab, label, count]) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as Tab)}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === tab
+                  ? 'bg-white shadow-sm text-text-primary'
+                  : 'text-text-secondary'
+              }`}
+            >
+              {label} {count > 0 && <span className="text-xs opacity-60">({count})</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Skeleton loading */}
       {loading && (
         <div className="space-y-3 animate-pulse">
@@ -514,10 +564,34 @@ export default function EventsAdminPage() {
         </Card>
       )}
 
-      {/* Hendelsesliste */}
-      {!loading && events.length > 0 && (
+      {/* Filtrert hendelsesliste */}
+      {!loading && events.length > 0 && (() => {
+        const filtered = events.filter(e => {
+          if (activeTab === 'active') return e.status === 'active'
+          if (activeTab === 'upcoming') return e.status === 'upcoming'
+          return e.status === 'completed'
+        })
+
+        if (filtered.length === 0) {
+          const emptyMessages: Record<Tab, string> = {
+            active: 'Ingen aktive hendelser',
+            upcoming: 'Ingen kommende hendelser',
+            completed: 'Ingen fullførte hendelser ennå',
+          }
+          return (
+            <Card className="p-6 text-center">
+              {activeTab === 'completed'
+                ? <CheckCircle size={32} className="text-text-tertiary mx-auto mb-3" />
+                : <Calendar size={32} className="text-text-tertiary mx-auto mb-3" />
+              }
+              <p className="text-text-secondary">{emptyMessages[activeTab]}</p>
+            </Card>
+          )
+        }
+
+        return (
         <div className="space-y-3">
-          {events.map((event, i) => {
+          {filtered.map((event, i) => {
             const isExpanded = expandedId === event.id
             const isEditing = editingId === event.id
             const isDeleteConfirm = deleteConfirmId === event.id
@@ -820,6 +894,20 @@ export default function EventsAdminPage() {
                                 </Button>
                               )}
 
+                              {/* Eksporter CSV — kun for fullførte */}
+                              {event.status === 'completed' && (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="w-full"
+                                  loading={exporting === event.id}
+                                  onClick={() => handleExportCSV(event.id)}
+                                >
+                                  <Download size={14} />
+                                  Eksporter CSV
+                                </Button>
+                              )}
+
                               {/* Rediger + Slett */}
                               <div className="grid grid-cols-2 gap-2">
                                 <Button
@@ -853,7 +941,8 @@ export default function EventsAdminPage() {
             )
           })}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

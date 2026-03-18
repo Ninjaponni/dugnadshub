@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { User, LogOut, Shield, Bell, RotateCcw } from 'lucide-react'
+import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList } from 'lucide-react'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
@@ -19,6 +19,10 @@ export default function ProfilePage() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
+
+  // Mine dugnader — historikk over fullførte hendelser
+  const [history, setHistory] = useState<Array<{ title: string; date: string; zones: number }>>([])
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -42,10 +46,66 @@ export default function ProfilePage() {
           child_name: p.child_name || '',
           child_group: p.child_group || '',
         })
+
+        // Hent dugnad-historikk: claims → assignments → events (completed)
+        const { data: claims } = await supabase
+          .from('zone_claims')
+          .select('assignment_id')
+          .eq('user_id', user.id)
+
+        if (claims && claims.length > 0) {
+          const assignmentIds = claims.map(c => (c as unknown as { assignment_id: string }).assignment_id)
+          const { data: assignments } = await supabase
+            .from('zone_assignments')
+            .select('event_id')
+            .in('id', assignmentIds)
+
+          if (assignments && assignments.length > 0) {
+            const eventIds = [...new Set(assignments.map(a => (a as unknown as { event_id: string }).event_id))]
+            const { data: events } = await supabase
+              .from('events')
+              .select('id, title, date, status')
+              .in('id', eventIds)
+              .eq('status', 'completed')
+              .order('date', { ascending: false })
+
+            if (events && events.length > 0) {
+              // Tell soner per hendelse
+              const eventAssignmentIds = new Map<string, string[]>()
+              for (const a of assignments) {
+                const ea = a as unknown as { event_id: string; id?: string }
+                // Vi trenger assignment_id → event_id mapping
+                // men vi har bare event_id fra assignments. Trenger å koble tilbake.
+              }
+              // Enklere: grupper claims via assignments per event
+              const { data: fullAssignments } = await supabase
+                .from('zone_assignments')
+                .select('id, event_id')
+                .in('id', assignmentIds)
+
+              const countPerEvent = new Map<string, number>()
+              for (const fa of (fullAssignments || [])) {
+                const a = fa as unknown as { id: string; event_id: string }
+                const ev = (events as unknown as Array<{ id: string }>).find(e => e.id === a.event_id)
+                if (ev) {
+                  countPerEvent.set(a.event_id, (countPerEvent.get(a.event_id) || 0) + 1)
+                }
+              }
+
+              setHistory((events as unknown as Array<{ id: string; title: string; date: string }>).map(e => ({
+                title: e.title,
+                date: e.date,
+                zones: countPerEvent.get(e.id) || 0,
+              })))
+            }
+          }
+        }
+        setHistoryLoaded(true)
       } else {
         // Ny bruker — vis redigeringsskjema
         setEditing(true)
         setForm({ full_name: '', phone: '', child_name: '', child_group: '' })
+        setHistoryLoaded(true)
       }
     }
 
@@ -228,6 +288,31 @@ export default function ProfilePage() {
             </Button>
           </Card>
 
+          {/* Mine dugnader — historikk */}
+          {historyLoaded && history.length > 0 && (
+            <Card className="p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <ClipboardList size={18} className="text-accent" />
+                <h3 className="font-semibold text-[15px]">Mine dugnader</h3>
+              </div>
+              <div className="space-y-2">
+                {history.map((h, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-black/5 last:border-0">
+                    <div>
+                      <p className="text-sm font-medium">{h.title}</p>
+                      <p className="text-xs text-text-secondary">
+                        {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                      {h.zones} {h.zones === 1 ? 'sone' : 'soner'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Admin-lenke (kun for admins) */}
           {profile?.role === 'admin' && (
             <Link href="/admin/oversikt">
@@ -283,7 +368,7 @@ export default function ProfilePage() {
 
           {/* Versjon */}
           <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 4.5
+            Tillerbyen Skolekorps Dugnadshub v 4.6
           </p>
 
           {/* Logg ut */}
