@@ -21,10 +21,11 @@ interface DugnadMapProps {
   initialZoom?: number | null
   flyTarget?: { lng: number; lat: number; zoom: number } | null
   onFlyComplete?: () => void
+  mapStyle?: string
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, flyTarget, onFlyComplete }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, flyTarget, onFlyComplete, mapStyle }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [hasFlown, setHasFlown] = useState(false)
@@ -71,7 +72,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
       minZoom={MAP_CONFIG.minZoom}
       maxZoom={MAP_CONFIG.maxZoom}
       style={{ width: '100%', height: '100%' }}
-      mapStyle={MAP_CONFIG.style}
+      mapStyle={mapStyle || MAP_CONFIG.style}
       onLoad={() => setMapLoaded(true)}
       interactiveLayerIds={mapLoaded ? ['zone-fill'] : []}
       onClick={(e) => {

@@ -5,8 +5,9 @@ export const MAP_CONFIG = {
   zoom: 13,
   minZoom: 11,
   maxZoom: 18,
-  // Mapbox Light stil — ren, Apple Maps-lignende
+  // Mapbox-stiler
   style: 'mapbox://styles/mapbox/light-v11',
+  satelliteStyle: 'mapbox://styles/mapbox/satellite-streets-v12',
 }
 
 // Statusfarger for sonepolygoner

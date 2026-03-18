@@ -98,8 +98,12 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     if (userId) evaluateBadges(userId).catch(() => {})
-    // Auto-push til sjåfører
-    notifyDrivers(zone.name)
+    // Auto-push: sjåfører for flaskeinnsamling, admin for andre typer
+    if (zone.zone_type === 'bottle') {
+      notifyDrivers(zone.name)
+    } else {
+      notifyAdmin(zone.name)
+    }
     setShowCompleteConfirm(false)
     onAction()
     setLoading(false)
@@ -110,6 +114,23 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       const { data: { session } } = await supabaseRef.current.auth.getSession()
       if (!session) return
       await fetch('/api/push/notify-drivers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ zoneName }),
+      })
+    } catch {
+      // Push-feil er ikke kritisk — stille feil
+    }
+  }
+
+  async function notifyAdmin(zoneName: string) {
+    try {
+      const { data: { session } } = await supabaseRef.current.auth.getSession()
+      if (!session) return
+      await fetch('/api/push/notify-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

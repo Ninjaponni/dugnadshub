@@ -9,7 +9,9 @@ import { useActiveEvent } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
+import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
+import { Map as MapIcon, Satellite } from 'lucide-react'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,
@@ -83,6 +85,7 @@ function MapPageContent() {
   const { zones: rawZones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
   const zones = hasActiveEvent ? rawZones : []
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
+  const [isSatellite, setIsSatellite] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
   const [initialZoom, setInitialZoom] = useState<number | null>(null)
@@ -142,7 +145,17 @@ function MapPageContent() {
         initialZoom={initialZoom}
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
+        mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : MAP_CONFIG.style}
       />
+
+      {/* Satellitt/kart-toggle */}
+      <button
+        onClick={() => setIsSatellite(s => !s)}
+        className="absolute top-[168px] right-[10px] z-10 safe-top w-[29px] h-[29px] bg-white rounded-md shadow flex items-center justify-center"
+        aria-label={isSatellite ? 'Vis kart' : 'Vis satellitt'}
+      >
+        {isSatellite ? <MapIcon size={16} className="text-gray-700" /> : <Satellite size={16} className="text-gray-700" />}
+      </button>
 
       <MapLegend />
 

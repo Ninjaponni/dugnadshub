@@ -269,12 +269,12 @@ export default function HomePage() {
           {activeEvents.length === 0 && (
             <Card className="p-5 mb-5">
               <p className="text-text-secondary text-center py-2 text-[15px]">
-                Akkurat nå er det ingen dugnad, så du kan ta livet helt med ro.
+                Ingen aktive dugnader nå,<br />du kan ta livet helt med ro.
               </p>
               {futureEvents.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-black/5">
                   <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-2 text-center">
-                    Neste opp
+                    Planlagte dugnader
                   </p>
                   {futureEvents.map((event) => (
                     <div key={event.id} className="flex items-center gap-3 py-2">
