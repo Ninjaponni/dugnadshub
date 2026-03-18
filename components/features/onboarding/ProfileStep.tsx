@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -16,6 +16,27 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
   const [form, setForm] = useState({ full_name: '', phone: '', child_name: '', child_group: '' })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  // Hent eksisterende profildata
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoaded(true); return }
+      const { data } = await supabase.from('profiles').select('full_name, phone, child_name, child_group').eq('id', user.id).single() as unknown as { data: { full_name: string | null; phone: string | null; child_name: string | null; child_group: string | null } | null }
+      if (data) {
+        setForm({
+          full_name: data.full_name || '',
+          phone: data.phone || '',
+          child_name: data.child_name || '',
+          child_group: data.child_group || '',
+        })
+      }
+      setLoaded(true)
+    }
+    load()
+  }, [])
 
   const inputClass = `w-full px-4 py-3 rounded-xl bg-white/80 border-0 text-[17px]
     placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30`
