@@ -15,14 +15,14 @@ const steps = [
   {
     icon: Package,
     title: 'Samle inn',
-    description: 'Gå runden og samle flasker og boks',
+    description: 'Gå runden og samle inn flasker',
     color: 'text-success',
     bg: 'bg-success/10',
   },
   {
     icon: Truck,
-    title: 'Lever',
-    description: 'Marker som ferdig, sjåfør henter',
+    title: 'Ferdig!',
+    description: 'Marker sonen som ferdig, så henter sjåføren',
     color: 'text-purple',
     bg: 'bg-purple/10',
   },
@@ -44,7 +44,7 @@ export default function HowItWorksStep() {
         transition={{ delay: 0.1 }}
         className="text-text-secondary text-[15px] mb-8"
       >
-        Velg sone, gå ut, lever
+        Tre enkle steg
       </motion.p>
 
       <div className="w-full max-w-[300px] space-y-4">

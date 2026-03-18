@@ -46,6 +46,18 @@ export async function evaluateBadges(userId: string) {
 
   const completedEvents = (events || []).filter(e => e.status === 'completed')
 
+  // --- Badge 16: Profil-proffen — fylte ut profilen ---
+  if (!earned.has(16)) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, phone, child_name, child_group')
+      .eq('id', userId)
+      .single() as unknown as { data: { full_name: string | null; phone: string | null; child_name: string | null; child_group: string | null } | null }
+    if (profile?.full_name && profile?.phone && profile?.child_name && profile?.child_group) {
+      toAward.push(16)
+    }
+  }
+
   // --- Badge 2: Kartleser — tok en sone for første gang ---
   if (!earned.has(2) && userClaims.length > 0) {
     toAward.push(2)

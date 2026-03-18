@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { evaluateBadges } from '@/lib/badges/evaluator'
 import Button from '@/components/ui/Button'
 
 interface ProfileStepProps {
@@ -36,6 +37,8 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
     })
 
     if (!error) {
+      // Tildel Profil-proffen-merket hvis alle felt er fylt ut
+      await evaluateBadges(user.id)
       setSaved(true)
       onProfileSaved()
     }
