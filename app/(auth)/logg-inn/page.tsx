@@ -131,7 +131,7 @@ export default function LoginPage() {
           >
             <h2 className="text-xl font-semibold mb-2">Skriv inn koden</h2>
             <p className="text-text-secondary text-[15px] mb-6">
-              Vi sendte en 6-sifret kode til<br />
+              Vi sendte en kode til<br />
               <span className="font-medium text-text-primary">{email}</span>
             </p>
 
