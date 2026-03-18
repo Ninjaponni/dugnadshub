@@ -26,6 +26,7 @@ export default function DriverPage() {
   const [events, setEvents] = useState<DugnadEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [pickingUp, setPickingUp] = useState<string | null>(null)
+  const [confirmPickUp, setConfirmPickUp] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
 
@@ -236,15 +237,41 @@ export default function DriverPage() {
                     </div>
                   )}
 
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    loading={pickingUp === zone.assignmentId}
-                    onClick={() => handlePickUp(zone.assignmentId)}
-                  >
-                    <Check size={14} />
-                    Marker som hentet
-                  </Button>
+                  {confirmPickUp === zone.assignmentId ? (
+                    <div className="space-y-2">
+                      <p className="text-sm text-text-secondary text-center">
+                        Er alle flasker hentet i denne sonen?
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="flex-1"
+                          onClick={() => setConfirmPickUp(null)}
+                        >
+                          Avbryt
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          loading={pickingUp === zone.assignmentId}
+                          onClick={() => { setConfirmPickUp(null); handlePickUp(zone.assignmentId) }}
+                        >
+                          <Check size={14} />
+                          Ja, hentet
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setConfirmPickUp(zone.assignmentId)}
+                    >
+                      <Check size={14} />
+                      Marker som hentet
+                    </Button>
+                  )}
                 </Card>
               </motion.div>
             ))}
