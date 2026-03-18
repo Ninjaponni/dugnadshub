@@ -9,8 +9,8 @@ interface OtpInputProps {
   error?: boolean
 }
 
-// 8-sifret OTP-kode med auto-advance, backspace og paste-støtte
-const LENGTH = 8
+// 6-sifret OTP-kode med auto-advance, backspace og paste-støtte
+const LENGTH = 6
 
 export default function OtpInput({ onComplete, disabled, error }: OtpInputProps) {
   const [digits, setDigits] = useState<string[]>(Array(LENGTH).fill(''))
@@ -71,7 +71,7 @@ export default function OtpInput({ onComplete, disabled, error }: OtpInputProps)
 
   return (
     <motion.div
-      className="flex gap-1.5 justify-center"
+      className="flex gap-2.5 justify-center"
       animate={error ? { x: [0, -10, 10, -10, 10, 0] } : {}}
       transition={{ duration: 0.4 }}
     >
@@ -89,7 +89,7 @@ export default function OtpInput({ onComplete, disabled, error }: OtpInputProps)
           onKeyDown={e => handleKeyDown(i, e)}
           onFocus={() => handleFocus(i)}
           className={`
-            w-10 h-12 text-center text-xl font-semibold rounded-lg
+            w-12 h-14 text-center text-2xl font-semibold rounded-xl
             bg-bg border-2 transition-colors duration-150
             focus:outline-none focus:ring-0
             disabled:opacity-40

@@ -10,7 +10,7 @@ import { Mail, Lock } from 'lucide-react'
 
 type View = 'email' | 'otp' | 'password'
 
-// Innlogging — OTP-kode + passord (fallback)
+// Innlogging — egen OTP via Resend + passord (fallback)
 export default function LoginPage() {
   const [view, setView] = useState<View>('email')
   const [email, setEmail] = useState('')
@@ -28,16 +28,19 @@ export default function LoginPage() {
     return () => clearTimeout(timer)
   }, [cooldown])
 
-  // Send OTP-kode til e-post
+  // Send OTP-kode via egen API-rute (Resend)
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
 
-    if (error) {
+    if (!res.ok) {
       setError('Kunne ikke sende kode. Prøv igjen.')
     } else {
       setView('otp')
@@ -52,32 +55,49 @@ export default function LoginPage() {
     setError('')
     setOtpError(false)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
 
-    if (error) {
+    if (!res.ok) {
       setError('Kunne ikke sende ny kode. Prøv igjen.')
     } else {
       setCooldown(60)
     }
   }
 
-  // Verifiser OTP-kode
+  // Verifiser OTP-kode via egen API, deretter opprett sesjon
   const handleVerifyOtp = useCallback(async (code: string) => {
     setLoading(true)
     setError('')
     setOtpError(false)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email',
+    const res = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
     })
 
-    if (error) {
+    if (!res.ok) {
       setOtpError(true)
       setError('Feil eller utløpt kode. Prøv igjen.')
+      setLoading(false)
+      return
+    }
+
+    // Bruk token_hash til å opprette klient-sesjon
+    const { token_hash, type } = await res.json()
+    const supabase = createClient()
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash,
+      type,
+    })
+
+    if (verifyError) {
+      setOtpError(true)
+      setError('Kunne ikke logge inn. Prøv igjen.')
     } else {
       router.replace('/hjem')
     }
@@ -131,7 +151,7 @@ export default function LoginPage() {
           >
             <h2 className="text-xl font-semibold mb-2">Skriv inn koden</h2>
             <p className="text-text-secondary text-[15px] mb-6">
-              Vi sendte en kode til<br />
+              Vi sendte en 6-sifret kode til<br />
               <span className="font-medium text-text-primary">{email}</span>
             </p>
 
