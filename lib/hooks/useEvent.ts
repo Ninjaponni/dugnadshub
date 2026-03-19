@@ -30,3 +30,32 @@ export function useActiveEvent() {
 
   return { event, loading }
 }
+
+// Henter alle aktive/kommende kart-relevante hendelser
+export function useActiveEvents() {
+  const [events, setEvents] = useState<DugnadEvent[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabaseRef = useRef(createClient())
+
+  useEffect(() => {
+    async function fetch() {
+      const { data } = await supabaseRef.current
+        .from('events')
+        .select('*')
+        .in('status', ['active', 'upcoming'])
+        .in('type', ['bottle_collection', 'lapper'])
+        .order('date', { ascending: true })
+
+      const all = (data || []) as unknown as DugnadEvent[]
+      // Aktive først, deretter kommende
+      const active = all.filter(e => e.status === 'active')
+      const upcoming = all.filter(e => e.status === 'upcoming')
+      setEvents([...active, ...upcoming])
+      setLoading(false)
+    }
+
+    fetch()
+  }, [])
+
+  return { events, loading }
+}

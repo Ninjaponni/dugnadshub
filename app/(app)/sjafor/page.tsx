@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Truck, MapPin, Check, Package } from 'lucide-react'
+import { Truck, MapPin, Check, Package, Info } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { DugnadEvent } from '@/lib/supabase/types'
@@ -17,7 +17,7 @@ interface DriverZone {
   area: string
   status: string
   households: number
-  collectors: Array<{ full_name: string | null; phone: string | null }>
+  collectors: Array<{ full_name: string | null; phone: string | null; notes: string | null }>
 }
 
 // Sjåførvisning — viser soner klare for henting
@@ -86,11 +86,12 @@ export default function DriverPage() {
     const assignmentIds = assignments.map(a => a.id)
     const { data: claims } = await sb
       .from('zone_claims')
-      .select('assignment_id, user_id, profiles(full_name, phone)')
+      .select('assignment_id, user_id, notes, profiles(full_name, phone)')
       .in('assignment_id', assignmentIds) as unknown as {
         data: Array<{
           assignment_id: string
           user_id: string
+          notes: string | null
           profiles: { full_name: string | null; phone: string | null } | null
         }> | null
       }
@@ -111,6 +112,7 @@ export default function DriverPage() {
         collectors: zoneClaims.map(c => ({
           full_name: c.profiles?.full_name || null,
           phone: c.profiles?.phone || null,
+          notes: c.notes || null,
         })),
       }
     })
@@ -161,6 +163,17 @@ export default function DriverPage() {
           )}
         </div>
       </div>
+
+      {/* Sjåførnotater fra aktive hendelser */}
+      {!loading && events.filter(e => e.driver_notes).map(e => (
+        <div key={e.id} className="mb-4 flex items-start gap-3 rounded-xl bg-blue-50 p-3">
+          <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-blue-600 mb-0.5">{e.title}</p>
+            <p className="text-sm text-blue-800">{e.driver_notes}</p>
+          </div>
+        </div>
+      ))}
 
       {/* Skeleton */}
       {loading && (
@@ -225,12 +238,17 @@ export default function DriverPage() {
                         Samlere
                       </p>
                       {zone.collectors.map((c, j) => (
-                        <div key={j} className="flex items-center gap-2 text-sm">
-                          <span>{c.full_name || 'Ukjent'}</span>
-                          {c.phone && (
-                            <a href={`tel:${c.phone}`} className="text-accent text-xs">
-                              {c.phone}
-                            </a>
+                        <div key={j}>
+                          <div className="flex items-center gap-2 text-sm">
+                            <span>{c.full_name || 'Ukjent'}</span>
+                            {c.phone && (
+                              <a href={`tel:${c.phone}`} className="text-accent text-xs">
+                                {c.phone}
+                              </a>
+                            )}
+                          </div>
+                          {c.notes && (
+                            <p className="text-xs text-text-tertiary ml-0 mt-0.5">{c.notes}</p>
                           )}
                         </div>
                       ))}

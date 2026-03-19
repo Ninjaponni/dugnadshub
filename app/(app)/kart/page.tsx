@@ -5,13 +5,13 @@ import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeZones, type ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
-import { useActiveEvent } from '@/lib/hooks/useEvent'
+import { useActiveEvent, useActiveEvents } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
-import { Map as MapIcon, Satellite } from 'lucide-react'
+import { Map as MapIcon, Satellite, ChevronDown } from 'lucide-react'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,
@@ -59,10 +59,13 @@ function MapPageContent() {
   const overrideEventId = searchParams.get('event')
   const showAll = searchParams.get('alle') === '1'
 
+  const { events: allEvents, loading: eventsLoading } = useActiveEvents()
   const { event: autoEvent, loading: eventLoading } = useActiveEvent()
 
   // Bruk override-event fra URL, ellers den automatiske (nærmeste)
   const [overrideEvent, setOverrideEvent] = useState<DugnadEvent | null>(null)
+  const [selectedEventIndex, setSelectedEventIndex] = useState(0)
+  const [showEventPicker, setShowEventPicker] = useState(false)
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
@@ -77,7 +80,12 @@ function MapPageContent() {
       })
   }, [overrideEventId])
 
-  const event = overrideEventId ? overrideEvent : autoEvent
+  // Velg event: URL-override > valgt fra liste > auto (første aktive)
+  const event = overrideEventId
+    ? overrideEvent
+    : allEvents.length > 1
+      ? allEvents[selectedEventIndex] || allEvents[0]
+      : autoEvent
   const effectiveEventId = showAll ? null : (event?.id || null)
 
   // Vis soner kun ved aktiv hendelse, eksplisitt event-ID i URL, eller "vis alle"
@@ -159,17 +167,29 @@ function MapPageContent() {
 
       <MapLegend />
 
-      {!eventLoading && (
+      {!eventLoading && !eventsLoading && (
         <div className="absolute top-14 left-4 right-16 z-10 safe-top">
           <div className="glass rounded-xl px-3 py-2 shadow-lg">
             {hasActiveEvent && event ? (
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-medium text-accent uppercase tracking-wide">
-                    {event.status === 'active' ? 'Pågår nå' : 'Kommende'}
-                  </p>
-                </div>
-                <p className="text-sm font-semibold mb-1.5">{event.title}</p>
+                {/* Klikkbar header hvis flere hendelser */}
+                <button
+                  onClick={() => allEvents.length > 1 && !overrideEventId ? setShowEventPicker(v => !v) : undefined}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-medium text-accent uppercase tracking-wide">
+                      {event.status === 'active' ? 'Pågår nå' : 'Kommende'}
+                    </p>
+                    {allEvents.length > 1 && !overrideEventId && (
+                      <span className="flex items-center gap-0.5 text-[11px] text-text-tertiary">
+                        {selectedEventIndex + 1}/{allEvents.length}
+                        <ChevronDown size={12} className={`transition-transform ${showEventPicker ? 'rotate-180' : ''}`} />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold mb-1.5">{event.title}</p>
+                </button>
                 <div className="flex items-center gap-2 flex-wrap text-xs text-text-secondary">
                   {availableCount > 0 && <span className="inline-flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#EF4444' }} />
@@ -199,6 +219,34 @@ function MapPageContent() {
               </p>
             )}
           </div>
+
+          {/* Hendelse-velger dropdown */}
+          {showEventPicker && allEvents.length > 1 && (
+            <div className="glass rounded-xl mt-1 shadow-lg overflow-hidden">
+              {allEvents.map((ev, i) => (
+                <button
+                  key={ev.id}
+                  onClick={() => {
+                    setSelectedEventIndex(i)
+                    setShowEventPicker(false)
+                    setSelectedZone(null)
+                  }}
+                  className={`w-full text-left px-3 py-2.5 text-sm border-b border-black/5 last:border-0 active:bg-black/5 ${
+                    i === selectedEventIndex ? 'bg-accent/5 font-semibold' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{ev.title}</span>
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                      ev.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {ev.status === 'active' ? 'Aktiv' : 'Kommende'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   const assignmentIds = assignments.map(a => a.id)
   const { data: claims } = await supabase
     .from('zone_claims')
-    .select('assignment_id, user_id')
+    .select('assignment_id, user_id, notes')
     .in('assignment_id', assignmentIds)
 
   // Hent profiler for alle claims
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
   const areaLabels: Record<string, string> = { NORD: 'Nord', SOR: 'Sør' }
 
   // Grupper claims per assignment
-  const claimsByAssignment = new Map<string, Array<{ user_id: string }>>()
+  const claimsByAssignment = new Map<string, Array<{ user_id: string; notes: string | null }>>()
   for (const c of (claims || [])) {
     const list = claimsByAssignment.get(c.assignment_id) || []
     list.push(c)
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     picked_up: 'Hentet',
   }
 
-  const header = 'Sone,Område,Status,Samler 1,Telefon 1,Samler 2,Telefon 2,Ferdig'
+  const header = 'Sone,Område,Status,Samler 1,Telefon 1,Notat 1,Samler 2,Telefon 2,Notat 2,Ferdig'
   const rows = assignments.map(a => {
     const zone = zoneMap.get(a.zone_id)
     const zoneClaims = claimsByAssignment.get(a.id) || []
@@ -94,8 +94,10 @@ export async function GET(request: NextRequest) {
       csvEscape(statusLabels[a.status] || a.status),
       csvEscape(p1?.full_name || ''),
       csvEscape(p1?.phone || ''),
+      csvEscape(zoneClaims[0]?.notes || ''),
       csvEscape(p2?.full_name || ''),
       csvEscape(p2?.phone || ''),
+      csvEscape(zoneClaims[1]?.notes || ''),
       ferdig,
     ].join(',')
   })

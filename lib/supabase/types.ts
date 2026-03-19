@@ -53,6 +53,7 @@ export interface DugnadEvent {
   area: EventArea
   status: EventStatus
   description: string | null
+  driver_notes: string | null
   created_by: string
 }
 
@@ -68,6 +69,7 @@ export interface ZoneClaim {
   assignment_id: string
   user_id: string
   claimed_at: string
+  notes: string | null
 }
 
 export interface DriverAssignment {

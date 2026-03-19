@@ -31,6 +31,7 @@ interface EventFormData {
   endTime: string
   area: EventArea
   description: string
+  driverNotes: string
 }
 
 const emptyForm: EventFormData = {
@@ -41,6 +42,7 @@ const emptyForm: EventFormData = {
   endTime: '',
   area: 'begge',
   description: '',
+  driverNotes: '',
 }
 
 const statusLabels: Record<EventStatus, string> = {
@@ -191,6 +193,7 @@ export default function EventsAdminPage() {
       end_time: form.endTime || null,
       area: form.area,
       description: form.description || null,
+      driver_notes: form.driverNotes || null,
       status: 'upcoming',
       created_by: user.id,
     }).select().single() as { data: DugnadEvent | null; error: unknown }
@@ -224,6 +227,7 @@ export default function EventsAdminPage() {
       end_time: editForm.endTime || null,
       area: editForm.area,
       description: editForm.description || null,
+      driver_notes: editForm.driverNotes || null,
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
@@ -247,6 +251,7 @@ export default function EventsAdminPage() {
       endTime: event.end_time || '',
       area: event.area || 'begge',
       description: event.description || '',
+      driverNotes: event.driver_notes || '',
     })
   }
 
@@ -471,6 +476,18 @@ export default function EventsAdminPage() {
             onChange={e => setData(prev => ({ ...prev, description: e.target.value }))}
             rows={2}
             placeholder="Ekstra info for deltakerne..."
+            className={`${inputClass} resize-none`}
+          />
+        </div>
+
+        {/* Sjåførnotat */}
+        <div>
+          <label className="text-xs font-medium text-text-secondary block mb-1">Sjåførnotat (valgfritt)</label>
+          <textarea
+            value={data.driverNotes}
+            onChange={e => setData(prev => ({ ...prev, driverNotes: e.target.value }))}
+            rows={2}
+            placeholder="F.eks. Lever flasker til Infinitum Torgardstrøa 5"
             className={`${inputClass} resize-none`}
           />
         </div>

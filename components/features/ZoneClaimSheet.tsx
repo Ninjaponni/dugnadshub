@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
-import { StickyNote, Navigation, CheckCircle } from 'lucide-react'
+import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import dropPointsData from '@/lib/map/drop-points-data'
@@ -40,6 +40,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editingNote, setEditingNote] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
   const supabaseRef = useRef(createClient())
 
   if (!zone) return null
@@ -150,6 +153,20 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     onClose()
   }
 
+  // Lagre notat på brukerens claim
+  async function handleSaveNote() {
+    if (!zone?.assignment_id || !userId) return
+    setSavingNote(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseRef.current.from('zone_claims') as any)
+      .update({ notes: noteText || null })
+      .eq('assignment_id', zone.assignment_id)
+      .eq('user_id', userId)
+    setEditingNote(false)
+    setSavingNote(false)
+    onAction()
+  }
+
   return (
     <BottomSheet open={!!zone} onClose={onClose} title={zone.name}>
       {/* Status og nøkkelinfo */}
@@ -205,19 +222,73 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide">
             Samlere
           </p>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {zone.claims.map((claim) => (
-              <div key={claim.user_id} className="flex items-center gap-2 text-sm">
-                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
-                  {claim.full_name?.charAt(0) || '?'}
+              <div key={claim.user_id}>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
+                    {claim.full_name?.charAt(0) || '?'}
+                  </div>
+                  <span>{claim.full_name || 'Ukjent'}</span>
+                  {claim.user_id === userId && (
+                    <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
+                  )}
                 </div>
-                <span>{claim.full_name || 'Ukjent'}</span>
-                {claim.user_id === userId && (
-                  <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
+                {/* Vis notat under samlerens navn */}
+                {claim.notes && (
+                  <p className="ml-8 text-xs text-text-secondary mt-0.5 flex items-center gap-1">
+                    <MessageSquare size={10} className="shrink-0" />
+                    {claim.notes}
+                  </p>
                 )}
               </div>
             ))}
           </div>
+
+          {/* Legg til / rediger eget notat */}
+          {userHasClaimed && !isFinished && (
+            <div className="mt-3">
+              {editingNote ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={noteText}
+                    onChange={e => setNoteText(e.target.value)}
+                    rows={2}
+                    placeholder="F.eks. Med 3 barn: Ola, Kari, Per"
+                    className="w-full px-3 py-2 rounded-xl bg-black/5 text-sm outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingNote(false)}
+                      className="flex-1 py-1.5 text-sm font-medium text-text-secondary rounded-lg active:bg-black/5"
+                    >
+                      Avbryt
+                    </button>
+                    <button
+                      onClick={handleSaveNote}
+                      disabled={savingNote}
+                      className="flex-1 py-1.5 text-sm font-medium text-accent rounded-lg active:bg-accent/10"
+                    >
+                      {savingNote ? 'Lagrer...' : 'Lagre'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    const myClaim = zone.claims.find(c => c.user_id === userId)
+                    setNoteText(myClaim?.notes || '')
+                    setEditingNote(true)
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-accent font-medium mt-1 active:opacity-70"
+                >
+                  <Pencil size={12} />
+                  {zone.claims.find(c => c.user_id === userId)?.notes ? 'Rediger notat' : 'Legg til notat'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

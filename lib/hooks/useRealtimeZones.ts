@@ -7,7 +7,7 @@ import type { ZoneAssignment, ZoneClaim, Zone } from '@/lib/supabase/types'
 export interface ZoneWithStatus extends Zone {
   assignment_id: string | null
   status: ZoneAssignment['status']
-  claims: Array<{ user_id: string; full_name: string | null }>
+  claims: Array<{ user_id: string; full_name: string | null; notes: string | null }>
 }
 
 // Lytter på sone-endringer i sanntid via Supabase Realtime
@@ -27,7 +27,7 @@ export function useRealtimeZones(eventId: string | null) {
     if (!allZones) return
 
     let assignments: ZoneAssignment[] = []
-    let claims: (ZoneClaim & { profiles?: { full_name: string | null } })[] = []
+    let claims: (ZoneClaim & { profiles?: { full_name: string | null } } & { notes: string | null })[] = []
 
     if (eventId) {
       const { data: assignData } = await supabase
@@ -40,7 +40,7 @@ export function useRealtimeZones(eventId: string | null) {
       if (assignments.length > 0) {
         const { data: claimData } = await supabase
           .from('zone_claims')
-          .select('*, profiles(full_name)')
+          .select('*, notes, profiles(full_name)')
           .in('assignment_id', assignments.map(a => a.id))
 
         if (claimData) claims = claimData as unknown as typeof claims
@@ -60,6 +60,7 @@ export function useRealtimeZones(eventId: string | null) {
         claims: zoneClaims.map(c => ({
           user_id: c.user_id,
           full_name: c.profiles?.full_name || null,
+          notes: c.notes || null,
         })),
       }
     })
