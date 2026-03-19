@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!otpRow) {
+    // Forsinkelse på 1 sekund for å bremse brute-force
+    await new Promise(r => setTimeout(r, 1000))
     return NextResponse.json({ error: 'Feil eller utløpt kode' }, { status: 401 })
   }
 
@@ -45,16 +47,20 @@ export async function POST(request: NextRequest) {
 
   const emailLower = email.toLowerCase()
 
-  // Finn eller opprett bruker
-  const { data: { users } } = await supabase.auth.admin.listUsers()
-  const existingUser = users.find(u => u.email?.toLowerCase() === emailLower)
+  // Finn eller opprett bruker (unngår listUsers som bare returnerer første side)
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', emailLower)
+    .single()
 
-  if (!existingUser) {
+  if (!existingProfile) {
+    // Prøv å opprette — håndter "already exists" gracefully
     const { error: createError } = await supabase.auth.admin.createUser({
       email: emailLower,
       email_confirm: true,
     })
-    if (createError) {
+    if (createError && !createError.message.includes('already been registered')) {
       return NextResponse.json({ error: 'Kunne ikke opprette bruker' }, { status: 500 })
     }
   }

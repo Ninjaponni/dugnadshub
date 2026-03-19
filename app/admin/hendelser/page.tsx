@@ -110,6 +110,7 @@ export default function EventsAdminPage() {
   type Tab = 'active' | 'upcoming' | 'completed'
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [exporting, setExporting] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
@@ -258,10 +259,16 @@ export default function EventsAdminPage() {
   // Slett hendelse (og tilhorende zone_assignments)
   async function handleDelete(eventId: string) {
     setDeleting(true)
+    setErrorMsg(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('zone_assignments') as any).delete().eq('event_id', eventId)
+    const { error: assignErr } = await (supabaseRef.current.from('zone_assignments') as any).delete().eq('event_id', eventId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('events') as any).delete().eq('id', eventId)
+    const { error: eventErr } = await (supabaseRef.current.from('events') as any).delete().eq('id', eventId)
+    if (assignErr || eventErr) {
+      setErrorMsg('Kunne ikke slette hendelsen')
+      setDeleting(false)
+      return
+    }
     setDeleteConfirmId(null)
     setDeleting(false)
     setExpandedId(null)
@@ -271,25 +278,34 @@ export default function EventsAdminPage() {
   // Endre status pa hendelse — egne knapper per status
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
     setUpdatingId(eventId)
+    setErrorMsg(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
+    const { error } = await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
+    if (error) {
+      setErrorMsg('Kunne ikke endre status')
+      setUpdatingId(null)
+      return
+    }
 
     // Send push ved aktivering
     if (newStatus === 'active') {
       const event = events.find(e => e.id === eventId)
       if (event) {
-        const { data: { session } } = await supabaseRef.current.auth.getSession()
-        if (session) {
-          await fetch('/api/push/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-            body: JSON.stringify({
-              title: 'Dugnad er i gang!',
-              body: `${event.title} er nå aktiv — ta en sone!`,
-              url: `/kart?event=${eventId}`,
-              filter: { all: true },
-            }),
-          }).catch(() => {})
+        const { data: { user } } = await supabaseRef.current.auth.getUser()
+        if (user) {
+          const { data: { session } } = await supabaseRef.current.auth.getSession()
+          if (session) {
+            await fetch('/api/push/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+              body: JSON.stringify({
+                title: 'Dugnad er i gang!',
+                body: `${event.title} er nå aktiv — ta en sone!`,
+                url: `/kart?event=${eventId}`,
+                filter: { all: true },
+              }),
+            }).catch(() => {})
+          }
         }
       }
     }
@@ -301,6 +317,7 @@ export default function EventsAdminPage() {
   // Nullstill alle claims og reset assignments for en hendelse
   async function handleResetClaims(eventId: string) {
     setResetting(true)
+    setErrorMsg(null)
     // Hent assignments for denne hendelsen
     const { data: assignments } = await supabaseRef.current
       .from('zone_assignments')
@@ -311,10 +328,15 @@ export default function EventsAdminPage() {
       const assignmentIds = assignments.map(a => a.id)
       // Slett alle claims
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseRef.current.from('zone_claims') as any).delete().in('assignment_id', assignmentIds)
+      const { error: claimErr } = await (supabaseRef.current.from('zone_claims') as any).delete().in('assignment_id', assignmentIds)
       // Reset assignment-status til available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseRef.current.from('zone_assignments') as any).update({ status: 'available' }).eq('event_id', eventId)
+      const { error: assignErr } = await (supabaseRef.current.from('zone_assignments') as any).update({ status: 'available' }).eq('event_id', eventId)
+      if (claimErr || assignErr) {
+        setErrorMsg('Kunne ikke nullstille claims')
+        setResetting(false)
+        return
+      }
     }
 
     setResetConfirmId(null)
@@ -511,6 +533,16 @@ export default function EventsAdminPage() {
           {showForm ? 'Avbryt' : 'Ny hendelse'}
         </Button>
       </div>
+
+      {/* Feilmelding */}
+      {errorMsg && (
+        <div className="mb-4 p-3 rounded-xl bg-danger/10 text-danger text-sm font-medium flex items-center justify-between">
+          <span>{errorMsg}</span>
+          <button onClick={() => setErrorMsg(null)} className="text-danger/60 ml-2">
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Opprettskjema */}
       <AnimatePresence>

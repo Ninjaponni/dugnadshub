@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -34,7 +34,7 @@ export default function HomePage() {
   const [myZones, setMyZones] = useState<MyZone[]>([])
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
 
   // Sjekk onboarding-status ved mount
   useEffect(() => {
@@ -45,35 +45,36 @@ export default function HomePage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) { setLoading(false); return }
 
       // Parallelle kall i stedet for sekvensielle
       const [profileRes, eventsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single() as unknown as Promise<{ data: unknown }>,
-        supabase.from('events').select('*').in('status', ['upcoming', 'active']).order('date', { ascending: true }) as unknown as Promise<{ data: unknown[] | null }>,
+        supabaseRef.current.from('profiles').select('*').eq('id', user.id).single() as unknown as Promise<{ data: unknown }>,
+        supabaseRef.current.from('events').select('*').in('status', ['upcoming', 'active']).order('date', { ascending: true }) as unknown as Promise<{ data: unknown[] | null }>,
       ])
 
       if (profileRes.data) setProfile(profileRes.data as Profile)
       const allEvents = (eventsRes.data || []) as unknown as DugnadEvent[]
       if (allEvents.length === 0) { setLoading(false); return }
 
-      // Hent ALLE assignments og claims i to kall (ikke per event/per sone)
+      // Hent assignments og soner parallelt, deretter claims
       const eventIds = allEvents.map(e => e.id)
 
-      const [assignRes, claimRes, zonesRes] = await Promise.all([
-        supabase.from('zone_assignments').select('*').in('event_id', eventIds),
-        supabase.from('zone_claims').select('*, profiles(full_name)').in(
-          'assignment_id',
-          // Trenger assignment IDer — hent alle
-          (await supabase.from('zone_assignments').select('id').in('event_id', eventIds))
-            .data?.map((a: { id: string }) => a.id) || []
-        ),
-        supabase.from('zones').select('id, name, area'),
+      const [assignRes, zonesRes] = await Promise.all([
+        supabaseRef.current.from('zone_assignments').select('*').in('event_id', eventIds),
+        supabaseRef.current.from('zones').select('id, name, area'),
       ])
 
       const assignments = (assignRes.data || []) as unknown as Array<{ id: string; event_id: string; zone_id: string; status: string }>
-      const claims = (claimRes.data || []) as unknown as Array<{ id: string; assignment_id: string; user_id: string; profiles: { full_name: string } | null }>
+
+      // Hent claims basert på assignment IDer fra forrige kall
+      const assignmentIds = assignments.map(a => a.id)
+      const { data: claimData } = assignmentIds.length > 0
+        ? await supabaseRef.current.from('zone_claims').select('*, profiles(full_name)').in('assignment_id', assignmentIds)
+        : { data: [] }
+
+      const claims = (claimData || []) as unknown as Array<{ id: string; assignment_id: string; user_id: string; profiles: { full_name: string } | null }>
       const zoneMap = new Map((zonesRes.data || []).map((z: { id: string; name: string; area: string }) => [z.id, z]))
 
       // Bygg progresjon per event
@@ -126,7 +127,8 @@ export default function HomePage() {
     }
 
     load()
-  }, [supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const greeting = () => {
     const hour = new Date().getHours()
@@ -146,9 +148,9 @@ export default function HomePage() {
     setShowOnboarding(false)
     // Refresh profildata etter evt. lagring i onboarding
     async function reload() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
       if (data) setProfile(data as unknown as Profile)
     }
     reload()

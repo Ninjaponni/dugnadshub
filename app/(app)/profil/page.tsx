@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
@@ -24,14 +24,14 @@ export default function ProfilePage() {
   const [history, setHistory] = useState<Array<{ title: string; date: string; zones: number }>>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) return
 
-      const { data } = await supabase
+      const { data } = await supabaseRef.current
         .from('profiles')
         .select('*')
         .eq('id', user.id)
@@ -48,21 +48,21 @@ export default function ProfilePage() {
         })
 
         // Hent dugnad-historikk: claims → assignments → events (completed)
-        const { data: claims } = await supabase
+        const { data: claims } = await supabaseRef.current
           .from('zone_claims')
           .select('assignment_id')
           .eq('user_id', user.id)
 
         if (claims && claims.length > 0) {
           const assignmentIds = claims.map(c => (c as unknown as { assignment_id: string }).assignment_id)
-          const { data: assignments } = await supabase
+          const { data: assignments } = await supabaseRef.current
             .from('zone_assignments')
             .select('event_id')
             .in('id', assignmentIds)
 
           if (assignments && assignments.length > 0) {
             const eventIds = [...new Set(assignments.map(a => (a as unknown as { event_id: string }).event_id))]
-            const { data: events } = await supabase
+            const { data: events } = await supabaseRef.current
               .from('events')
               .select('id, title, date, status')
               .in('id', eventIds)
@@ -78,7 +78,7 @@ export default function ProfilePage() {
                 // men vi har bare event_id fra assignments. Trenger å koble tilbake.
               }
               // Enklere: grupper claims via assignments per event
-              const { data: fullAssignments } = await supabase
+              const { data: fullAssignments } = await supabaseRef.current
                 .from('zone_assignments')
                 .select('id, event_id')
                 .in('id', assignmentIds)
@@ -110,7 +110,8 @@ export default function ProfilePage() {
     }
 
     load()
-  }, [supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Sjekk push-status
   useEffect(() => {
@@ -124,7 +125,7 @@ export default function ProfilePage() {
     setPushLoading(true)
     try {
       if (pushEnabled) {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session } } = await supabaseRef.current.auth.getSession()
         await unsubscribeFromPush(session?.access_token || '')
         setPushEnabled(false)
       } else {
@@ -132,7 +133,7 @@ export default function ProfilePage() {
         if (registration) {
           const subscription = await subscribeToPush(registration)
           if (subscription) {
-            const { data: { session } } = await supabase.auth.getSession()
+            const { data: { session } } = await supabaseRef.current.auth.getSession()
             if (session) {
               const ok = await saveSubscription(subscription, session.access_token)
               if (ok) setPushEnabled(true)
@@ -149,11 +150,11 @@ export default function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await supabaseRef.current.auth.getUser()
     if (!user) return
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from('profiles') as any)
+    const { error } = await (supabaseRef.current.from('profiles') as any)
       .upsert({
         id: user.id,
         email: user.email!,
@@ -166,14 +167,14 @@ export default function ProfilePage() {
     if (!error) {
       setEditing(false)
       // Reload profil
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
       if (data) setProfile(data as unknown as Profile)
     }
     setSaving(false)
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut()
+    await supabaseRef.current.auth.signOut()
     router.replace('/logg-inn')
   }
 

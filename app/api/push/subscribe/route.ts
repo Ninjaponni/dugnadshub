@@ -16,13 +16,13 @@ export async function POST(request: NextRequest) {
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await getSupabase().auth.getUser(token)
     if (authError || !user) {
-      return NextResponse.json({ error: 'Auth failed', detail: authError?.message }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const { endpoint, keys_p256dh, keys_auth } = body
     if (!endpoint || !keys_p256dh || !keys_auth) {
-      return NextResponse.json({ error: 'Missing fields', received: Object.keys(body) }, { status: 400 })
+      return NextResponse.json({ error: 'Ugyldig data' }, { status: 400 })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,11 +34,13 @@ export async function POST(request: NextRequest) {
     }, { onConflict: 'user_id,endpoint' })
 
     if (error) {
-      return NextResponse.json({ error: 'DB error', detail: error.message, code: error.code }, { status: 500 })
+      console.error('Push subscribe DB error:', error.message)
+      return NextResponse.json({ error: 'Kunne ikke lagre' }, { status: 500 })
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return NextResponse.json({ error: 'Unexpected error', detail: String(err) }, { status: 500 })
+    console.error('Push subscribe error:', err)
+    return NextResponse.json({ error: 'Uventet feil' }, { status: 500 })
   }
 }
 
@@ -59,6 +61,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return NextResponse.json({ error: 'Unexpected error', detail: String(err) }, { status: 500 })
+    console.error('Push unsubscribe error:', err)
+    return NextResponse.json({ error: 'Uventet feil' }, { status: 500 })
   }
 }

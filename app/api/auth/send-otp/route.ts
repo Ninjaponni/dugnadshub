@@ -30,6 +30,18 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabase()
 
+  // Rate limit — maks 5 koder per e-post per time
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count } = await supabase
+    .from('otp_codes')
+    .select('*', { count: 'exact', head: true })
+    .eq('email', email.toLowerCase())
+    .gte('created_at', oneHourAgo)
+
+  if (count !== null && count >= 5) {
+    return NextResponse.json({ error: 'For mange forsøk — prøv igjen om litt' }, { status: 429 })
+  }
+
   // Marker gamle koder som brukt
   await supabase
     .from('otp_codes')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -43,14 +43,14 @@ export default function MembersAdminPage() {
   const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
 
   async function loadData() {
     const [profilesRes, badgesRes, claimsRes, eventsRes] = await Promise.all([
-      supabase.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
-      supabase.from('user_badges').select('*') as unknown as Promise<{ data: UserBadge[] | null }>,
-      supabase.from('zone_claims').select('*') as unknown as Promise<{ data: ZoneClaim[] | null }>,
-      supabase.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
+      supabaseRef.current.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
+      supabaseRef.current.from('user_badges').select('*') as unknown as Promise<{ data: UserBadge[] | null }>,
+      supabaseRef.current.from('zone_claims').select('*') as unknown as Promise<{ data: ZoneClaim[] | null }>,
+      supabaseRef.current.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
     ])
 
     setProfiles(profilesRes.data || [])
@@ -60,7 +60,8 @@ export default function MembersAdminPage() {
     setLoading(false)
   }
 
-  useEffect(() => { loadData() }, [supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData() }, [])
 
   // Hjelpefunksjoner for sortering
   function getClaimCount(userId: string): number {
@@ -107,7 +108,7 @@ export default function MembersAdminPage() {
   async function handleRoleChange(userId: string, newRole: Role) {
     setUpdatingRole(userId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('profiles') as any).update({ role: newRole }).eq('id', userId)
+    await (supabaseRef.current.from('profiles') as any).update({ role: newRole }).eq('id', userId)
     setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p))
     setUpdatingRole(null)
   }
@@ -125,7 +126,7 @@ export default function MembersAdminPage() {
 
     setAwardingBadge(`${userId}-${badgeId}`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase.from('user_badges') as any).insert({
+    const { data } = await (supabaseRef.current.from('user_badges') as any).insert({
       user_id: userId,
       badge_id: badgeId,
       event_id: null,
@@ -144,7 +145,7 @@ export default function MembersAdminPage() {
     if (!badge) return
 
     setAwardingBadge(`${userId}-${badgeId}`)
-    await supabase.from('user_badges').delete().eq('id', badge.id)
+    await supabaseRef.current.from('user_badges').delete().eq('id', badge.id)
     setUserBadges(prev => prev.filter(ub => ub.id !== badge.id))
     setAwardingBadge(null)
   }
@@ -152,7 +153,7 @@ export default function MembersAdminPage() {
   // Fjern alle merker for en bruker
   async function handleResetBadges(userId: string) {
     setAwardingBadge(`${userId}-reset`)
-    await supabase.from('user_badges').delete().eq('user_id', userId)
+    await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
     setAwardingBadge(null)
   }
@@ -162,14 +163,14 @@ export default function MembersAdminPage() {
     setDeleting(true)
 
     // Slett relaterte data forst
-    await supabase.from('user_badges').delete().eq('user_id', userId)
-    await supabase.from('zone_claims').delete().eq('user_id', userId)
-    await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+    await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
+    await supabaseRef.current.from('zone_claims').delete().eq('user_id', userId)
+    await supabaseRef.current.from('push_subscriptions').delete().eq('user_id', userId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('profiles') as any).delete().eq('id', userId)
+    await (supabaseRef.current.from('profiles') as any).delete().eq('id', userId)
 
     // Slett auth-bruker via admin API
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await supabaseRef.current.auth.getSession()
     if (session) {
       await fetch('/api/admin/delete-user', {
         method: 'POST',
