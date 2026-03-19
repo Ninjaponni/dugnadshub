@@ -191,10 +191,12 @@ export default function HomePage() {
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
                 Mine soner
               </h2>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 {myZones.map((zone) => (
                   <Link key={zone.zoneId} href={`/kart?event=${zone.eventId}&sone=${zone.zoneId}`}>
-                    <Card className="p-3 flex items-center gap-3 mb-0">
+                    <Card className={`p-3 flex items-center gap-3 ${
+                      zone.status === 'completed' ? 'border-l-4 border-l-success' : ''
+                    }`}>
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                         zone.status === 'completed' ? 'bg-success/10' : 'bg-accent/10'
                       }`}>
@@ -207,6 +209,7 @@ export default function HomePage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-[15px] truncate">{zone.zoneName}</p>
                         <p className="text-xs text-text-secondary">
+                          {zone.status === 'completed' && <span className="text-success font-medium">Ferdig · </span>}
                           {zone.eventTitle}
                           {zone.partnerName && ` · med ${zone.partnerName}`}
                         </p>
