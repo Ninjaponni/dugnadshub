@@ -69,6 +69,12 @@ export function useRealtimeZones(eventId: string | null) {
     setLoading(false)
   }, [eventId])
 
+  // Tøm soner og vis loading ved bytte av hendelse — forhindrer flash av gamle soner
+  useEffect(() => {
+    setZones([])
+    setLoading(true)
+  }, [eventId])
+
   useEffect(() => {
     fetchZones()
 

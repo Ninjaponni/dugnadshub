@@ -88,8 +88,8 @@ function MapPageContent() {
       : autoEvent
   const effectiveEventId = showAll ? null : (event?.id || null)
 
-  // Vis soner kun ved aktiv hendelse, eksplisitt event-ID i URL, eller "vis alle"
-  const hasActiveEvent = showAll || !!overrideEventId || (!!event && event.status === 'active')
+  // Vis soner kun ved aktiv hendelse, eksplisitt event-ID i URL (og lastet), eller "vis alle"
+  const hasActiveEvent = showAll || (!!overrideEventId && !!overrideEvent) || (!!event && event.status === 'active')
   const { zones: rawZones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
   const zones = hasActiveEvent ? rawZones : []
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
