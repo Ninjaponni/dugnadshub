@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
-import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus } from 'lucide-react'
+import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus, Phone } from 'lucide-react'
 import MemberPicker from '@/components/features/MemberPicker'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
@@ -275,6 +275,15 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                     {claim.full_name?.charAt(0) || '?'}
                   </div>
                   <span className="flex-1">{claim.full_name || 'Ukjent'}</span>
+                  {isAdmin && claim.phone && (
+                    <a
+                      href={`tel:${claim.phone}`}
+                      className="p-1 rounded-full active:bg-black/10"
+                      aria-label={`Ring ${claim.full_name}`}
+                    >
+                      <Phone size={14} className="text-accent" />
+                    </a>
+                  )}
                   {claim.user_id === userId && (
                     <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
                   )}
