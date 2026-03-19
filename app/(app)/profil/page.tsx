@@ -293,7 +293,7 @@ export default function ProfilePage() {
             <Card className="p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <ClipboardList size={18} className="text-accent" />
-                <h3 className="font-semibold text-[15px]">Mine dugnader</h3>
+                <h3 className="font-semibold text-[15px]">Gjennomførte dugnader</h3>
               </div>
               <div className="space-y-2">
                 {history.map((h, i) => (

@@ -4,17 +4,18 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown } from 'lucide-react'
+import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown, Trash2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import type { Profile, Role, UserBadge, ZoneClaim, DugnadEvent } from '@/lib/supabase/types'
 
-type SortMode = 'alpha' | 'badges'
+type SortMode = 'alpha' | 'badges' | 'least_active'
 
 const sortLabels: Record<SortMode, string> = {
   alpha: 'A–Å',
   badges: 'Flest merker',
+  least_active: 'Minst aktiv',
 }
 
 // Merker som kan tildeles manuelt av admin
@@ -40,6 +41,8 @@ export default function MembersAdminPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
   async function loadData() {
@@ -92,6 +95,8 @@ export default function MembersAdminPage() {
       switch (sortMode) {
         case 'badges':
           return getBadgeCountForUser(b.id) - getBadgeCountForUser(a.id)
+        case 'least_active':
+          return getClaimCount(a.id) - getClaimCount(b.id)
         case 'alpha':
         default:
           return (a.full_name || '').localeCompare(b.full_name || '', 'nb')
@@ -150,6 +155,35 @@ export default function MembersAdminPage() {
     await supabase.from('user_badges').delete().eq('user_id', userId)
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
     setAwardingBadge(null)
+  }
+
+  // Slett medlem — fjerner profil, merker, claims og auth-bruker
+  async function handleDeleteMember(userId: string) {
+    setDeleting(true)
+
+    // Slett relaterte data forst
+    await supabase.from('user_badges').delete().eq('user_id', userId)
+    await supabase.from('zone_claims').delete().eq('user_id', userId)
+    await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('profiles') as any).delete().eq('id', userId)
+
+    // Slett auth-bruker via admin API
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ user_id: userId }),
+      }).catch(() => {})
+    }
+
+    setProfiles(prev => prev.filter(p => p.id !== userId))
+    setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
+    setAllClaims(prev => prev.filter(c => c.user_id !== userId))
+    setDeleteConfirmId(null)
+    setExpandedId(null)
+    setDeleting(false)
   }
 
   // Tell antall ganger en bruker har fått et badge
@@ -414,6 +448,53 @@ export default function MembersAdminPage() {
                               </div>
                             </div>
                           )}
+
+                          {/* Slett medlem */}
+                          <AnimatePresence>
+                            {deleteConfirmId === profile.id ? (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-2xl overflow-hidden border border-danger/20">
+                                  <div className="bg-danger/5 p-4 text-center">
+                                    <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
+                                    <p className="text-[15px] font-medium mb-1">Slette {profile.full_name || 'dette medlemmet'}?</p>
+                                    <p className="text-sm text-text-secondary">
+                                      Profil, merker og claims fjernes permanent.
+                                    </p>
+                                  </div>
+                                  <div className="flex border-t border-danger/20">
+                                    <button
+                                      onClick={() => setDeleteConfirmId(null)}
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-black/5"
+                                    >
+                                      Avbryt
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteMember(profile.id)}
+                                      disabled={deleting}
+                                      className="flex-1 py-3 text-sm font-medium text-danger active:bg-danger/10"
+                                    >
+                                      {deleting ? 'Sletter...' : 'Slett'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                className="w-full"
+                                onClick={() => setDeleteConfirmId(profile.id)}
+                              >
+                                <Trash2 size={14} />
+                                Slett medlem
+                              </Button>
+                            )}
+                          </AnimatePresence>
 
                         </div>
                       </motion.div>
