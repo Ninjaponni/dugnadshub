@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
-import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon } from 'lucide-react'
+import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus } from 'lucide-react'
+import MemberPicker from '@/components/features/MemberPicker'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import dropPointsData from '@/lib/map/drop-points-data'
@@ -15,6 +16,7 @@ interface ZoneClaimSheetProps {
   userId: string | null
   onClose: () => void
   onAction: () => void
+  isAdmin?: boolean
   onFlyTo?: (lng: number, lat: number, zoom?: number) => void
 }
 
@@ -35,7 +37,7 @@ function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string 
   return { label: 'Ledig', color: 'bg-zone-available' }
 }
 
-export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, onFlyTo }: ZoneClaimSheetProps) {
+export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo }: ZoneClaimSheetProps) {
   const [loading, setLoading] = useState(false)
   const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
@@ -43,6 +45,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const [editingNote, setEditingNote] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [savingNote, setSavingNote] = useState(false)
+  const [showMemberPicker, setShowMemberPicker] = useState(false)
+  const [assignLoading, setAssignLoading] = useState(false)
+  const [adminUnclaimTarget, setAdminUnclaimTarget] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
 
   if (!zone) return null
@@ -167,6 +172,46 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     onAction()
   }
 
+  async function handleAdminAssign(targetUserId: string) {
+    if (!eventId || !zone) return
+    setAssignLoading(true)
+    setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('admin_claim_zone', {
+      p_event_id: eventId,
+      p_zone_id: zone.id,
+      p_user_id: targetUserId,
+    })
+    if (rpcError) {
+      setError(rpcError.message || 'Kunne ikke tildele sonen.')
+      setAssignLoading(false)
+      return
+    }
+    setShowMemberPicker(false)
+    setAssignLoading(false)
+    onAction()
+  }
+
+  async function handleAdminUnclaim(targetUserId: string) {
+    if (!eventId || !zone) return
+    setLoading(true)
+    setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('admin_unclaim_zone', {
+      p_event_id: eventId,
+      p_zone_id: zone.id,
+      p_user_id: targetUserId,
+    })
+    if (rpcError) {
+      setError(rpcError.message || 'Kunne ikke fjerne samler.')
+      setLoading(false)
+      return
+    }
+    setAdminUnclaimTarget(null)
+    setLoading(false)
+    onAction()
+  }
+
   return (
     <BottomSheet open={!!zone} onClose={onClose} title={zone.name}>
       {/* Status og nøkkelinfo */}
@@ -229,9 +274,37 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                   <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
                     {claim.full_name?.charAt(0) || '?'}
                   </div>
-                  <span>{claim.full_name || 'Ukjent'}</span>
+                  <span className="flex-1">{claim.full_name || 'Ukjent'}</span>
                   {claim.user_id === userId && (
                     <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
+                  )}
+                  {/* Admin kan fjerne andres claims */}
+                  {isAdmin && claim.user_id !== userId && !isFinished && (
+                    adminUnclaimTarget === claim.user_id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setAdminUnclaimTarget(null)}
+                          className="text-xs text-text-tertiary px-1.5 py-0.5 rounded active:bg-black/5"
+                        >
+                          Avbryt
+                        </button>
+                        <button
+                          onClick={() => handleAdminUnclaim(claim.user_id)}
+                          disabled={loading}
+                          className="text-xs text-danger font-medium px-1.5 py-0.5 rounded active:bg-danger/10"
+                        >
+                          Fjern
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAdminUnclaimTarget(claim.user_id)}
+                        className="p-1 rounded-full active:bg-black/10"
+                        aria-label="Fjern samler"
+                      >
+                        <XIcon size={14} className="text-text-tertiary" />
+                      </button>
+                    )
                   )}
                 </div>
                 {/* Vis notat under samlerens navn */}
@@ -310,6 +383,26 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             <Button size="lg" loading={loading} onClick={handleClaim} className="w-full">
               Ta denne sonen
             </Button>
+          )}
+
+          {/* Admin: tildel medlem */}
+          {isAdmin && !isFull && !isFinished && !showMemberPicker && (
+            <Button
+              size="md"
+              loading={assignLoading}
+              onClick={() => setShowMemberPicker(true)}
+              className="w-full bg-black/5 !text-text-primary hover:bg-black/10"
+            >
+              <UserPlus size={16} className="mr-1.5" />
+              Tildel medlem
+            </Button>
+          )}
+          {isAdmin && showMemberPicker && (
+            <MemberPicker
+              onSelect={(uid) => handleAdminAssign(uid)}
+              onCancel={() => setShowMemberPicker(false)}
+              excludeUserIds={zone.claims.map((c) => c.user_id)}
+            />
           )}
 
           {/* Marker som ferdig — med bekreftelse */}

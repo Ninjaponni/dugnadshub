@@ -95,13 +95,20 @@ function MapPageContent() {
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [isSatellite, setIsSatellite] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
   const [initialZoom, setInitialZoom] = useState<number | null>(null)
   const [flyTarget, setFlyTarget] = useState<{ lng: number; lat: number; zoom: number } | null>(null)
 
   useEffect(() => {
-    supabaseRef.current.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id)
+    supabaseRef.current.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: profile } = await (supabaseRef.current.from('profiles') as any)
+          .select('role').eq('id', user.id).single()
+        if (profile) setUserRole(profile.role as string)
+      }
     })
   }, [])
 
@@ -259,6 +266,7 @@ function MapPageContent() {
           refetch()
           setSelectedZone(null)
         }}
+        isAdmin={userRole === 'admin'}
         onFlyTo={(lng, lat, zoom) => {
           setFlyTarget({ lng, lat, zoom: zoom || 16 })
         }}
