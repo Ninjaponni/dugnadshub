@@ -45,14 +45,14 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
 
   return (
     <div className="mt-2">
-      {/* Soekefelt */}
+      {/* Søkefelt */}
       <div className="relative mb-2">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Soek etter medlem..."
+          placeholder="Søk etter medlem..."
           className="w-full pl-8 pr-8 py-2 rounded-xl bg-black/5 text-sm outline-none focus:ring-2 focus:ring-accent/30"
           autoFocus
         />
