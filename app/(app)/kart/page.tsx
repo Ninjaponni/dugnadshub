@@ -59,7 +59,9 @@ function MapPageContent() {
   const overrideEventId = searchParams.get('event')
   const showAll = searchParams.get('alle') === '1'
 
-  const { events: allEvents, loading: eventsLoading } = useActiveEvents()
+  const { events: allEventsRaw, loading: eventsLoading } = useActiveEvents()
+  // Kun aktive hendelser kan velges i kartet
+  const allEvents = allEventsRaw.filter(e => e.status === 'active')
   const { event: autoEvent, loading: eventLoading } = useActiveEvent()
 
   // Bruk override-event fra URL, ellers den automatiske (nærmeste)
