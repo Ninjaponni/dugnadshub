@@ -172,6 +172,21 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     onAction()
   }
 
+  async function handleUncomplete() {
+    if (!zone?.assignment_id) return
+    setLoading(true)
+    setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('uncomplete_zone', { p_assignment_id: zone.assignment_id })
+    if (rpcError) {
+      setError('Kunne ikke angre ferdigmelding. Prøv igjen.')
+      setLoading(false)
+      return
+    }
+    onAction()
+    setLoading(false)
+  }
+
   async function handleAdminAssign(targetUserId: string) {
     if (!eventId || !zone) return
     setAssignLoading(true)
@@ -265,7 +280,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       {zone.claims.length > 0 && (
         <div className="mb-4">
           <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide">
-            Samlere
+            {zone.zone_type === 'lapper' ? 'Utdelere' : 'Samlere'}
           </p>
           <div className="space-y-2">
             {zone.claims.map((claim) => (
@@ -415,7 +430,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           )}
 
           {/* Marker som ferdig — med bekreftelse */}
-          {canMarkComplete && !showCompleteConfirm && (
+          {canMarkComplete && !showCompleteConfirm && !editingNote && (
             <Button size="lg" loading={loading} onClick={() => setShowCompleteConfirm(true)} className="w-full bg-success hover:bg-success/90">
               Marker som ferdig
             </Button>
@@ -450,7 +465,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           )}
 
           {/* Gi opp sonen — med bekreftelse */}
-          {canUnclaim && !showUnclaimConfirm && !showCompleteConfirm && (
+          {canUnclaim && !showUnclaimConfirm && !showCompleteConfirm && !editingNote && (
             <Button size="md" variant="danger" loading={loading} onClick={() => setShowUnclaimConfirm(true)} className="w-full">
               Gi opp sonen
             </Button>
@@ -478,6 +493,13 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Angre ferdigmelding — kun for bruker som har claimed og sone er completed (ikke picked_up) */}
+          {zone.status === 'completed' && userHasClaimed && (
+            <Button size="md" loading={loading} onClick={handleUncomplete} className="w-full bg-warning/10 !text-warning hover:bg-warning/20">
+              Angre ferdigmelding
+            </Button>
           )}
 
           {isFull && !userHasClaimed && !isFinished && (
