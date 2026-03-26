@@ -7,6 +7,7 @@ import ZoneLayer from './ZoneLayer'
 import ZoneMarkers from './ZoneMarkers'
 import DropPointMarkers from './DropPointMarkers'
 import PosterMarkers from './PosterMarkers'
+import BaseMarker from './BaseMarker'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import type { EventType } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
@@ -95,6 +96,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
         <>
           <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
           {eventType !== 'lapper' && <DropPointMarkers activeArea={activeArea} />}
+          {eventType === 'bottle_collection' && <BaseMarker activeArea={activeArea} />}
           {eventType === 'lapper' && <PosterMarkers activeArea={activeArea} />}
           <ZoneMarkers zones={zones} userId={userId || null} />
         </>
