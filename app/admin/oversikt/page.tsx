@@ -230,9 +230,9 @@ export default function AdminOverviewPage() {
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-black/5 mt-3 pt-3 space-y-3">
+                      <div className="border-t border-black/5 mt-4 pt-4 space-y-3">
                         {/* Kart */}
-                        <Link href={`/kart?event=${event.id}`}>
+                        <Link href={`/kart?event=${event.id}`} className="block">
                           <Button size="sm" variant="secondary" className="w-full">
                             <Map size={14} /> Se kart
                           </Button>
