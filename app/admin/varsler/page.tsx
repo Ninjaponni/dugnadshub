@@ -11,7 +11,7 @@ const roleLabels: Record<string, string> = {
   admin: 'Admin',
   collector: 'Samler',
   driver: 'Sjåfør',
-  strapper: 'Strapper',
+  strapper: 'Stripser',
 }
 
 const groupLabels = ['Aspirant', 'Junior', 'Hovedkorps']
