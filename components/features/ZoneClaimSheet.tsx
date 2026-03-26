@@ -57,7 +57,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const isFinished = zone.status === 'completed' || zone.status === 'picked_up'
   const canClaim = eventId && !userHasClaimed && !isFull && !isFinished
   const canUnclaim = eventId && userHasClaimed && !isFinished
-  const canMarkComplete = eventId && userHasClaimed && !isFinished
+  const canMarkComplete = eventId && (userHasClaimed || (isAdmin && zone.claims.length > 0)) && !isFinished
 
   const displayStatus = getDisplayStatus(zone)
   const dropPoint = findDropPoint(zone.name, zone.area)
