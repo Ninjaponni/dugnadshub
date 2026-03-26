@@ -176,8 +176,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     if (!zone?.assignment_id) return
     setLoading(true)
     setError(null)
+    const rpcName = userHasClaimed ? 'uncomplete_zone' : 'admin_uncomplete_zone'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: rpcError } = await (supabaseRef.current.rpc as any)('uncomplete_zone', { p_assignment_id: zone.assignment_id })
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)(rpcName, { p_assignment_id: zone.assignment_id })
     if (rpcError) {
       setError('Kunne ikke angre ferdigmelding. Prøv igjen.')
       setLoading(false)
@@ -496,7 +497,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           )}
 
           {/* Angre ferdigmelding — kun for bruker som har claimed og sone er completed (ikke picked_up) */}
-          {zone.status === 'completed' && userHasClaimed && (
+          {zone.status === 'completed' && (userHasClaimed || isAdmin) && (
             <Button size="md" loading={loading} onClick={handleUncomplete} className="w-full bg-warning/10 !text-warning hover:bg-warning/20">
               Angre ferdigmelding
             </Button>
