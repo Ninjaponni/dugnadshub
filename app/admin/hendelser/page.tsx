@@ -318,27 +318,13 @@ export default function EventsAdminPage() {
   async function handleResetClaims(eventId: string) {
     setResetting(true)
     setErrorMsg(null)
-    // Hent assignments for denne hendelsen
-    const { data: assignments } = await supabaseRef.current
-      .from('zone_assignments')
-      .select('id')
-      .eq('event_id', eventId) as unknown as { data: Array<{ id: string }> | null }
-
-    if (assignments && assignments.length > 0) {
-      const assignmentIds = assignments.map(a => a.id)
-      // Slett alle claims
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: claimErr } = await (supabaseRef.current.from('zone_claims') as any).delete().in('assignment_id', assignmentIds)
-      // Reset assignment-status til available
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: assignErr } = await (supabaseRef.current.from('zone_assignments') as any).update({ status: 'available' }).eq('event_id', eventId)
-      if (claimErr || assignErr) {
-        setErrorMsg('Kunne ikke nullstille claims')
-        setResetting(false)
-        return
-      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('admin_reset_claims', { p_event_id: eventId })
+    if (rpcError) {
+      setErrorMsg('Kunne ikke nullstille claims')
+      setResetting(false)
+      return
     }
-
     setResetConfirmId(null)
     setResetting(false)
     await loadEvents()
@@ -877,7 +863,7 @@ export default function EventsAdminPage() {
 
                           {/* Handlingsknapper — rediger, slett, statusendring */}
                           {!isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               {/* Statusknapper tilpasset gjeldende status */}
                               {event.status === 'upcoming' && (
                                 <Button
@@ -893,7 +879,7 @@ export default function EventsAdminPage() {
                               )}
 
                               {event.status === 'active' && (
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                   {event.zoneStats.available > 0 && (
                                     <Button
                                       size="sm"
