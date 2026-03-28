@@ -6,16 +6,13 @@ import { createClient } from '@/lib/supabase/client'
 import Button from '@/components/ui/Button'
 import OtpInput from '@/components/ui/OtpInput'
 import { motion } from 'framer-motion'
-import { Mail, Lock } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import Image from 'next/image'
 
-type View = 'email' | 'otp' | 'password'
-
-// Innlogging — egen OTP via Resend + passord (fallback)
+// Innlogging — egen OTP via Resend
 export default function LoginPage() {
-  const [view, setView] = useState<View>('email')
+  const [view, setView] = useState<'email' | 'otp'>('email')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [otpError, setOtpError] = useState(false)
@@ -105,26 +102,6 @@ export default function LoginPage() {
     setLoading(false)
   }, [email, router])
 
-  // Passord-login
-  async function handlePasswordLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setError('Feil e-post eller passord.')
-    } else {
-      router.replace('/hjem')
-    }
-    setLoading(false)
-  }
-
   const inputClass = `w-full pl-10 pr-4 py-3 rounded-xl bg-bg border-0 text-[17px]
     placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30`
 
@@ -190,36 +167,6 @@ export default function LoginPage() {
               </button>
             </div>
           </motion.div>
-        ) : view === 'password' ? (
-          <form onSubmit={handlePasswordLogin} className="card p-6">
-            <label className="block mb-3">
-              <span className="text-sm font-medium text-text-secondary mb-1.5 block">E-postadresse</span>
-              <div className="relative">
-                <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="forelder@eksempel.no" required autoFocus className={inputClass} />
-              </div>
-            </label>
-            <label className="block mb-4">
-              <span className="text-sm font-medium text-text-secondary mb-1.5 block">Passord</span>
-              <div className="relative">
-                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••" required className={inputClass} />
-              </div>
-            </label>
-
-            {error && <p className="text-danger text-sm mb-3">{error}</p>}
-
-            <Button type="submit" size="lg" loading={loading} className="w-full">
-              Logg inn
-            </Button>
-
-            <button type="button" onClick={() => { setView('email'); setError('') }}
-              className="text-accent text-sm mt-4 w-full text-center">
-              Bruk kode i stedet
-            </button>
-          </form>
         ) : (
           <form onSubmit={handleSendOtp} className="card p-6">
             <label className="block mb-4">
@@ -236,11 +183,6 @@ export default function LoginPage() {
             <Button type="submit" size="lg" loading={loading} className="w-full">
               Send kode
             </Button>
-
-            <button type="button" onClick={() => { setView('password'); setError('') }}
-              className="text-accent text-sm mt-4 w-full text-center">
-              Logg inn med passord
-            </button>
           </form>
         )}
       </motion.div>
