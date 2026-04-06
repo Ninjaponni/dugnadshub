@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 
   if (isLapper) {
     // Lapper-format — matcher korpsets eksisterende Google Sheets
-    const header = `SONE,Hovedansvarlig,Delt ut,Tlf,Kontakt,"Antall husstander\npr. vei",Send med`
+    const header = `SONE,Hovedansvarlig,Delt ut,Tlf,Kontakt,"Antall husstander\npr. vei",Send med,Notater`
 
     const rows = sortedAssignments.map(a => {
       const zone = zoneMap.get(a.zone_id)
@@ -146,6 +146,12 @@ export async function GET(request: NextRequest) {
       if (zone?.posters) sendMedParts.push(`+ ${zone.posters} plakatar`)
       const sendMed = sendMedParts.join('\n')
 
+      // Notater fra claims
+      const notater = zoneClaims
+        .map(c => c.notes || '')
+        .filter(Boolean)
+        .join('\n')
+
       return [
         csvEscape(soneId),
         csvEscape(hovedansvarlig),
@@ -154,6 +160,7 @@ export async function GET(request: NextRequest) {
         csvEscape(kontakt),
         csvEscape(husstander),
         csvEscape(sendMed),
+        csvEscape(notater),
       ].join(',')
     })
 
