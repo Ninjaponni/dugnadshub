@@ -98,90 +98,120 @@ export async function GET(request: NextRequest) {
   const typeLabel = isLapper ? 'LAPPEUTDELING' : 'FLASKEINNSAMLING'
   const titleRow = `,${typeLabel} ${areaLabel}: ${norwegianWeekday(event.date)} ${formatDateNorwegian(event.date)} Kl. ${startTime},,,,,,,,`
 
-  // Header-rad — tilpasset hendelsestype
-  const header = isLapper
-    ? `Sone,Gate,Ant. lapper,Ant. frivillige,Kommentar,Frivillige,Telefon,Notat,,Ferdig,`
-    : `Henger,Gate,Ant. husstander,Ant. samlere,Kommentar,Samlere,Telefon,Notat,Ut kl.: ${startTime},Ferdig,Flasker hentet`
-
-  // Sorter assignments etter henger-gruppe, deretter gatenavn
+  // Sorter assignments etter sonenavn
   const sortedAssignments = [...assignments].sort((a, b) => {
     const zA = zoneMap.get(a.zone_id)
     const zB = zoneMap.get(b.zone_id)
-    const groupA = zA?.trailer_group || 0
-    const groupB = zB?.trailer_group || 0
-    if (groupA !== groupB) return groupA - groupB
+    if (!isLapper) {
+      const groupA = zA?.trailer_group || 0
+      const groupB = zB?.trailer_group || 0
+      if (groupA !== groupB) return groupA - groupB
+    }
     return (zA?.name || '').localeCompare(zB?.name || '', 'nb')
   })
 
-  // Bygg datarader
-  let totalCollectors = 0
-  const rows = sortedAssignments.map(a => {
-    const zone = zoneMap.get(a.zone_id)
-    const zoneClaims = claimsByAssignment.get(a.id) || []
+  // Bygg CSV basert på hendelsestype
+  let csvLines: string[]
 
-    // Samlerinfo — alle navn og telefoner samlet med linjeskift
-    const collectorNames = zoneClaims
-      .map(c => profileMap.get(c.user_id)?.full_name || '')
-      .filter(Boolean)
-      .join('\n')
-    const collectorPhones = zoneClaims
-      .map(c => profileMap.get(c.user_id)?.phone || '')
-      .filter(Boolean)
-      .join('\n')
-    const collectorNotes = zoneClaims
-      .map(c => c.notes || '')
-      .filter(Boolean)
-      .join('\n')
+  if (isLapper) {
+    // Lapper-format — matcher korpsets eksisterende Google Sheets
+    const header = `SONE,Hovedansvarlig,Delt ut,Tlf,Kontakt,"Antall husstander\npr. vei",Send med`
 
-    const collectorsNeeded = zone?.collectors_needed || 2
-    totalCollectors += collectorsNeeded
+    const rows = sortedAssignments.map(a => {
+      const zone = zoneMap.get(a.zone_id)
+      const zoneClaims = claimsByAssignment.get(a.id) || []
 
-    const ferdig = a.status === 'completed' || a.status === 'picked_up' ? 'Ja' : ''
-    const hentet = a.status === 'picked_up' ? 'Ja' : ''
+      // Sone-ID (f.eks. LN1, LS3)
+      const soneId = zone?.id || a.zone_id
 
-    // Lapper: vis antall lapper (+ plakater i kommentar), ingen henger/hentet
-    const antall = isLapper ? (zone?.flyers || '') : (zone?.households || '')
-    const kommentar = isLapper && zone?.posters
-      ? [zone.posters + ' plakater', zone?.notes].filter(Boolean).join('. ')
-      : (zone?.notes || '')
+      // Hovedansvarlig (første claim)
+      const firstClaim = zoneClaims[0]
+      const hovedansvarlig = firstClaim ? (profileMap.get(firstClaim.user_id)?.full_name || '') : ''
+      const phone = firstClaim ? (profileMap.get(firstClaim.user_id)?.phone || '') : ''
 
-    return [
-      isLapper ? (zone?.name?.match(/[A-Z]+\d+/)?.[0] || '') : (zone?.trailer_group || ''),
-      csvEscape(zone?.name || a.zone_id),
-      antall,
-      collectorsNeeded,
-      csvEscape(kommentar),
-      csvEscape(collectorNames),
-      csvEscape(collectorPhones),
-      csvEscape(collectorNotes),
-      '',
-      ferdig,
-      isLapper ? '' : hentet,
-    ].join(',')
-  })
+      const ferdig = a.status === 'completed' || a.status === 'picked_up' ? 'x' : ''
 
-  // Totalrad — sum av samlere
-  const totalRow = `,,,${totalCollectors},,,,,,,`
+      // Kontakt-felt — gatenavn + plakater (som i originalen)
+      const kontaktParts: string[] = []
+      if (zone?.name) kontaktParts.push(zone.name)
+      if (zone?.posters) kontaktParts.push(`Plakatar: ${zone.posters} stk`)
+      const kontakt = kontaktParts.join('\n')
 
-  // Bunnseksjon — sjåførinfo fra driver_notes
-  const footerRows: string[] = ['', '']
-  if (event.driver_notes) {
-    // Splitt driver_notes på linjeskift — hver linje blir en rad
-    const noteLines = (event.driver_notes as string).split('\n').filter((l: string) => l.trim())
-    for (const line of noteLines) {
-      footerRows.push(`,${csvEscape(line)},,,,,,,,`)
+      // Husstander
+      const husstander = zone?.households ? String(zone.households) : ''
+
+      // Send med — antall lapper + plakater
+      const sendMedParts: string[] = []
+      if (zone?.flyers) sendMedParts.push(`${zone.flyers} lappar`)
+      if (zone?.posters) sendMedParts.push(`+ ${zone.posters} plakatar`)
+      const sendMed = sendMedParts.join('\n')
+
+      return [
+        csvEscape(soneId),
+        csvEscape(hovedansvarlig),
+        ferdig,
+        csvEscape(phone),
+        csvEscape(kontakt),
+        csvEscape(husstander),
+        csvEscape(sendMed),
+      ].join(',')
+    })
+
+    csvLines = [titleRow, '', header, ...rows]
+  } else {
+    // Flaskeinnsamling-format
+    const header = `Henger,Gate,Ant. husstander,Ant. samlere,Kommentar,Samlere,Telefon,Notat,Ut kl.: ${startTime},Ferdig,Flasker hentet`
+
+    let totalCollectors = 0
+    const rows = sortedAssignments.map(a => {
+      const zone = zoneMap.get(a.zone_id)
+      const zoneClaims = claimsByAssignment.get(a.id) || []
+
+      const collectorNames = zoneClaims
+        .map(c => profileMap.get(c.user_id)?.full_name || '')
+        .filter(Boolean)
+        .join('\n')
+      const collectorPhones = zoneClaims
+        .map(c => profileMap.get(c.user_id)?.phone || '')
+        .filter(Boolean)
+        .join('\n')
+      const collectorNotes = zoneClaims
+        .map(c => c.notes || '')
+        .filter(Boolean)
+        .join('\n')
+
+      const collectorsNeeded = zone?.collectors_needed || 2
+      totalCollectors += collectorsNeeded
+
+      const ferdig = a.status === 'completed' || a.status === 'picked_up' ? 'Ja' : ''
+      const hentet = a.status === 'picked_up' ? 'Ja' : ''
+
+      return [
+        zone?.trailer_group || '',
+        csvEscape(zone?.name || a.zone_id),
+        zone?.households || '',
+        collectorsNeeded,
+        csvEscape(zone?.notes || ''),
+        csvEscape(collectorNames),
+        csvEscape(collectorPhones),
+        csvEscape(collectorNotes),
+        '',
+        ferdig,
+        hentet,
+      ].join(',')
+    })
+
+    const totalRow = `,,,${totalCollectors},,,,,,,`
+    const footerRows: string[] = ['', '']
+    if (event.driver_notes) {
+      const noteLines = (event.driver_notes as string).split('\n').filter((l: string) => l.trim())
+      for (const line of noteLines) {
+        footerRows.push(`,${csvEscape(line)},,,,,,,,`)
+      }
     }
-  }
 
-  // Sett sammen CSV
-  const csvLines = [
-    titleRow,
-    '',
-    header,
-    ...rows,
-    totalRow,
-    ...footerRows,
-  ]
+    csvLines = [titleRow, '', header, ...rows, totalRow, ...footerRows]
+  }
   const csv = '\uFEFF' + csvLines.join('\n')
 
   // Filnavn: tittel-dato.csv
