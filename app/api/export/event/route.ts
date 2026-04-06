@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   const zoneIds = assignments.map(a => a.zone_id)
   const { data: zones } = await supabase
     .from('zones')
-    .select('id, name, area, households, collectors_needed, trailer_group, notes')
+    .select('id, name, area, households, collectors_needed, trailer_group, notes, flyers, posters, zone_type')
     .in('id', zoneIds)
 
   // Hent claims med brukerinfo
@@ -92,12 +92,16 @@ export async function GET(request: NextRequest) {
   const areaLabels: Record<string, string> = { nord: 'Nord', sor: 'Sør', begge: 'Nord og Sør' }
   const areaLabel = areaLabels[event.area] || ''
   const startTime = formatTime(event.start_time)
+  const isLapper = event.type === 'lapper'
 
-  // Tittelrad — matcher Google Sheets-formatet
-  const titleRow = `,FLASKEINNSAMLING ${areaLabel}: ${norwegianWeekday(event.date)} ${formatDateNorwegian(event.date)} Kl. ${startTime},,,,,,,,`
+  // Tittelrad — tilpasset hendelsestype
+  const typeLabel = isLapper ? 'LAPPEUTDELING' : 'FLASKEINNSAMLING'
+  const titleRow = `,${typeLabel} ${areaLabel}: ${norwegianWeekday(event.date)} ${formatDateNorwegian(event.date)} Kl. ${startTime},,,,,,,,`
 
-  // Header-rad
-  const header = `Henger,Gate,Ant. husstander,Ant. samlere,Kommentar,Samlere,Telefon,Notat,Ut kl.: ${startTime},Ferdig,Flasker hentet`
+  // Header-rad — tilpasset hendelsestype
+  const header = isLapper
+    ? `Sone,Gate,Ant. lapper,Ant. frivillige,Kommentar,Frivillige,Telefon,Notat,,Ferdig,`
+    : `Henger,Gate,Ant. husstander,Ant. samlere,Kommentar,Samlere,Telefon,Notat,Ut kl.: ${startTime},Ferdig,Flasker hentet`
 
   // Sorter assignments etter henger-gruppe, deretter gatenavn
   const sortedAssignments = [...assignments].sort((a, b) => {
@@ -135,18 +139,24 @@ export async function GET(request: NextRequest) {
     const ferdig = a.status === 'completed' || a.status === 'picked_up' ? 'Ja' : ''
     const hentet = a.status === 'picked_up' ? 'Ja' : ''
 
+    // Lapper: vis antall lapper (+ plakater i kommentar), ingen henger/hentet
+    const antall = isLapper ? (zone?.flyers || '') : (zone?.households || '')
+    const kommentar = isLapper && zone?.posters
+      ? [zone.posters + ' plakater', zone?.notes].filter(Boolean).join('. ')
+      : (zone?.notes || '')
+
     return [
-      zone?.trailer_group || '',
+      isLapper ? (zone?.name?.match(/[A-Z]+\d+/)?.[0] || '') : (zone?.trailer_group || ''),
       csvEscape(zone?.name || a.zone_id),
-      zone?.households || '',
+      antall,
       collectorsNeeded,
-      csvEscape(zone?.notes || ''),
+      csvEscape(kommentar),
       csvEscape(collectorNames),
       csvEscape(collectorPhones),
       csvEscape(collectorNotes),
       '',
       ferdig,
-      hentet,
+      isLapper ? '' : hentet,
     ].join(',')
   })
 
