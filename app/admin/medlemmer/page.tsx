@@ -8,6 +8,7 @@ import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
+import type { Child } from '@/lib/supabase/types'
 import type { Profile, Role, UserBadge, ZoneClaim, DugnadEvent } from '@/lib/supabase/types'
 
 type SortMode = 'alpha' | 'badges' | 'least_active'
@@ -81,7 +82,7 @@ export default function MembersAdminPage() {
       return (
         (p.full_name || '').toLowerCase().includes(q) ||
         p.email.toLowerCase().includes(q) ||
-        (p.children || []).some((c: { name: string }) => c.name?.toLowerCase().includes(q)) ||
+        (p.children || []).some((c: Child) => c.name?.toLowerCase().includes(q)) ||
         roleLabel.toLowerCase().includes(q) ||
         (p.role || '').toLowerCase().includes(q)
       )
@@ -340,7 +341,7 @@ export default function MembersAdminPage() {
                           <div className="text-xs text-text-tertiary space-y-0.5">
                             <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
                             {profile.phone && <p>Telefon: <a href={`tel:${profile.phone}`} className="text-accent">{profile.phone}</a></p>}
-                            {profile.children && profile.children.length > 0 && profile.children.map((c: { name: string; group: string }, i: number) => (
+                            {profile.children && profile.children.length > 0 && profile.children.map((c: Child, i: number) => (
                               <p key={i}>Barn: {c.name}{c.group ? ` (${c.group})` : ''}</p>
                             ))}
                             <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
