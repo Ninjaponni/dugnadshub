@@ -1,6 +1,10 @@
 // Supabase database-typer — manuelt definert (erstatt med genererte typer senere)
 export type Role = 'admin' | 'collector' | 'driver' | 'strapper'
 export type ChildGroup = 'Aspirant' | 'Junior' | 'Hovedkorps'
+export interface Child {
+  name: string
+  group: ChildGroup
+}
 export type ZoneArea = 'NORD' | 'SOR'
 export type EventType = 'bottle_collection' | 'lapper' | 'lottery' | 'baking' | 'other'
 export type ZoneType = 'bottle' | 'lapper'
@@ -12,8 +16,7 @@ export interface Profile {
   full_name: string | null
   email: string
   phone: string | null
-  child_name: string | null
-  child_group: ChildGroup | null
+  children: Child[]
   role: Role
   avatar_url: string | null
   created_at: string

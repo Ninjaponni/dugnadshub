@@ -81,7 +81,7 @@ export default function MembersAdminPage() {
       return (
         (p.full_name || '').toLowerCase().includes(q) ||
         p.email.toLowerCase().includes(q) ||
-        (p.child_name || '').toLowerCase().includes(q) ||
+        (p.children || []).some((c: { name: string }) => c.name?.toLowerCase().includes(q)) ||
         roleLabel.toLowerCase().includes(q) ||
         (p.role || '').toLowerCase().includes(q)
       )
@@ -340,8 +340,9 @@ export default function MembersAdminPage() {
                           <div className="text-xs text-text-tertiary space-y-0.5">
                             <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
                             {profile.phone && <p>Telefon: <a href={`tel:${profile.phone}`} className="text-accent">{profile.phone}</a></p>}
-                            {profile.child_name && <p>Barn: {profile.child_name}</p>}
-                            {profile.child_group && <p>Gruppe: {profile.child_group}</p>}
+                            {profile.children?.length > 0 && profile.children.map((c: { name: string; group: string }, i: number) => (
+                              <p key={i}>Barn: {c.name}{c.group ? ` (${c.group})` : ''}</p>
+                            ))}
                             <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
                           </div>
 

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { User } from 'lucide-react'
+import { User, Plus, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { evaluateBadges } from '@/lib/badges/evaluator'
 import Button from '@/components/ui/Button'
+import type { Child } from '@/lib/supabase/types'
 
 interface ProfileStepProps {
   onProfileSaved: () => void
@@ -13,7 +14,8 @@ interface ProfileStepProps {
 
 // Steg 2: Profil-utfylling med inline skjema
 export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
-  const [form, setForm] = useState({ full_name: '', phone: '', child_name: '', child_group: '' })
+  const [form, setForm] = useState({ full_name: '', phone: '' })
+  const [children, setChildren] = useState<Child[]>([{ name: '', group: 'Aspirant' }])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -24,14 +26,13 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoaded(true); return }
-      const { data } = await supabase.from('profiles').select('full_name, phone, child_name, child_group').eq('id', user.id).single() as unknown as { data: { full_name: string | null; phone: string | null; child_name: string | null; child_group: string | null } | null }
+      const { data } = await supabase.from('profiles').select('full_name, phone, children').eq('id', user.id).single() as unknown as { data: { full_name: string | null; phone: string | null; children: Child[] | null } | null }
       if (data) {
         setForm({
           full_name: data.full_name || '',
           phone: data.phone || '',
-          child_name: data.child_name || '',
-          child_group: data.child_group || '',
         })
+        if (data.children?.length) setChildren(data.children)
       }
       setLoaded(true)
     }
@@ -53,12 +54,10 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
       email: user.email!,
       full_name: form.full_name || null,
       phone: form.phone || null,
-      child_name: form.child_name || null,
-      child_group: form.child_group || null,
+      children: children.filter(c => c.name.trim()),
     })
 
     if (!error) {
-      // Tildel Profil-proffen-merket hvis alle felt er fylt ut
       await evaluateBadges(user.id)
       setSaved(true)
       onProfileSaved()
@@ -82,6 +81,8 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
       </div>
     )
   }
+
+  if (!loaded) return null
 
   return (
     <div className="flex flex-col h-full px-6 pt-12">
@@ -113,23 +114,57 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
           placeholder="Telefon"
           className={inputClass}
         />
-        <input
-          type="text"
-          value={form.child_name}
-          onChange={(e) => setForm({ ...form, child_name: e.target.value })}
-          placeholder="Barnets navn"
-          className={inputClass}
-        />
-        <select
-          value={form.child_group}
-          onChange={(e) => setForm({ ...form, child_group: e.target.value })}
-          className={inputClass}
-        >
-          <option value="">Velg gruppe</option>
-          <option value="Aspirant">Aspirant</option>
-          <option value="Junior">Junior</option>
-          <option value="Hovedkorps">Hovedkorps</option>
-        </select>
+
+        {/* Barn — ett eller flere */}
+        <div className="space-y-3 pt-1">
+          {children.map((child, i) => (
+            <div key={i} className="flex gap-2">
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  value={child.name}
+                  onChange={(e) => {
+                    const updated = [...children]
+                    updated[i] = { ...updated[i], name: e.target.value }
+                    setChildren(updated)
+                  }}
+                  placeholder="Barnets navn"
+                  className={inputClass}
+                />
+                <select
+                  value={child.group}
+                  onChange={(e) => {
+                    const updated = [...children]
+                    updated[i] = { ...updated[i], group: e.target.value as Child['group'] }
+                    setChildren(updated)
+                  }}
+                  className={inputClass}
+                >
+                  <option value="Aspirant">Aspirant</option>
+                  <option value="Junior">Junior</option>
+                  <option value="Hovedkorps">Hovedkorps</option>
+                </select>
+              </div>
+              {children.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setChildren(children.filter((_, j) => j !== i))}
+                  className="mt-3 p-2 rounded-full active:bg-black/5"
+                >
+                  <Trash2 size={16} className="text-text-tertiary" />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setChildren([...children, { name: '', group: 'Aspirant' }])}
+            className="flex items-center gap-1.5 text-xs text-accent font-medium active:opacity-70"
+          >
+            <Plus size={14} />
+            Legg til barn
+          </button>
+        </div>
       </div>
 
       <div className="pb-8 pt-4">

@@ -49,7 +49,9 @@ async function getSubscriptions(filter: SendFilter) {
     profileQuery = profileQuery.in('role', filter.roles)
   }
   if (filter.childGroups && filter.childGroups.length > 0) {
-    profileQuery = profileQuery.in('child_group', filter.childGroups)
+    // children er JSONB-array med {name, group} — filtrer med or() + contains()
+    const orClauses = filter.childGroups.map(g => `children.cs.[{"group":"${g}"}]`).join(',')
+    profileQuery = profileQuery.or(orClauses)
   }
 
   const { data: profiles } = await profileQuery

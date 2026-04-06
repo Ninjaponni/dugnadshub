@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 interface Member {
   id: string
   full_name: string | null
-  child_name: string | null
+  children: Array<{ name: string; group: string }> | null
 }
 
 interface MemberPickerProps {
@@ -25,7 +25,7 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
   useEffect(() => {
     supabaseRef.current
       .from('profiles')
-      .select('id, full_name, child_name')
+      .select('id, full_name, children')
       .order('full_name')
       .then(({ data }) => {
         if (data) setMembers(data as Member[])
@@ -37,9 +37,9 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
     if (excludeUserIds.includes(m.id)) return false
     if (!search) return true
     const q = search.toLowerCase()
+    const childMatch = m.children?.some(c => c.name?.toLowerCase().includes(q))
     return (
-      m.full_name?.toLowerCase().includes(q) ||
-      m.child_name?.toLowerCase().includes(q)
+      m.full_name?.toLowerCase().includes(q) || childMatch
     )
   })
 
@@ -71,23 +71,26 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
         ) : filtered.length === 0 ? (
           <div className="p-4 text-center text-sm text-text-tertiary">Ingen treff</div>
         ) : (
-          filtered.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => onSelect(m.id, m.full_name || 'Ukjent')}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm border-b border-black/5 last:border-0 active:bg-black/5"
-            >
-              <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
-                {m.full_name?.charAt(0) || '?'}
-              </div>
-              <div className="min-w-0">
-                <span className="block truncate">{m.full_name || 'Ukjent'}</span>
-                {m.child_name && (
-                  <span className="block text-xs text-text-tertiary truncate">{m.child_name}</span>
-                )}
-              </div>
-            </button>
-          ))
+          filtered.map((m) => {
+            const childNames = m.children?.map(c => c.name).filter(Boolean).join(', ')
+            return (
+              <button
+                key={m.id}
+                onClick={() => onSelect(m.id, m.full_name || 'Ukjent')}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm border-b border-black/5 last:border-0 active:bg-black/5"
+              >
+                <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
+                  {m.full_name?.charAt(0) || '?'}
+                </div>
+                <div className="min-w-0">
+                  <span className="block truncate">{m.full_name || 'Ukjent'}</span>
+                  {childNames && (
+                    <span className="block text-xs text-text-tertiary truncate">{childNames}</span>
+                  )}
+                </div>
+              </button>
+            )
+          })
         )}
       </div>
     </div>

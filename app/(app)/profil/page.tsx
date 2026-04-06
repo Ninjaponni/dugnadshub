@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList } from 'lucide-react'
+import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Plus, Trash2 } from 'lucide-react'
+import type { Child } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
@@ -14,7 +15,9 @@ import Link from 'next/link'
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ full_name: '', phone: '', child_name: '', child_group: '' })
+  const [form, setForm] = useState({ full_name: '', phone: '' })
+  const [children, setChildren] = useState<Child[]>([])
+
   const [saving, setSaving] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
@@ -43,9 +46,8 @@ export default function ProfilePage() {
         setForm({
           full_name: p.full_name || '',
           phone: p.phone || '',
-          child_name: p.child_name || '',
-          child_group: p.child_group || '',
         })
+        setChildren(p.children?.length ? p.children : [{ name: '', group: 'Aspirant' as const }])
 
         // Hent dugnad-historikk: claims → assignments → events (completed)
         const { data: claims } = await supabaseRef.current
@@ -104,7 +106,8 @@ export default function ProfilePage() {
       } else {
         // Ny bruker — vis redigeringsskjema
         setEditing(true)
-        setForm({ full_name: '', phone: '', child_name: '', child_group: '' })
+        setForm({ full_name: '', phone: '' })
+        setChildren([{ name: '', group: 'Aspirant' as const }])
         setHistoryLoaded(true)
       }
     }
@@ -160,8 +163,7 @@ export default function ProfilePage() {
         email: user.email!,
         full_name: form.full_name || null,
         phone: form.phone || null,
-        child_name: form.child_name || null,
-        child_group: form.child_group || null,
+        children: children.filter(c => c.name.trim()),
       })
 
     if (!error) {
@@ -215,30 +217,59 @@ export default function ProfilePage() {
               />
             </label>
 
-            <label className="block">
-              <span className="text-sm font-medium text-text-secondary mb-1 block">Barnets navn</span>
-              <input
-                type="text"
-                value={form.child_name}
-                onChange={(e) => setForm({ ...form, child_name: e.target.value })}
-                placeholder="Lille Nordmann"
-                className={inputClass}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-medium text-text-secondary mb-1 block">Gruppe</span>
-              <select
-                value={form.child_group}
-                onChange={(e) => setForm({ ...form, child_group: e.target.value })}
-                className={inputClass}
+            {/* Barn */}
+            <div>
+              <span className="text-sm font-medium text-text-secondary mb-2 block">Barn</span>
+              <div className="space-y-3">
+                {children.map((child, i) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={child.name}
+                        onChange={(e) => {
+                          const updated = [...children]
+                          updated[i] = { ...updated[i], name: e.target.value }
+                          setChildren(updated)
+                        }}
+                        placeholder="Barnets navn"
+                        className={inputClass}
+                      />
+                      <select
+                        value={child.group}
+                        onChange={(e) => {
+                          const updated = [...children]
+                          updated[i] = { ...updated[i], group: e.target.value as Child['group'] }
+                          setChildren(updated)
+                        }}
+                        className={inputClass}
+                      >
+                        <option value="Aspirant">Aspirant</option>
+                        <option value="Junior">Junior</option>
+                        <option value="Hovedkorps">Hovedkorps</option>
+                      </select>
+                    </div>
+                    {children.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setChildren(children.filter((_, j) => j !== i))}
+                        className="mt-3 p-2 rounded-full active:bg-black/5"
+                      >
+                        <Trash2 size={16} className="text-text-tertiary" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setChildren([...children, { name: '', group: 'Aspirant' as const }])}
+                className="flex items-center gap-1.5 text-xs text-accent font-medium mt-3 active:opacity-70"
               >
-                <option value="">Velg gruppe</option>
-                <option value="Aspirant">Aspirant</option>
-                <option value="Junior">Junior</option>
-                <option value="Hovedkorps">Hovedkorps</option>
-              </select>
-            </label>
+                <Plus size={14} />
+                Legg til barn
+              </button>
+            </div>
 
             <div className="flex gap-3 pt-2">
               {profile && (
@@ -272,10 +303,11 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {profile?.child_name && (
-              <div className="text-sm text-text-secondary">
-                <p>Barn: {profile.child_name}</p>
-                {profile.child_group && <p>Gruppe: {profile.child_group}</p>}
+            {profile?.children && profile.children.length > 0 && (
+              <div className="text-sm text-text-secondary space-y-0.5">
+                {profile?.children.map((c, i) => (
+                  <p key={i}>{c.name}{c.group ? ` — ${c.group}` : ''}</p>
+                ))}
               </div>
             )}
 
@@ -369,7 +401,7 @@ export default function ProfilePage() {
 
           {/* Versjon */}
           <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 5.9
+            Tillerbyen Skolekorps Dugnadshub v 6.0
           </p>
 
           {/* Logg ut */}

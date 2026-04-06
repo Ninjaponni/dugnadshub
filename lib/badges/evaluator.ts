@@ -50,10 +50,11 @@ export async function evaluateBadges(userId: string) {
   if (!earned.has(16)) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name, phone, child_name, child_group')
+      .select('full_name, phone, children')
       .eq('id', userId)
-      .single() as unknown as { data: { full_name: string | null; phone: string | null; child_name: string | null; child_group: string | null } | null }
-    if (profile?.full_name && profile?.phone && profile?.child_name && profile?.child_group) {
+      .single() as unknown as { data: { full_name: string | null; phone: string | null; children: Array<{ name: string; group: string }> | null } | null }
+    const hasChildren = profile?.children && profile.children.length > 0 && profile.children[0]?.name
+    if (profile?.full_name && profile?.phone && hasChildren) {
       toAward.push(16)
     }
   }
