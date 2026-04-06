@@ -166,8 +166,9 @@ export async function GET(request: NextRequest) {
 
     csvLines = [titleRow, '', header, ...rows]
   } else {
-    // Flaskeinnsamling-format
-    const header = `Henger,Gate,Ant. husstander,Ant. samlere,Kommentar,Samlere,Telefon,Notat,Ut kl.: ${startTime},Ferdig,Flasker hentet`
+    // Flaskeinnsamling-format — matcher korpsets Google Sheets (Sør-format)
+    const endTime = event.end_time ? formatTime(event.end_time) : '20.00'
+    const header = `Henger,Gate,Antall husstander,Samlere,Kommentar,Hvem,Telefon,"Ut kl.:\n${startTime}","Inn\n(Senest kl ${endTime})","Flasker er \nhentet"`
 
     let totalCollectors = 0
     const rows = sortedAssignments.map(a => {
@@ -182,10 +183,15 @@ export async function GET(request: NextRequest) {
         .map(c => profileMap.get(c.user_id)?.phone || '')
         .filter(Boolean)
         .join('\n')
-      const collectorNotes = zoneClaims
+
+      // Kommentar = sone-notater + claim-notater samlet
+      const kommentarParts: string[] = []
+      if (zone?.notes) kommentarParts.push(zone.notes)
+      const claimNotes = zoneClaims
         .map(c => c.notes || '')
         .filter(Boolean)
-        .join('\n')
+      if (claimNotes.length > 0) kommentarParts.push(...claimNotes)
+      const kommentar = kommentarParts.join('\n')
 
       const collectorsNeeded = zone?.collectors_needed || 2
       totalCollectors += collectorsNeeded
@@ -198,17 +204,19 @@ export async function GET(request: NextRequest) {
         csvEscape(zone?.name || a.zone_id),
         zone?.households || '',
         collectorsNeeded,
-        csvEscape(zone?.notes || ''),
+        csvEscape(kommentar),
         csvEscape(collectorNames),
         csvEscape(collectorPhones),
-        csvEscape(collectorNotes),
         '',
         ferdig,
         hentet,
       ].join(',')
     })
 
-    const totalRow = `,,,${totalCollectors},,,,,,,`
+    // Totalrad
+    const totalRow = `,,,${totalCollectors},,,,,,`
+
+    // Bunnseksjon — sjåfører og stripsere fra driver_notes
     const footerRows: string[] = ['', '']
     if (event.driver_notes) {
       const noteLines = (event.driver_notes as string).split('\n').filter((l: string) => l.trim())
