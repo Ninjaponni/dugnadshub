@@ -154,7 +154,7 @@ export default function ProfilePage() {
     e.preventDefault()
     setSaving(true)
     const { data: { user } } = await supabaseRef.current.auth.getUser()
-    if (!user) return
+    if (!user) { setSaving(false); return }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabaseRef.current.from('profiles') as any)
@@ -315,7 +315,11 @@ export default function ProfilePage() {
               variant="secondary"
               size="sm"
               className="mt-4"
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
+                setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
+                setEditing(true)
+              }}
             >
               Rediger profil
             </Button>

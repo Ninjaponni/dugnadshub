@@ -340,7 +340,7 @@ export default function MembersAdminPage() {
                           <div className="text-xs text-text-tertiary space-y-0.5">
                             <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
                             {profile.phone && <p>Telefon: <a href={`tel:${profile.phone}`} className="text-accent">{profile.phone}</a></p>}
-                            {profile.children?.length > 0 && profile.children.map((c: { name: string; group: string }, i: number) => (
+                            {profile.children && profile.children.length > 0 && profile.children.map((c: { name: string; group: string }, i: number) => (
                               <p key={i}>Barn: {c.name}{c.group ? ` (${c.group})` : ''}</p>
                             ))}
                             <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>

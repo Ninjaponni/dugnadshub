@@ -53,7 +53,7 @@ export async function evaluateBadges(userId: string) {
       .select('full_name, phone, children')
       .eq('id', userId)
       .single() as unknown as { data: { full_name: string | null; phone: string | null; children: Array<{ name: string; group: string }> | null } | null }
-    const hasChildren = profile?.children && profile.children.length > 0 && profile.children[0]?.name
+    const hasChildren = profile?.children?.some(c => c.name?.trim())
     if (profile?.full_name && profile?.phone && hasChildren) {
       toAward.push(16)
     }

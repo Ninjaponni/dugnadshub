@@ -11,8 +11,7 @@ create table public.profiles (
   full_name text,
   email text not null,
   phone text,
-  child_name text,
-  child_group text check (child_group in ('Aspirant', 'Junior', 'Hovedkorps')),
+  children jsonb default '[]'::jsonb,
   role text not null default 'collector' check (role in ('admin', 'collector', 'driver', 'strapper')),
   avatar_url text,
   created_at timestamptz not null default now()

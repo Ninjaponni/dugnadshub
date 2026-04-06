@@ -49,9 +49,13 @@ async function getSubscriptions(filter: SendFilter) {
     profileQuery = profileQuery.in('role', filter.roles)
   }
   if (filter.childGroups && filter.childGroups.length > 0) {
-    // children er JSONB-array med {name, group} — filtrer med or() + contains()
-    const orClauses = filter.childGroups.map(g => `children.cs.[{"group":"${g}"}]`).join(',')
-    profileQuery = profileQuery.or(orClauses)
+    // Validér mot gyldige grupper for å unngå filter-injeksjon
+    const validGroups = new Set(['Aspirant', 'Junior', 'Hovedkorps'])
+    const safeGroups = filter.childGroups.filter(g => validGroups.has(g))
+    if (safeGroups.length > 0) {
+      const orClauses = safeGroups.map(g => `children.cs.[{"group":"${g}"}]`).join(',')
+      profileQuery = profileQuery.or(orClauses)
+    }
   }
 
   const { data: profiles } = await profileQuery

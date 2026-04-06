@@ -16,7 +16,7 @@ export interface Profile {
   full_name: string | null
   email: string
   phone: string | null
-  children: Child[]
+  children: Child[] | null
   role: Role
   avatar_url: string | null
   created_at: string
