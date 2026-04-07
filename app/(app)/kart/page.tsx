@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRealtimeZones, type ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import { useActiveEvent, useActiveEvents } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
+import BaseSheet from '@/components/features/BaseSheet'
+import type { Base } from '@/components/features/BaseSheet'
 import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
@@ -95,6 +97,7 @@ function MapPageContent() {
   const { zones: rawZones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
   const zones = hasActiveEvent ? rawZones : []
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
+  const [selectedBase, setSelectedBase] = useState<Base | null>(null)
   const [isSatellite, setIsSatellite] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -163,6 +166,7 @@ function MapPageContent() {
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
         mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : MAP_CONFIG.style}
+        onBaseClick={(base) => setSelectedBase(base)}
       />
 
       {/* Satellitt/kart-toggle */}
@@ -272,6 +276,18 @@ function MapPageContent() {
         onFlyTo={(lng, lat, zoom) => {
           setFlyTarget({ lng, lat, zoom: zoom || 16 })
         }}
+      />
+
+      <BaseSheet
+        base={selectedBase}
+        eventId={event?.id || null}
+        userId={userId}
+        isAdmin={userRole === 'admin'}
+        onClose={() => setSelectedBase(null)}
+        onAction={() => {
+          refetch()
+        }}
+        zones={zones}
       />
     </div>
   )

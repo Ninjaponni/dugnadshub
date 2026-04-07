@@ -24,10 +24,11 @@ interface DugnadMapProps {
   flyTarget?: { lng: number; lat: number; zoom: number } | null
   onFlyComplete?: () => void
   mapStyle?: string
+  onBaseClick?: (base: { id: string; name: string; area: 'NORD' | 'SOR'; coordinates: [number, number] }) => void
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, flyTarget, onFlyComplete, mapStyle }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, flyTarget, onFlyComplete, mapStyle, onBaseClick }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [hasFlown, setHasFlown] = useState(false)
@@ -96,7 +97,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
         <>
           <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
           {eventType !== 'lapper' && <DropPointMarkers activeArea={activeArea} />}
-          {eventType === 'bottle_collection' && <BaseMarker activeArea={activeArea} />}
+          {eventType === 'bottle_collection' && <BaseMarker activeArea={activeArea} onBaseClick={onBaseClick} />}
           {eventType === 'lapper' && <PosterMarkers activeArea={activeArea} />}
           <ZoneMarkers zones={zones} userId={userId || null} />
         </>

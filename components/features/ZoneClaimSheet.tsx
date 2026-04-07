@@ -127,7 +127,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ zoneName }),
+        body: JSON.stringify({ zoneName, zoneId: zone!.id, eventId }),
       })
     } catch {
       // Push-feil er ikke kritisk — stille feil

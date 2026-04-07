@@ -75,12 +75,22 @@ export interface ZoneClaim {
   notes: string | null
 }
 
+export type BaseRole = 'driver' | 'strapper'
+
 export interface DriverAssignment {
   id: string
   event_id: string
   user_id: string
   trailer_group: number
   area: ZoneArea
+  role: BaseRole
+  slot_number: number
+}
+
+// Utvidet med profil-info for visning i BaseSheet
+export interface DriverAssignmentWithProfile extends DriverAssignment {
+  full_name: string | null
+  phone: string | null
 }
 
 export interface ParticipationLog {
