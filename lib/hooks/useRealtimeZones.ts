@@ -17,6 +17,13 @@ export function useRealtimeZones(eventId: string | null) {
   const supabaseRef = useRef(createClient())
 
   const fetchZones = useCallback(async () => {
+    // null = ikke hent noe (venter på event-data)
+    if (!eventId) {
+      setZones([])
+      setLoading(false)
+      return
+    }
+
     const supabase = supabaseRef.current
 
     const { data: allZones } = await supabase
@@ -29,7 +36,8 @@ export function useRealtimeZones(eventId: string | null) {
     let assignments: ZoneAssignment[] = []
     let claims: (ZoneClaim & { profiles?: { full_name: string | null; phone: string | null } } & { notes: string | null })[] = []
 
-    if (eventId) {
+    // 'all' = vis alle soner uten event-filtrering
+    if (eventId && eventId !== 'all') {
       const { data: assignData } = await supabase
         .from('zone_assignments')
         .select('*')
@@ -79,7 +87,7 @@ export function useRealtimeZones(eventId: string | null) {
   useEffect(() => {
     fetchZones()
 
-    if (!eventId) return
+    if (!eventId || eventId === 'all') return
 
     const supabase = supabaseRef.current
 

@@ -91,7 +91,8 @@ function MapPageContent() {
     : allEvents.length > 1
       ? allEvents[selectedEventIndex] || allEvents[0]
       : autoEvent
-  const effectiveEventId = showAll ? null : (event?.id || null)
+  // 'all' = vis alle soner, null = ikke hent noe (venter på event), ellers event-id
+  const effectiveEventId = showAll ? 'all' : (event?.id || null)
 
   // Vis soner kun ved aktiv hendelse, eksplisitt event-ID i URL (og lastet), eller "vis alle"
   const hasActiveEvent = showAll || (!!overrideEventId && !!overrideEvent) || (!!event && event.status === 'active')
