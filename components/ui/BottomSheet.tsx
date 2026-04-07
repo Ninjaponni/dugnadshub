@@ -42,25 +42,28 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             drag="y"
             dragControls={dragControls}
+            dragListener={false}
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl max-h-[85dvh] overflow-auto pb-20"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl max-h-[85dvh] flex flex-col pb-20"
           >
-            {/* Drag-håndtak */}
+            {/* Drag-håndtak — kun dette området trigger drag-to-close */}
             <div
-              className="flex justify-center py-3 cursor-grab active:cursor-grabbing"
+              className="flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0"
               onPointerDown={(e) => dragControls.start(e)}
             >
               <div className="w-9 h-1 rounded-full bg-text-tertiary/40" />
             </div>
 
-            {title && (
-              <h2 className="text-xl font-semibold px-5 pb-3">{title}</h2>
-            )}
+            <div className="overflow-auto flex-1 overscroll-contain">
+              {title && (
+                <h2 className="text-xl font-semibold px-5 pb-3">{title}</h2>
+              )}
 
-            <div className="px-5 pb-6">
-              {children}
+              <div className="px-5 pb-6">
+                {children}
+              </div>
             </div>
           </motion.div>
         </>

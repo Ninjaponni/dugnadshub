@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import MemberPicker from '@/components/features/MemberPicker'
-import { Phone, X as XIcon, UserPlus, Truck, Wrench } from 'lucide-react'
+import { Phone, X as XIcon, UserPlus, Truck, Wrench, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneArea, DriverAssignmentWithProfile } from '@/lib/supabase/types'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
@@ -45,6 +45,7 @@ interface TrailerCardProps {
 function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loading, disabled, onClaim, onUnclaim, onAdminUnclaim, onAdminAssign }: TrailerCardProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showAdminConfirm, setShowAdminConfirm] = useState(false)
+  const [showZones, setShowZones] = useState(false)
   const isMe = assignment?.user_id === userId
 
   return (
@@ -52,10 +53,20 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
       <div className="flex items-center gap-2 mb-1">
         <Truck size={14} className="text-accent" />
         <span className="text-sm font-semibold">Henger {trailerGroup}</span>
+        {/* Trekkspill for sonenavn */}
+        {zoneNames.length > 0 && (
+          <button
+            onClick={() => setShowZones(v => !v)}
+            className="ml-auto flex items-center gap-1 text-[11px] text-text-tertiary active:opacity-70"
+          >
+            {zoneNames.length} soner
+            <ChevronDown size={12} className={`transition-transform ${showZones ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>
 
-      {/* Sonenavn — kompakt liste */}
-      {zoneNames.length > 0 && (
+      {/* Sonenavn — skjult bak trekkspill */}
+      {showZones && zoneNames.length > 0 && (
         <p className="text-xs text-text-tertiary mb-3 leading-relaxed">
           {zoneNames.join(' · ')}
         </p>
