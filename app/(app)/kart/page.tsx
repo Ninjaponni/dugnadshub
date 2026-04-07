@@ -138,15 +138,13 @@ function MapPageContent() {
     }
   }, [focusZoneId, zones, zonesLoading])
 
-  // Bestem aktivt område fra hendelsens soner
+  // Bestem aktivt område fra hendelsens area-felt (ikke soner — unngår flash)
   const activeArea = useMemo<ZoneArea | null>(() => {
     if (!event || showAll) return null
-    const assignedZones = zones.filter((z) => z.assignment_id)
-    if (assignedZones.length === 0) return null
-    const areas = new Set(assignedZones.map((z) => z.area))
-    if (areas.size === 1) return assignedZones[0].area
-    return null
-  }, [event, zones])
+    if (event.area === 'nord') return 'NORD'
+    if (event.area === 'sor') return 'SOR'
+    return null // 'begge' → vis alt
+  }, [event, showAll])
 
   // Beregn bounding box fra tildelte soner (+ base for flaskeinnsamling)
   const initialBounds = useMemo<[[number, number], [number, number]] | null>(() => {
