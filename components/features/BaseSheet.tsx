@@ -50,7 +50,7 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
 
   return (
     <div className="py-3">
-      {/* Header-rad: hengernavn + sonetrekkspill + status/knapp */}
+      {/* Rad 1: hengernavn + sonetrekkspill */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold">Henger {trailerGroup}</span>
         {zoneNames.length > 0 && (
@@ -62,40 +62,10 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
             <ChevronDown size={10} className={`transition-transform ${showZones ? 'rotate-180' : ''}`} />
           </button>
         )}
-        <div className="flex-1" />
-        {assignment ? (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
-              {assignment.full_name?.charAt(0) || '?'}
-            </div>
-            <span className="text-sm">{assignment.full_name || 'Ukjent'}</span>
-            {isMe && (
-              <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
-            )}
-            {isAdmin && assignment.phone && (
-              <a href={`tel:${assignment.phone}`} className="p-1 rounded-full active:bg-black/10" aria-label="Ring">
-                <Phone size={14} className="text-accent" />
-              </a>
-            )}
-            {isAdmin && !isMe && (
-              showAdminConfirm ? (
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary px-1.5 py-0.5 rounded active:bg-black/5">
-                    Avbryt
-                  </button>
-                  <button onClick={() => { setShowAdminConfirm(false); onAdminUnclaim() }} className="text-xs text-danger font-medium px-1.5 py-0.5 rounded active:bg-danger/10">
-                    Fjern
-                  </button>
-                </div>
-              ) : (
-                <button onClick={() => setShowAdminConfirm(true)} className="p-1 rounded-full active:bg-black/10" aria-label="Fjern sjåfør">
-                  <XIcon size={14} className="text-text-tertiary" />
-                </button>
-              )
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5">
+        {/* Ledig-status på samme rad som header når ingen er påmeldt */}
+        {!assignment && (
+          <>
+            <div className="flex-1" />
             <span className="text-sm text-text-secondary">Ledig</span>
             {!disabled && (
               <Button size="sm" onClick={onClaim} loading={loading}>
@@ -107,33 +77,69 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
                 <UserPlus size={14} />
               </Button>
             )}
-          </div>
+          </>
         )}
       </div>
 
       {/* Sonenavn — trekkspill */}
       {showZones && zoneNames.length > 0 && (
-        <p className="text-xs text-text-tertiary mt-1.5 leading-relaxed pl-0">
+        <p className="text-xs text-text-tertiary mt-1.5 leading-relaxed">
           {zoneNames.join(' · ')}
         </p>
       )}
 
-      {/* Gi opp / bekreftelse for egen plass */}
+      {/* Rad 2: påmeldt person (egen rad under header) */}
+      {assignment && (
+        <div className="mt-2 flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
+            {assignment.full_name?.charAt(0) || '?'}
+          </div>
+          <span className="text-sm flex-1 min-w-0 truncate">{assignment.full_name || 'Ukjent'}</span>
+          {isMe && (
+            <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full shrink-0">deg</span>
+          )}
+          {isAdmin && assignment.phone && (
+            <a href={`tel:${assignment.phone}`} className="w-9 h-9 flex items-center justify-center rounded-full active:bg-black/10 shrink-0" aria-label="Ring">
+              <Phone size={16} className="text-accent" />
+            </a>
+          )}
+          {isAdmin && !isMe && (
+            showAdminConfirm ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary py-1 px-2 rounded active:bg-black/5">
+                  Avbryt
+                </button>
+                <button onClick={() => { setShowAdminConfirm(false); onAdminUnclaim() }} className="text-xs text-danger font-medium py-1 px-2 rounded active:bg-danger/10">
+                  Fjern
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setShowAdminConfirm(true)} className="w-9 h-9 flex items-center justify-center rounded-full active:bg-black/10 shrink-0" aria-label="Fjern sjåfør">
+                <XIcon size={16} className="text-text-tertiary" />
+              </button>
+            )
+          )}
+        </div>
+      )}
+
+      {/* Rad 3: «Gi opp» — egen rad med god avstand */}
       {assignment && isMe && !showConfirm && (
-        <button
-          onClick={() => setShowConfirm(true)}
-          className="mt-1.5 text-xs text-danger font-medium active:opacity-70"
-        >
-          Gi opp
-        </button>
+        <div className="mt-2 pt-1">
+          <button
+            onClick={() => setShowConfirm(true)}
+            className="text-xs text-danger font-medium py-1.5 active:opacity-70"
+          >
+            Gi opp plassen
+          </button>
+        </div>
       )}
       {assignment && isMe && showConfirm && (
-        <div className="mt-1.5 flex items-center gap-2">
-          <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary px-2 py-1 rounded active:bg-black/5">
+        <div className="mt-2 pt-1 flex items-center gap-3">
+          <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-black/5">
             Avbryt
           </button>
-          <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium px-2 py-1 rounded active:bg-danger/10">
-            {loading ? 'Fjerner...' : 'Bekreft'}
+          <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium py-1.5 px-2 rounded active:bg-danger/10">
+            {loading ? 'Fjerner...' : 'Bekreft gi opp'}
           </button>
         </div>
       )}
@@ -161,58 +167,79 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabl
   const isMe = assignment?.user_id === userId
 
   return (
-    <div className="flex items-center gap-2 py-2">
-      <span className="text-sm text-text-secondary w-16 shrink-0">Plass {slotNumber}:</span>
-      {assignment ? (
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
-            {assignment.full_name?.charAt(0) || '?'}
-          </div>
-          <span className="text-sm truncate">{assignment.full_name || 'Ukjent'}</span>
-          {isMe && (
-            <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full shrink-0">deg</span>
-          )}
+    <div className="py-3">
+      {/* Rad 1: plassnummer + person/status */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-text-secondary shrink-0">Plass {slotNumber}:</span>
+        {assignment ? (
+          <>
+            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
+              {assignment.full_name?.charAt(0) || '?'}
+            </div>
+            <span className="text-sm flex-1 min-w-0 truncate">{assignment.full_name || 'Ukjent'}</span>
+            {isMe && (
+              <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full shrink-0">deg</span>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="text-sm text-text-secondary flex-1">Ledig</span>
+            {!disabled && (
+              <Button size="sm" onClick={onClaim} loading={loading}>
+                Meld deg
+              </Button>
+            )}
+            {isAdmin && (
+              <Button size="sm" variant="ghost" onClick={onAdminAssign} aria-label="Tildel">
+                <UserPlus size={14} />
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Rad 2: handlinger — god avstand, 44px touch targets */}
+      {assignment && (isMe || isAdmin) && (
+        <div className="mt-2 flex items-center gap-3">
           {isAdmin && assignment.phone && (
-            <a href={`tel:${assignment.phone}`} className="p-1 rounded-full active:bg-black/10 shrink-0" aria-label="Ring">
-              <Phone size={14} className="text-accent" />
+            <a href={`tel:${assignment.phone}`} className="flex items-center gap-1.5 text-xs text-accent font-medium py-1.5 active:opacity-70" aria-label="Ring">
+              <Phone size={14} />
+              Ring
             </a>
           )}
           {isMe && !showConfirm && (
-            <button onClick={() => setShowConfirm(true)} className="text-xs text-danger font-medium active:opacity-70 shrink-0">
-              Gi opp
+            <button
+              onClick={() => setShowConfirm(true)}
+              className="text-xs text-danger font-medium py-1.5 active:opacity-70"
+            >
+              Gi opp plassen
             </button>
           )}
           {isMe && showConfirm && (
-            <>
-              <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary shrink-0">Avbryt</button>
-              <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium shrink-0">Bekreft</button>
-            </>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-black/5">
+                Avbryt
+              </button>
+              <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium py-1.5 px-2 rounded active:bg-danger/10">
+                {loading ? 'Fjerner...' : 'Bekreft gi opp'}
+              </button>
+            </div>
           )}
           {isAdmin && !isMe && (
             showAdminConfirm ? (
-              <>
-                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary shrink-0">Avbryt</button>
-                <button onClick={() => { setShowAdminConfirm(false); onAdminUnclaim() }} className="text-xs text-danger font-medium shrink-0">Fjern</button>
-              </>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-black/5">
+                  Avbryt
+                </button>
+                <button onClick={() => { setShowAdminConfirm(false); onAdminUnclaim() }} className="text-xs text-danger font-medium py-1.5 px-2 rounded active:bg-danger/10">
+                  Fjern
+                </button>
+              </div>
             ) : (
-              <button onClick={() => setShowAdminConfirm(true)} className="p-1 rounded-full active:bg-black/10 shrink-0" aria-label="Fjern">
-                <XIcon size={14} className="text-text-tertiary" />
+              <button onClick={() => setShowAdminConfirm(true)} className="text-xs text-text-tertiary font-medium py-1.5 active:opacity-70" aria-label="Fjern">
+                Fjern
               </button>
             )
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 flex-1">
-          <span className="text-sm text-text-tertiary flex-1">Ledig</span>
-          {!disabled && (
-            <Button size="sm" onClick={onClaim} loading={loading}>
-              Meld deg
-            </Button>
-          )}
-          {isAdmin && (
-            <button onClick={onAdminAssign} className="p-1.5 rounded-full active:bg-black/10" aria-label="Tildel">
-              <UserPlus size={14} className="text-text-tertiary" />
-            </button>
           )}
         </div>
       )}
