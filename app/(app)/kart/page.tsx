@@ -156,7 +156,7 @@ function MapPageContent() {
     <div className="fixed inset-0 z-0">
       <DugnadMap
         zones={zones}
-        onZoneClick={setSelectedZone}
+        onZoneClick={(zone) => { setSelectedZone(zone); setSelectedBase(null) }}
         selectedZoneId={selectedZone?.id}
         userId={userId}
         activeArea={activeArea}
@@ -166,7 +166,7 @@ function MapPageContent() {
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
         mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : MAP_CONFIG.style}
-        onBaseClick={(base) => setSelectedBase(base)}
+        onBaseClick={(base) => { setSelectedBase(base); setSelectedZone(null) }}
       />
 
       {/* Satellitt/kart-toggle */}

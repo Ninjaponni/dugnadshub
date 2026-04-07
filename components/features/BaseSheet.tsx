@@ -35,13 +35,14 @@ interface TrailerCardProps {
   userId: string | null
   isAdmin: boolean
   loading: boolean
+  disabled: boolean
   onClaim: () => void
   onUnclaim: () => void
   onAdminUnclaim: () => void
   onAdminAssign: () => void
 }
 
-function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loading, onClaim, onUnclaim, onAdminUnclaim, onAdminAssign }: TrailerCardProps) {
+function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loading, disabled, onClaim, onUnclaim, onAdminUnclaim, onAdminAssign }: TrailerCardProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showAdminConfirm, setShowAdminConfirm] = useState(false)
   const isMe = assignment?.user_id === userId
@@ -114,9 +115,11 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
       ) : (
         <div className="flex items-center gap-2">
           <span className="text-sm text-text-tertiary flex-1">Ledig</span>
-          <Button size="sm" onClick={onClaim} loading={loading}>
-            Meld deg
-          </Button>
+          {!disabled && (
+            <Button size="sm" onClick={onClaim} loading={loading}>
+              Meld deg
+            </Button>
+          )}
           {isAdmin && (
             <button onClick={onAdminAssign} className="p-1.5 rounded-full active:bg-black/10" aria-label="Tildel">
               <UserPlus size={14} className="text-text-tertiary" />
@@ -135,13 +138,14 @@ interface StrapperSlotProps {
   userId: string | null
   isAdmin: boolean
   loading: boolean
+  disabled: boolean
   onClaim: () => void
   onUnclaim: () => void
   onAdminUnclaim: () => void
   onAdminAssign: () => void
 }
 
-function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, onClaim, onUnclaim, onAdminUnclaim, onAdminAssign }: StrapperSlotProps) {
+function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabled, onClaim, onUnclaim, onAdminUnclaim, onAdminAssign }: StrapperSlotProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showAdminConfirm, setShowAdminConfirm] = useState(false)
   const isMe = assignment?.user_id === userId
@@ -190,9 +194,11 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, onClai
       ) : (
         <div className="flex items-center gap-2 flex-1">
           <span className="text-sm text-text-tertiary flex-1">Ledig</span>
-          <Button size="sm" onClick={onClaim} loading={loading}>
-            Meld deg
-          </Button>
+          {!disabled && (
+            <Button size="sm" onClick={onClaim} loading={loading}>
+              Meld deg
+            </Button>
+          )}
           {isAdmin && (
             <button onClick={onAdminAssign} className="p-1.5 rounded-full active:bg-black/10" aria-label="Tildel">
               <UserPlus size={14} className="text-text-tertiary" />
@@ -213,35 +219,40 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
   const [memberPickerTarget, setMemberPickerTarget] = useState<{ role: string; trailerGroup: number; slotNumber: number } | null>(null)
   const supabaseRef = useRef(createClient())
 
-  // Hent data når sheet åpnes
+  // Hent data når sheet åpnes (initial load viser skeleton)
   useEffect(() => {
     if (!base || !eventId) return
-    fetchAssignments()
+    fetchAssignments(true)
   }, [base, eventId])
 
-  async function fetchAssignments() {
+  async function fetchAssignments(showSkeleton = false) {
     if (!base || !eventId) return
-    setLoading(true)
-    const { data } = await supabaseRef.current
+    if (showSkeleton) setLoading(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: queryError } = await (supabaseRef.current
       .from('driver_assignments')
       .select('id, event_id, user_id, trailer_group, area, role, slot_number, profiles(full_name, phone)')
       .eq('event_id', eventId)
-      .eq('area', base.area) as unknown as {
-        data: Array<DriverAssignmentWithProfile & { profiles: { full_name: string | null; phone: string | null } }> | null
-      }
+      .eq('area', base.area) as any)
 
-    const mapped = (data || []).map(d => ({
-      id: d.id,
-      event_id: d.event_id,
-      user_id: d.user_id,
-      trailer_group: d.trailer_group,
-      area: d.area,
-      role: d.role,
-      slot_number: d.slot_number,
+    if (queryError) {
+      setError('Kunne ikke laste plasser. Prøv igjen.')
+      setLoading(false)
+      return
+    }
+
+    const mapped = (data || []).map((d: Record<string, unknown> & { profiles?: { full_name: string | null; phone: string | null } }) => ({
+      id: d.id as string,
+      event_id: d.event_id as string,
+      user_id: d.user_id as string,
+      trailer_group: d.trailer_group as number,
+      area: d.area as string,
+      role: d.role as string,
+      slot_number: d.slot_number as number,
       full_name: d.profiles?.full_name || null,
       phone: d.profiles?.phone || null,
     }))
-    setAssignments(mapped)
+    setAssignments(mapped as DriverAssignmentWithProfile[])
     setLoading(false)
   }
 
@@ -413,6 +424,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
                   userId={userId}
                   isAdmin={isAdmin}
                   loading={claimLoading === `driver-${tg}-1` || claimLoading === 'unclaim'}
+                  disabled={userHasSlot}
                   onClaim={() => handleClaim('driver', tg, 1)}
                   onUnclaim={handleUnclaim}
                   onAdminUnclaim={() => {
@@ -440,6 +452,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
                   userId={userId}
                   isAdmin={isAdmin}
                   loading={claimLoading === `strapper-0-${slot}` || claimLoading === 'unclaim'}
+                  disabled={userHasSlot}
                   onClaim={() => handleClaim('strapper', 0, slot)}
                   onUnclaim={handleUnclaim}
                   onAdminUnclaim={() => {
