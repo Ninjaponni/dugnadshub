@@ -31,56 +31,55 @@ export async function POST(request: NextRequest) {
     url: '/sjafor',
   }
 
-  // Prøv å finne riktig sjåfør basert på sonens trailer_group
-  if (zoneId && eventId) {
-    // Hent sonens trailer_group og area
+  // Hent sonens trailer_group og area (brukes i alle tiers)
+  let zoneArea: string | null = null
+  let zoneTrailerGroup: number | null = null
+
+  if (zoneId) {
     const { data: zone } = await supabase
       .from('zones')
       .select('trailer_group, area')
       .eq('id', zoneId)
       .single()
-
     if (zone) {
-      // Finn sjåfør for denne hengeren
-      const { data: drivers } = await supabase
-        .from('driver_assignments')
-        .select('user_id')
-        .eq('event_id', eventId)
-        .eq('area', zone.area)
-        .eq('trailer_group', zone.trailer_group)
-        .eq('role', 'driver')
-
-      if (drivers && drivers.length > 0) {
-        // Send til sjåfør(ene) for denne hengeren + admins
-        const driverIds = drivers.map((d: { user_id: string }) => d.user_id)
-
-        // Hent admin-brukere
-        const { data: admins } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'admin')
-
-        const adminIds = (admins || []).map((a: { id: string }) => a.id)
-        const allIds = [...new Set([...driverIds, ...adminIds])]
-
-        const result = await sendPush(payload, { userIds: allIds })
-        return NextResponse.json(result)
-      }
+      zoneArea = zone.area
+      zoneTrailerGroup = zone.trailer_group
     }
   }
 
-  // Fallback: send til alle sjåfører (fra driver_assignments) + admins
+  // Tier 1: Finn sjåfør for spesifikk henger
+  if (eventId && zoneArea && zoneTrailerGroup !== null) {
+    const { data: drivers } = await supabase
+      .from('driver_assignments')
+      .select('user_id')
+      .eq('event_id', eventId)
+      .eq('area', zoneArea)
+      .eq('trailer_group', zoneTrailerGroup)
+      .eq('role', 'driver')
+
+    if (drivers && drivers.length > 0) {
+      const driverIds = drivers.map((d: { user_id: string }) => d.user_id)
+      const { data: admins } = await supabase.from('profiles').select('id').eq('role', 'admin')
+      const adminIds = (admins || []).map((a: { id: string }) => a.id)
+      const allIds = [...new Set([...driverIds, ...adminIds])]
+
+      const result = await sendPush(payload, { userIds: allIds })
+      return NextResponse.json(result)
+    }
+  }
+
+  // Tier 2: Alle sjåfører for samme område (ikke alle områder)
   if (eventId) {
-    const { data: allDrivers } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let driverQuery: any = supabase
       .from('driver_assignments')
       .select('user_id')
       .eq('event_id', eventId)
       .eq('role', 'driver')
+    if (zoneArea) driverQuery = driverQuery.eq('area', zoneArea)
 
-    const { data: admins } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'admin')
+    const { data: allDrivers } = await driverQuery
+    const { data: admins } = await supabase.from('profiles').select('id').eq('role', 'admin')
 
     const driverIds = (allDrivers || []).map((d: { user_id: string }) => d.user_id)
     const adminIds = (admins || []).map((a: { id: string }) => a.id)
