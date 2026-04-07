@@ -9,7 +9,6 @@ import { useActiveEvent, useActiveEvents } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import BaseSheet from '@/components/features/BaseSheet'
 import type { Base } from '@/components/features/BaseSheet'
-import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
@@ -179,8 +178,6 @@ function MapPageContent() {
       >
         {isSatellite ? <MapIcon size={16} className="text-gray-700" /> : <Satellite size={16} className="text-gray-700" />}
       </button>
-
-      <MapLegend />
 
       {/* Info-knapp */}
       <button
