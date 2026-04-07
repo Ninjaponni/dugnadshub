@@ -105,7 +105,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
       {mapLoaded && (
         <>
           <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
-          {eventType !== 'lapper' && <DropPointMarkers activeArea={activeArea} />}
+          {eventType && eventType !== 'lapper' && <DropPointMarkers activeArea={activeArea} />}
           {eventType === 'bottle_collection' && <BaseMarker activeArea={activeArea} onBaseClick={onBaseClick} />}
           {eventType === 'lapper' && <PosterMarkers activeArea={activeArea} />}
           <ZoneMarkers zones={zones} userId={userId || null} />
