@@ -49,36 +49,26 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
   const isMe = assignment?.user_id === userId
 
   return (
-    <div className="rounded-2xl bg-black/[0.03] p-4">
-      <div className="flex items-center gap-2 mb-1">
-        <Truck size={14} className="text-accent" />
+    <div className="py-3">
+      {/* Header-rad: hengernavn + sonetrekkspill + status/knapp */}
+      <div className="flex items-center gap-2">
         <span className="text-sm font-semibold">Henger {trailerGroup}</span>
-        {/* Trekkspill for sonenavn */}
         {zoneNames.length > 0 && (
           <button
             onClick={() => setShowZones(v => !v)}
-            className="ml-auto flex items-center gap-1 text-[11px] text-text-tertiary active:opacity-70"
+            className="flex items-center gap-0.5 text-[11px] text-text-tertiary active:opacity-70"
           >
             {zoneNames.length} soner
-            <ChevronDown size={12} className={`transition-transform ${showZones ? 'rotate-180' : ''}`} />
+            <ChevronDown size={10} className={`transition-transform ${showZones ? 'rotate-180' : ''}`} />
           </button>
         )}
-      </div>
-
-      {/* Sonenavn — skjult bak trekkspill */}
-      {showZones && zoneNames.length > 0 && (
-        <p className="text-xs text-text-tertiary mb-3 leading-relaxed">
-          {zoneNames.join(' · ')}
-        </p>
-      )}
-
-      {assignment ? (
-        <div>
-          <div className="flex items-center gap-2 text-sm">
+        <div className="flex-1" />
+        {assignment ? (
+          <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
               {assignment.full_name?.charAt(0) || '?'}
             </div>
-            <span className="flex-1">{assignment.full_name || 'Ukjent'}</span>
+            <span className="text-sm">{assignment.full_name || 'Ukjent'}</span>
             {isMe && (
               <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
             )}
@@ -104,38 +94,47 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
               )
             )}
           </div>
-          {isMe && !showConfirm && (
-            <button
-              onClick={() => setShowConfirm(true)}
-              className="mt-2 text-xs text-danger font-medium active:opacity-70"
-            >
-              Gi opp
-            </button>
-          )}
-          {isMe && showConfirm && (
-            <div className="mt-2 flex items-center gap-2">
-              <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary px-2 py-1 rounded active:bg-black/5">
-                Avbryt
-              </button>
-              <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium px-2 py-1 rounded active:bg-danger/10">
-                {loading ? 'Fjerner...' : 'Bekreft'}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-text-tertiary flex-1">Ledig</span>
-          {!disabled && (
-            <Button size="sm" onClick={onClaim} loading={loading}>
-              Meld deg
-            </Button>
-          )}
-          {isAdmin && (
-            <button onClick={onAdminAssign} className="p-1.5 rounded-full active:bg-black/10" aria-label="Tildel">
-              <UserPlus size={14} className="text-text-tertiary" />
-            </button>
-          )}
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-text-secondary">Ledig</span>
+            {!disabled && (
+              <Button size="sm" onClick={onClaim} loading={loading}>
+                Meld deg
+              </Button>
+            )}
+            {isAdmin && (
+              <Button size="sm" variant="ghost" onClick={onAdminAssign} aria-label="Tildel">
+                <UserPlus size={14} />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Sonenavn — trekkspill */}
+      {showZones && zoneNames.length > 0 && (
+        <p className="text-xs text-text-tertiary mt-1.5 leading-relaxed pl-0">
+          {zoneNames.join(' · ')}
+        </p>
+      )}
+
+      {/* Gi opp / bekreftelse for egen plass */}
+      {assignment && isMe && !showConfirm && (
+        <button
+          onClick={() => setShowConfirm(true)}
+          className="mt-1.5 text-xs text-danger font-medium active:opacity-70"
+        >
+          Gi opp
+        </button>
+      )}
+      {assignment && isMe && showConfirm && (
+        <div className="mt-1.5 flex items-center gap-2">
+          <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary px-2 py-1 rounded active:bg-black/5">
+            Avbryt
+          </button>
+          <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium px-2 py-1 rounded active:bg-danger/10">
+            {loading ? 'Fjerner...' : 'Bekreft'}
+          </button>
         </div>
       )}
     </div>
@@ -425,7 +424,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
               <Truck size={12} />
               Sjåfører
             </p>
-            <div className="space-y-2">
+            <div className="rounded-2xl bg-black/[0.03] px-4 divide-y divide-black/5">
               {trailerGroups.map(tg => (
                 <TrailerCard
                   key={tg}
@@ -447,6 +446,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
               ))}
             </div>
           </div>
+
 
           {/* Stripsere */}
           <div>
