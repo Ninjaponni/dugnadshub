@@ -13,7 +13,8 @@ import MapLegend from '@/components/map/MapLegend'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
-import { Map as MapIcon, Satellite, ChevronDown } from 'lucide-react'
+import MapInfoSheet from '@/components/features/MapInfoSheet'
+import { Map as MapIcon, Satellite, ChevronDown, Info } from 'lucide-react'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,
@@ -104,6 +105,7 @@ function MapPageContent() {
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
   const [initialZoom, setInitialZoom] = useState<number | null>(null)
   const [flyTarget, setFlyTarget] = useState<{ lng: number; lat: number; zoom: number } | null>(null)
+  const [showInfo, setShowInfo] = useState(false)
 
   useEffect(() => {
     supabaseRef.current.auth.getUser().then(async ({ data: { user } }) => {
@@ -179,6 +181,22 @@ function MapPageContent() {
       </button>
 
       <MapLegend />
+
+      {/* Info-knapp */}
+      <button
+        onClick={() => setShowInfo(true)}
+        className="absolute bottom-4 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center"
+        aria-label="Hjelp"
+      >
+        <Info size={18} className="text-accent" />
+      </button>
+
+      <MapInfoSheet
+        open={showInfo}
+        onClose={() => setShowInfo(false)}
+        eventType={event?.type || null}
+        contactPhone={event?.contact_phone || null}
+      />
 
       {!eventLoading && !eventsLoading && (
         <div className="absolute top-14 left-4 right-16 z-10 safe-top">

@@ -58,6 +58,7 @@ export interface DugnadEvent {
   description: string | null
   driver_notes: string | null
   created_by: string
+  contact_phone: string | null
 }
 
 export interface ZoneAssignment {
