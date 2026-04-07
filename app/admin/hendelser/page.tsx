@@ -32,6 +32,7 @@ interface EventFormData {
   area: EventArea
   description: string
   driverNotes: string
+  contactPhone: string
 }
 
 const emptyForm: EventFormData = {
@@ -43,6 +44,7 @@ const emptyForm: EventFormData = {
   area: 'begge',
   description: '',
   driverNotes: '',
+  contactPhone: '',
 }
 
 const statusLabels: Record<EventStatus, string> = {
@@ -195,6 +197,7 @@ export default function EventsAdminPage() {
       area: form.area,
       description: form.description || null,
       driver_notes: form.driverNotes || null,
+      contact_phone: form.contactPhone || null,
       status: 'upcoming',
       created_by: user.id,
     }).select().single() as { data: DugnadEvent | null; error: unknown }
@@ -229,6 +232,7 @@ export default function EventsAdminPage() {
       area: editForm.area,
       description: editForm.description || null,
       driver_notes: editForm.driverNotes || null,
+      contact_phone: editForm.contactPhone || null,
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
@@ -253,6 +257,7 @@ export default function EventsAdminPage() {
       area: event.area || 'begge',
       description: event.description || '',
       driverNotes: event.driver_notes || '',
+      contactPhone: event.contact_phone || '',
     })
   }
 
@@ -497,6 +502,18 @@ export default function EventsAdminPage() {
             rows={2}
             placeholder="F.eks. Lever flasker til Infinitum Torgardstrøa 5"
             className={`${inputClass} resize-none`}
+          />
+        </div>
+
+        {/* Telefon dugnadsansvarlig */}
+        <div>
+          <label className="text-xs font-medium text-text-secondary block mb-1">Telefon dugnadsansvarlig (valgfritt)</label>
+          <input
+            type="tel"
+            value={data.contactPhone}
+            onChange={e => setData(prev => ({ ...prev, contactPhone: e.target.value }))}
+            placeholder="F.eks. 99988877"
+            className={inputClass}
           />
         </div>
 
