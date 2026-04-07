@@ -221,7 +221,7 @@ function MapPageContent() {
       {/* Info-knapp */}
       <button
         onClick={() => setShowInfo(true)}
-        className="absolute bottom-20 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center"
+        className="absolute bottom-28 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center"
         aria-label="Hjelp"
       >
         <Info size={18} className="text-accent" />
