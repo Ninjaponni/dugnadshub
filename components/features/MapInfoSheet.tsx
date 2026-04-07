@@ -72,7 +72,7 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
       {/* Ring dugnadsansvarlig */}
       {contactPhone && (
         <a
-          href={`tel:${contactPhone}`}
+          href={`tel:${contactPhone.replace(/\s+/g, '')}`}
           className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-accent text-white font-semibold rounded-xl text-sm active:opacity-80 transition-opacity"
         >
           <Phone size={16} />

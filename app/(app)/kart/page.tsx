@@ -182,7 +182,7 @@ function MapPageContent() {
 
     if (!isFinite(minLng)) return null
     return [[minLng, minLat], [maxLng, maxLat]]
-  }, [zones, event?.type, activeArea, focusZoneId, showAll])
+  }, [zones, zonesLoading, event?.type, activeArea, focusZoneId, showAll])
 
   const assignedZones = zones.filter((z) => z.assignment_id)
   const availableCount = assignedZones.filter((z) => z.claims.length === 0).length
