@@ -48,6 +48,9 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
   const [showZones, setShowZones] = useState(false)
   const isMe = assignment?.user_id === userId
 
+  // Reset confirm-states ved endring av tildeling
+  useEffect(() => { setShowConfirm(false); setShowAdminConfirm(false) }, [assignment?.user_id])
+
   return (
     <div className="py-3">
       {/* Rad 1: hengernavn + sonetrekkspill */}
@@ -165,6 +168,9 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabl
   const [showConfirm, setShowConfirm] = useState(false)
   const [showAdminConfirm, setShowAdminConfirm] = useState(false)
   const isMe = assignment?.user_id === userId
+
+  // Reset confirm-states ved endring av tildeling
+  useEffect(() => { setShowConfirm(false); setShowAdminConfirm(false) }, [assignment?.user_id])
 
   return (
     <div className="py-3">
@@ -460,7 +466,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
                   assignment={getDriverAssignment(tg)}
                   userId={userId}
                   isAdmin={isAdmin}
-                  loading={claimLoading === `driver-${tg}-1` || claimLoading === 'unclaim'}
+                  loading={claimLoading === `driver-${tg}-1` || claimLoading === 'unclaim' || claimLoading === 'admin-unclaim' || claimLoading === 'admin-assign'}
                   disabled={userHasSlot}
                   onClaim={() => handleClaim('driver', tg, 1)}
                   onUnclaim={handleUnclaim}
@@ -489,7 +495,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
                   assignment={getStrapperAssignment(slot)}
                   userId={userId}
                   isAdmin={isAdmin}
-                  loading={claimLoading === `strapper-0-${slot}` || claimLoading === 'unclaim'}
+                  loading={claimLoading === `strapper-0-${slot}` || claimLoading === 'unclaim' || claimLoading === 'admin-unclaim' || claimLoading === 'admin-assign'}
                   disabled={userHasSlot}
                   onClaim={() => handleClaim('strapper', 0, slot)}
                   onUnclaim={handleUnclaim}

@@ -56,11 +56,11 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
               <div className="w-9 h-1 rounded-full bg-text-tertiary/40" />
             </div>
 
-            <div className="overflow-auto flex-1 overscroll-contain">
-              {title && (
-                <h2 className="text-xl font-semibold px-5 pb-3">{title}</h2>
-              )}
+            {title && (
+              <h2 className="text-xl font-semibold px-5 pb-3 shrink-0">{title}</h2>
+            )}
 
+            <div className="overflow-auto flex-1 overscroll-contain">
               <div className="px-5 pb-6">
                 {children}
               </div>
