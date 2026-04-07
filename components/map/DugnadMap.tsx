@@ -21,6 +21,7 @@ interface DugnadMapProps {
   eventType?: EventType | null
   initialCenter?: [number, number] | null
   initialZoom?: number | null
+  initialBounds?: [[number, number], [number, number]] | null
   flyTarget?: { lng: number; lat: number; zoom: number } | null
   onFlyComplete?: () => void
   mapStyle?: string
@@ -28,21 +29,29 @@ interface DugnadMapProps {
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, flyTarget, onFlyComplete, mapStyle, onBaseClick }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, initialBounds, flyTarget, onFlyComplete, mapStyle, onBaseClick }: DugnadMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [hasFlown, setHasFlown] = useState(false)
 
-  // Fly til fokus-sone når kartet er lastet
+  // Fly til fokus-sone eller fit bounds når kartet er lastet
   useEffect(() => {
-    if (!mapLoaded || !initialCenter || hasFlown) return
-    mapRef.current?.flyTo({
-      center: initialCenter,
-      zoom: initialZoom || 15,
-      duration: 1200,
-    })
-    setHasFlown(true)
-  }, [mapLoaded, initialCenter, initialZoom, hasFlown])
+    if (!mapLoaded || hasFlown) return
+    if (initialCenter) {
+      mapRef.current?.flyTo({
+        center: initialCenter,
+        zoom: initialZoom || 15,
+        duration: 1200,
+      })
+      setHasFlown(true)
+    } else if (initialBounds) {
+      mapRef.current?.fitBounds(initialBounds, {
+        padding: { top: 160, bottom: 100, left: 40, right: 40 },
+        duration: 1200,
+      })
+      setHasFlown(true)
+    }
+  }, [mapLoaded, initialCenter, initialZoom, initialBounds, hasFlown])
 
   // Fly til oppsamlingspunkt eller annet mål
   useEffect(() => {

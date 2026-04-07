@@ -9,6 +9,7 @@ import { useActiveEvent, useActiveEvents } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import BaseSheet from '@/components/features/BaseSheet'
 import type { Base } from '@/components/features/BaseSheet'
+import { bases } from '@/components/map/BaseMarker'
 import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
@@ -146,6 +147,44 @@ function MapPageContent() {
     return null
   }, [event, zones])
 
+  // Beregn bounding box fra tildelte soner (+ base for flaskeinnsamling)
+  const initialBounds = useMemo<[[number, number], [number, number]] | null>(() => {
+    if (focusZoneId || showAll) return null
+    const assigned = zones.filter((z) => z.assignment_id)
+    if (assigned.length === 0) return null
+
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity
+
+    for (const zone of assigned) {
+      const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
+      if (!feature) continue
+      const coords = feature.geometry.type === 'MultiPolygon'
+        ? (feature.geometry.coordinates as number[][][][]).flatMap(p => p[0])
+        : (feature.geometry.coordinates as number[][][])[0]
+      for (const [lng, lat] of coords) {
+        if (lng < minLng) minLng = lng
+        if (lng > maxLng) maxLng = lng
+        if (lat < minLat) minLat = lat
+        if (lat > maxLat) maxLat = lat
+      }
+    }
+
+    // Inkluder base-koordinater for flaskeinnsamling
+    if (event?.type === 'bottle_collection') {
+      const relevantBases = activeArea ? bases.filter(b => b.area === activeArea) : bases
+      for (const base of relevantBases) {
+        const [lng, lat] = base.coordinates
+        if (lng < minLng) minLng = lng
+        if (lng > maxLng) maxLng = lng
+        if (lat < minLat) minLat = lat
+        if (lat > maxLat) maxLat = lat
+      }
+    }
+
+    if (!isFinite(minLng)) return null
+    return [[minLng, minLat], [maxLng, maxLat]]
+  }, [zones, event?.type, activeArea, focusZoneId, showAll])
+
   const assignedZones = zones.filter((z) => z.assignment_id)
   const availableCount = assignedZones.filter((z) => z.claims.length === 0).length
   const partialCount = assignedZones.filter((z) => z.claims.length > 0 && z.claims.length < z.collectors_needed && z.status !== 'completed' && z.status !== 'picked_up').length
@@ -164,6 +203,7 @@ function MapPageContent() {
         eventType={event?.type || null}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
+        initialBounds={initialBounds}
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
         mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : MAP_CONFIG.style}
