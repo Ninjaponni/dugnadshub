@@ -164,6 +164,7 @@ create policy "zone_assignments: admin kan endre" on public.zone_assignments for
 create policy "zone_claims: alle kan lese" on public.zone_claims for select using (true);
 create policy "zone_claims: bruker kan sette inn" on public.zone_claims for insert with check (auth.uid() = user_id);
 create policy "zone_claims: bruker kan slette egne" on public.zone_claims for delete using (auth.uid() = user_id);
+create policy "zone_claims: bruker kan oppdatere egne" on public.zone_claims for update using (auth.uid() = user_id);
 
 -- DRIVER_ASSIGNMENTS: alle kan lese, admin kan endre
 create policy "driver_assignments: alle kan lese" on public.driver_assignments for select using (true);
