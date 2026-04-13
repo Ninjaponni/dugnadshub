@@ -34,6 +34,8 @@ interface EventFormData {
   description: string
   driverNotes: string
   contactPhone: string
+  bagsCollected: string
+  completionNotes: string
 }
 
 const emptyForm: EventFormData = {
@@ -46,6 +48,8 @@ const emptyForm: EventFormData = {
   description: '',
   driverNotes: '',
   contactPhone: '',
+  bagsCollected: '',
+  completionNotes: '',
 }
 
 const statusLabels: Record<EventStatus, string> = {
@@ -239,6 +243,8 @@ export default function EventsAdminPage() {
       description: editForm.description || null,
       driver_notes: editForm.driverNotes || null,
       contact_phone: editForm.contactPhone || null,
+      bags_collected: editForm.bagsCollected ? parseInt(editForm.bagsCollected, 10) : null,
+      completion_notes: editForm.completionNotes || null,
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
@@ -264,6 +270,8 @@ export default function EventsAdminPage() {
       description: event.description || '',
       driverNotes: event.driver_notes || '',
       contactPhone: event.contact_phone || '',
+      bagsCollected: event.bags_collected ? String(event.bags_collected) : '',
+      completionNotes: event.completion_notes || '',
     })
   }
 
@@ -534,6 +542,33 @@ export default function EventsAdminPage() {
             className={inputClass}
           />
         </div>
+
+        {/* Sekker og fullføringsnotat — kun i redigering */}
+        {submitLabel === 'Lagre endringer' && (
+          <>
+            <div>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Sekker levert (valgfritt)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={data.bagsCollected}
+                onChange={e => setData(prev => ({ ...prev, bagsCollected: e.target.value }))}
+                placeholder="F.eks. 45"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Fullføringsnotat (valgfritt)</label>
+              <textarea
+                value={data.completionNotes}
+                onChange={e => setData(prev => ({ ...prev, completionNotes: e.target.value }))}
+                rows={2}
+                placeholder="F.eks. Fantastisk oppmøte, ferdig på 1,5 time"
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+          </>
+        )}
 
         <Button type="submit" loading={isLoading} className="w-full">
           {submitLabel}
