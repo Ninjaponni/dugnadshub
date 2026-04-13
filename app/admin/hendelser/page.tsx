@@ -8,6 +8,7 @@ import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, Aler
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone } from '@/lib/supabase/types'
+import { evaluateBadges } from '@/lib/badges/evaluator'
 
 // Sonestatus-teller per hendelse
 interface ZoneStats {
@@ -290,6 +291,18 @@ export default function EventsAdminPage() {
       setErrorMsg('Kunne ikke endre status')
       setUpdatingId(null)
       return
+    }
+
+    // Evaluer badges for alle deltagere ved fullføring
+    if (newStatus === 'completed') {
+      const { data: claims } = await supabaseRef.current
+        .from('zone_claims')
+        .select('user_id, zone_assignments!inner(event_id)')
+        .eq('zone_assignments.event_id', eventId) as unknown as { data: Array<{ user_id: string }> | null }
+      const userIds = [...new Set((claims || []).map(c => c.user_id))]
+      for (const uid of userIds) {
+        evaluateBadges(uid).catch(() => {})
+      }
     }
 
     // Send push ved aktivering
