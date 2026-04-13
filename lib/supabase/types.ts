@@ -59,6 +59,8 @@ export interface DugnadEvent {
   driver_notes: string | null
   created_by: string
   contact_phone: string | null
+  bags_collected: number | null
+  completion_notes: string | null
 }
 
 export interface ZoneAssignment {

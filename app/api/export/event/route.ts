@@ -227,6 +227,18 @@ export async function GET(request: NextRequest) {
 
     csvLines = [titleRow, '', header, ...rows, totalRow, ...footerRows]
   }
+
+  // Sekker og fullføringsnotater
+  if (event.bags_collected || event.completion_notes) {
+    csvLines.push('', '')
+    if (event.bags_collected) {
+      csvLines.push(`Sekker levert:,${event.bags_collected}`)
+    }
+    if (event.completion_notes) {
+      csvLines.push(`Notat:,${csvEscape(event.completion_notes as string)}`)
+    }
+  }
+
   const csv = '\uFEFF' + csvLines.join('\n')
 
   // Filnavn: tittel-dato.csv

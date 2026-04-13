@@ -109,6 +109,11 @@ export default function EventsAdminPage() {
   const [resetConfirmId, setResetConfirmId] = useState<string | null>(null)
   const [resetting, setResetting] = useState(false)
 
+  // Fullførings-dialog
+  const [completeConfirmId, setCompleteConfirmId] = useState<string | null>(null)
+  const [completeBags, setCompleteBags] = useState('')
+  const [completeNotes, setCompleteNotes] = useState('')
+
   // Tab-navigasjon
   type Tab = 'active' | 'upcoming' | 'completed'
   const [activeTab, setActiveTab] = useState<Tab>('active')
@@ -733,6 +738,18 @@ export default function EventsAdminPage() {
                             <p className="text-sm text-text-secondary">{event.description}</p>
                           )}
 
+                          {/* Fullføringsinfo */}
+                          {event.status === 'completed' && (event.bags_collected || event.completion_notes) && !isEditing && (
+                            <div className="p-3 bg-success/5 rounded-xl text-sm space-y-1">
+                              {event.bags_collected && (
+                                <p><span className="font-medium">Sekker levert:</span> {event.bags_collected}</p>
+                              )}
+                              {event.completion_notes && (
+                                <p><span className="font-medium">Notat:</span> {event.completion_notes}</p>
+                              )}
+                            </div>
+                          )}
+
                           {/* Sonestatistikk */}
                           <div className="grid grid-cols-3 gap-2">
                             <div className="bg-blue-50 rounded-xl p-2 text-center">
@@ -891,8 +908,74 @@ export default function EventsAdminPage() {
                             )}
                           </AnimatePresence>
 
+                          {/* Fullførings-dialog med sekker og notater */}
+                          <AnimatePresence>
+                            {completeConfirmId === event.id && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-2xl overflow-hidden border border-success/20">
+                                  <div className="bg-success/5 p-4">
+                                    <CheckCircle size={32} className="text-success mx-auto mb-2" />
+                                    <p className="text-[15px] font-medium mb-3 text-center">Fullfør hendelsen</p>
+                                    <div className="space-y-3">
+                                      <div>
+                                        <label className="text-xs font-medium text-text-secondary block mb-1">Hvor mange sekker ble levert?</label>
+                                        <input
+                                          type="number"
+                                          inputMode="numeric"
+                                          value={completeBags}
+                                          onChange={e => setCompleteBags(e.target.value)}
+                                          placeholder="F.eks. 45"
+                                          className={inputClass}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-xs font-medium text-text-secondary block mb-1">Annet å notere? (valgfritt)</label>
+                                        <textarea
+                                          value={completeNotes}
+                                          onChange={e => setCompleteNotes(e.target.value)}
+                                          rows={2}
+                                          placeholder="F.eks. Fantastisk oppmøte, ferdig på 1,5 time"
+                                          className={`${inputClass} resize-none`}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex border-t border-success/20">
+                                    <button
+                                      onClick={() => setCompleteConfirmId(null)}
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-success/20 active:bg-black/5"
+                                    >
+                                      Avbryt
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        // Lagre sekker og notater før statusendring
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        await (supabaseRef.current.from('events') as any).update({
+                                          bags_collected: completeBags ? parseInt(completeBags, 10) : null,
+                                          completion_notes: completeNotes || null,
+                                        }).eq('id', event.id)
+                                        setCompleteConfirmId(null)
+                                        handleStatusChange(event.id, 'completed')
+                                      }}
+                                      disabled={updatingId === event.id}
+                                      className="flex-1 py-3 text-sm font-medium text-success active:bg-success/10"
+                                    >
+                                      {updatingId === event.id ? 'Fullføres...' : 'Fullfør'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
                           {/* Handlingsknapper — rediger, slett, statusendring */}
-                          {!isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && (
+                          {!isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && completeConfirmId !== event.id && (
                             <div className="space-y-3">
                               {/* Statusknapper tilpasset gjeldende status */}
                               {event.status === 'upcoming' && (
@@ -935,7 +1018,11 @@ export default function EventsAdminPage() {
                                       variant="secondary"
                                       className="bg-success/10 text-success hover:bg-success/20"
                                       loading={updatingId === event.id}
-                                      onClick={() => handleStatusChange(event.id, 'completed')}
+                                      onClick={() => {
+                                        setCompleteConfirmId(event.id)
+                                        setCompleteBags('')
+                                        setCompleteNotes('')
+                                      }}
                                     >
                                       Merk som fullført
                                     </Button>
