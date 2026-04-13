@@ -291,7 +291,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                     {claim.full_name?.charAt(0) || '?'}
                   </div>
                   <span className="flex-1">{claim.full_name || 'Ukjent'}</span>
-                  {isAdmin && claim.phone && (
+                  {(isAdmin || userHasClaimed) && claim.phone && claim.user_id !== userId && (
                     <a
                       href={`tel:${claim.phone}`}
                       className="p-1 rounded-full active:bg-black/10"

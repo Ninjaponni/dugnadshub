@@ -4,13 +4,20 @@ import BottomSheet from '@/components/ui/BottomSheet'
 import { Phone } from 'lucide-react'
 import type { EventType } from '@/lib/supabase/types'
 
-// Fargekoder — samme som MapLegend
-const colorItems = [
+// Fargekoder per hendelsestype
+const bottleColors = [
   { color: '#EF4444', label: 'Ledig — ta denne sonen' },
   { color: '#F59E0B', label: 'Delvis tatt — trenger flere' },
   { color: '#007AFF', label: 'Fullt bemannet' },
   { color: '#22C55E', label: 'Ferdigplukket' },
   { color: '#8B5CF6', label: 'Hentet' },
+]
+
+const flyerColors = [
+  { color: '#EF4444', label: 'Ledig — ta denne sonen' },
+  { color: '#F59E0B', label: 'Delvis tatt — trenger flere' },
+  { color: '#007AFF', label: 'Fullt bemannet' },
+  { color: '#22C55E', label: 'Ferdig levert' },
 ]
 
 interface MapInfoSheetProps {
@@ -20,9 +27,10 @@ interface MapInfoSheetProps {
   contactPhone: string | null
 }
 
-// Informasjonsark for dugnadsdeltagere
+// Informasjonsark for dugnadsdeltagere — tilpasset hendelsestype
 export default function MapInfoSheet({ open, onClose, eventType, contactPhone }: MapInfoSheetProps) {
   const isBottleCollection = eventType === 'bottle_collection'
+  const colorItems = isBottleCollection ? bottleColors : flyerColors
 
   return (
     <BottomSheet open={open} onClose={onClose} title="Slik fungerer dugnaden">
@@ -31,7 +39,7 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
         <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Fargekoder</p>
         <div className="space-y-2">
           {colorItems.map(({ color, label }) => (
-            <div key={color} className="flex items-center gap-2.5 text-sm">
+            <div key={color + label} className="flex items-center gap-2.5 text-sm">
               <div
                 className="w-3 h-3 rounded-sm shrink-0"
                 style={{ backgroundColor: color, opacity: 0.6 }}
@@ -49,12 +57,18 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
           <Step n={1}>
             Velg en ledig sone (rød) og trykk <strong>Ta denne sonen</strong>
           </Step>
-          <Step n={2}>
-            Når du er ferdig, trykk <strong>Marker som ferdig</strong>
-          </Step>
-          {isBottleCollection && (
-            <Step n={3}>
-              Sjåføren henter panten
+          {isBottleCollection ? (
+            <>
+              <Step n={2}>
+                Når du er ferdig, trykk <strong>Marker som ferdig</strong>
+              </Step>
+              <Step n={3}>
+                Sjåføren henter panten
+              </Step>
+            </>
+          ) : (
+            <Step n={2}>
+              Når alle lapper og plakater er levert, trykk <strong>Marker som ferdig</strong>
             </Step>
           )}
         </div>
