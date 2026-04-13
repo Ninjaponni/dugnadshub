@@ -220,10 +220,20 @@ export default function DriverPage() {
       setPickingUp(null)
       return
     }
-    // Oppdater lokal state
-    setZones(prev => prev.map(z =>
-      z.assignmentId === assignmentId ? { ...z, status: 'picked_up' } : z
-    ))
+    // Oppdater lokal state — både zones og trailerGroups
+    setZones(prev => {
+      const updated = prev.map(z =>
+        z.assignmentId === assignmentId ? { ...z, status: 'picked_up' } : z
+      )
+      // Synkroniser trailerGroups med oppdaterte soner
+      setTrailerGroups(groups => groups.map(g => ({
+        ...g,
+        zones: g.zones.map(z =>
+          z.assignmentId === assignmentId ? { ...z, status: 'picked_up' } : z
+        ),
+      })))
+      return updated
+    })
     setPickingUp(null)
   }
 
