@@ -166,7 +166,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="pt-20 pb-8 px-5 space-y-8">
+      <main className="pt-20 pb-28 px-5 space-y-8">
         <PushPrompt />
 
         {/* Hilsen */}

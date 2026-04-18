@@ -469,7 +469,7 @@ export default function BadgesPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="text-2xl font-bold mt-2 mb-2"
+                  className="text-2xl font-bold mt-2 mb-2 font-[var(--font-display)]"
                 >
                   {revealBadge.name}
                 </motion.h3>
