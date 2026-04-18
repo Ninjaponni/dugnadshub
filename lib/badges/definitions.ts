@@ -24,7 +24,7 @@ export const badgeDefinitions = [
   { id: 13, name: 'Legende', icon: '/badges/legende.png', category: 'elite' as const, description: 'Spesiell anerkjennelse', auto_criteria: null },
 
   // Rollemerker (tildeles manuelt, kan gis flere ganger)
-  { id: 14, name: 'Sjåføren', icon: '/badges/sjaforen.png', category: 'aktivitet' as const, description: 'Kjørte henting som sjåfør', auto_criteria: null },
+  { id: 14, name: 'Sjåføren', icon: '/badges/sjaforen.png', category: 'aktivitet' as const, description: 'Driving Miss Pant', auto_criteria: null },
   { id: 15, name: 'Stripsern', icon: '/badges/stripsern.png', category: 'aktivitet' as const, description: 'Stripset som stripser', auto_criteria: null },
 
   // Aktivitetsmerker (kan gis flere ganger — vises som ×N)
