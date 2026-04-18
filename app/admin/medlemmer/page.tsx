@@ -99,7 +99,7 @@ export default function MembersAdminPage() {
         case 'badges':
           return getBadgeCountForUser(b.id) - getBadgeCountForUser(a.id)
         case 'least_active':
-          return getClaimCount(a.id) - getClaimCount(b.id)
+          return (getBadgeCountForUser(a.id) + getClaimCount(a.id)) - (getBadgeCountForUser(b.id) + getClaimCount(b.id))
         case 'alpha':
         default:
           return (a.full_name || '').localeCompare(b.full_name || '', 'nb')
