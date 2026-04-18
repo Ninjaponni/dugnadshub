@@ -35,4 +35,5 @@ export const badgeDefinitions = [
   { id: 21, name: 'Saftansen', icon: '/badges/saftansen.png', category: 'aktivitet' as const, description: 'Laget saft til dugnad', auto_criteria: null },
   { id: 22, name: 'Kaffansen', icon: '/badges/kaffansen.png', category: 'aktivitet' as const, description: 'Kokte kaffe til dugnad', auto_criteria: null },
   { id: 23, name: 'Premieskaffer', icon: '/badges/premieskaffer.png', category: 'aktivitet' as const, description: 'Skaffet premier til lotteri', auto_criteria: null },
+  { id: 24, name: 'Flaskesekk-oppbevarer', icon: '/badges/flaskesekkoppbevarer.png', category: 'aktivitet' as const, description: 'Oppbevarte flaskesekker hjemme', auto_criteria: null },
 ]
