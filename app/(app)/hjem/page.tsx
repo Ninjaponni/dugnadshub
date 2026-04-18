@@ -128,8 +128,7 @@ export default function HomePage() {
     if (hour < 10) return 'God morgen'
     if (hour < 12) return 'God formiddag'
     if (hour < 17) return 'God ettermiddag'
-    if (hour < 22) return 'God kveld'
-    return 'God natt'
+    return 'God kveld'
   }
 
   const fullName = profile?.full_name || ''
