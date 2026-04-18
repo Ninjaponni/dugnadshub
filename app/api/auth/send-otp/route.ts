@@ -15,9 +15,10 @@ function getSupabase() {
   )
 }
 
-// Generer 6-sifret kode
+// Generer 6-sifret kode med kryptografisk tilfeldig tall
 function generateCode(): string {
-  const code = Math.floor(100000 + Math.random() * 900000)
+  const { randomInt } = require('crypto')
+  const code = randomInt(100000, 1000000)
   return code.toString()
 }
 

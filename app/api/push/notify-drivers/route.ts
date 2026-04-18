@@ -20,6 +20,16 @@ export async function POST(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token)
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Verifiser at brukeren har minst ett aktivt claim (er samler)
+  const { data: activeClaims } = await supabase
+    .from('zone_claims')
+    .select('id')
+    .eq('user_id', user.id)
+    .limit(1)
+  if (!activeClaims || activeClaims.length === 0) {
+    return NextResponse.json({ error: 'No active claims' }, { status: 403 })
+  }
+
   const { zoneName, zoneId, eventId } = await request.json()
   if (!zoneName) {
     return NextResponse.json({ error: 'zoneName required' }, { status: 400 })
