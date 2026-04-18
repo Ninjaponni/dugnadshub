@@ -230,7 +230,7 @@ function MapPageContent() {
       {/* Info-knapp */}
       <button
         onClick={() => setShowInfo(true)}
-        className="absolute bottom-28 right-4 z-10 w-10 h-10 bg-card rounded-full shadow-sm flex items-center justify-center"
+        className="absolute bottom-36 right-4 z-10 w-10 h-10 bg-card rounded-full shadow-sm flex items-center justify-center"
         aria-label="Hjelp"
       >
         <Info size={18} className="text-accent" />
