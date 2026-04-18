@@ -70,6 +70,7 @@ export default function ProfilePage() {
         })
         setChildren(p.children?.length ? p.children : [{ name: '', group: 'Aspirant' as const }])
         setAvatarId(p.avatar_url || getRandomAvatarId())
+        setDittBidrag(mockDittBidrag)
 
         // Hent dugnad-historikk: claims → assignments → events (completed)
         const { data: claims } = await supabaseRef.current
