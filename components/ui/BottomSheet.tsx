@@ -46,7 +46,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-bg rounded-t-[28px] max-h-[85dvh] flex flex-col pb-20 shadow-[0_-12px_30px_rgba(61,53,48,0.08)]"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-bg rounded-t-[28px] max-h-[85dvh] flex flex-col shadow-[0_-12px_30px_rgba(61,53,48,0.08)]"
           >
             {/* Drag-håndtak — kun dette området trigger drag-to-close */}
             <div
@@ -61,7 +61,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             )}
 
             <div className="overflow-auto flex-1 overscroll-contain">
-              <div className="px-5 pb-6">
+              <div className="px-5 pb-28 safe-bottom">
                 {children}
               </div>
             </div>
