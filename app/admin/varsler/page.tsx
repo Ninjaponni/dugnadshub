@@ -30,7 +30,7 @@ export default function AdminNotificationsPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null)
 
-  const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-surface-low text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
+  const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-card ring-1 ring-text-tertiary/20 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
 
   function toggleRole(role: string) {
     setSendToAll(false)
@@ -87,14 +87,19 @@ export default function AdminNotificationsPage() {
   const canSend = title.trim() && body.trim() && (sendToAll || selectedRoles.length > 0 || selectedGroups.length > 0)
 
   return (
-    <div className="pb-28">
-      {/* Dugnadshub header */}
-      <div className="flex items-center gap-3 mb-6">
-        <KorpsLogo size={32} />
-        <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
-          Dugnadshub
-        </span>
-      </div>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+        <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
+          <div className="flex items-center gap-3">
+            <KorpsLogo size={32} />
+            <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+              Dugnadshub
+            </span>
+          </div>
+          <div className="w-9" />
+        </div>
+      </header>
+      <div className="pt-16 pb-28">
 
       {/* Tilbake + tittel */}
       <div className="flex items-center gap-3 mb-5">
@@ -257,5 +262,6 @@ export default function AdminNotificationsPage() {
         </Card>
       )}
     </div>
+    </>
   )
 }

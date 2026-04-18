@@ -80,7 +80,7 @@ const areaLabels: Record<EventArea, string> = {
 }
 
 // Inputfelt-klasse brukt gjennomgaende
-const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-surface-low text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
+const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-card ring-1 ring-text-tertiary/20 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
 // Dato/tid-felt trenger ekstra styling for iOS Safari
 const dateTimeClass = `${inputClass} appearance-none max-w-full`
 
@@ -579,14 +579,19 @@ export default function EventsAdminPage() {
   }
 
   return (
-    <div className="pb-28">
-      {/* Dugnadshub header */}
-      <div className="flex items-center gap-3 mb-6">
-        <KorpsLogo size={32} />
-        <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
-          Dugnadshub
-        </span>
-      </div>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+        <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
+          <div className="flex items-center gap-3">
+            <KorpsLogo size={32} />
+            <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+              Dugnadshub
+            </span>
+          </div>
+          <div className="w-9" />
+        </div>
+      </header>
+      <div className="pt-16 pb-28">
 
       {/* Tilbake + tittel + ny-knapp */}
       <div className="flex items-center gap-3 mb-4">
@@ -1145,5 +1150,6 @@ export default function EventsAdminPage() {
         )
       })()}
     </div>
+    </>
   )
 }
