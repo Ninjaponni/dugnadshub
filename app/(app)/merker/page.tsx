@@ -340,9 +340,12 @@ export default function BadgesPage() {
                 Hva er greia med merkene?
               </h4>
               <p className="text-sm text-text-secondary leading-relaxed">
-                Merkene er din kvittering for god dugnadsinnsats — noe å være stolt av!
-                Men de er også lodd i trekningen under julekonserten.
-                Jo flere merker, jo større sjanse for premie.
+                Hvert merke er et bevis på din dugnadsinnsats — noe å være stolt av!
+              </p>
+              <p className="text-sm text-text-secondary leading-relaxed mt-2">
+                Men de er også lodd i trekningen under julekonserten. Jo flere merker, jo større sjanse for premie.
+              </p>
+              <p className="text-sm text-text-secondary leading-relaxed mt-2">
                 Den med flest kåres til årets dugnadshelt.
               </p>
             </div>
