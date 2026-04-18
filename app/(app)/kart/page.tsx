@@ -208,7 +208,7 @@ function MapPageContent() {
         selectedZoneId={selectedZone?.id}
         userId={userId}
         activeArea={activeArea}
-        eventType={event?.type || null}
+        eventType={hasActiveEvent ? (event?.type || null) : null}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
         initialBounds={initialBounds}
