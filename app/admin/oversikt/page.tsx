@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import { Users, Calendar, ChevronRight, ChevronDown, ChevronUp, Map, ArrowLeft, Bell, Zap, Check, AlertTriangle, Power } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -119,25 +120,33 @@ export default function AdminOverviewPage() {
   const upcomingEvents = events.filter(e => e.status === 'upcoming')
 
   return (
-    <div>
-      {/* Header */}
+    <div className="pb-28">
+      {/* Dugnadshub header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/hjem" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
-          <ArrowLeft size={18} className="text-text-secondary" />
+        <KorpsLogo size={32} />
+        <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+          Dugnadshub
+        </span>
+      </div>
+
+      {/* Tilbake + tittel */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/hjem" className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low">
+          <ArrowLeft size={20} className="text-accent" />
         </Link>
-        <h1 className="text-[28px] font-bold font-[var(--font-display)]">Administrasjon</h1>
+        <h1 className="text-[28px] font-bold text-accent font-[var(--font-display)]">Administrasjon</h1>
       </div>
 
       {/* Skeleton */}
       {loading && (
         <div className="space-y-4 animate-pulse">
-          <div className="card p-5 space-y-3">
+          <div className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(57,56,43,0.08)] p-5 space-y-3">
             <div className="h-5 w-48 bg-surface-low rounded" />
             <div className="h-4 w-36 bg-surface-low rounded" />
             <div className="h-10 bg-surface-low rounded-xl" />
           </div>
-          <div className="card p-4 h-16" />
-          <div className="card p-4 h-16" />
+          <div className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(57,56,43,0.08)] p-4 h-16" />
+          <div className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(57,56,43,0.08)] p-4 h-16" />
         </div>
       )}
 
@@ -145,7 +154,7 @@ export default function AdminOverviewPage() {
         <>
           {/* Aktive hendelser — operasjonssenter */}
           {activeEvents.length === 0 && (
-            <Card className="p-5 mb-5 text-center">
+            <Card className="p-5 mb-5 text-center rounded-2xl">
               <p className="text-text-secondary">Ingen aktive hendelser</p>
             </Card>
           )}
@@ -156,7 +165,7 @@ export default function AdminOverviewPage() {
               ? (event.claimedZones / event.totalZones) * 100 : 0
 
             return (
-              <Card key={event.id} className="p-5 mb-4">
+              <Card key={event.id} className="p-5 mb-4 rounded-2xl">
                 {/* Header — klikkbar for å ekspandere */}
                 <button
                   onClick={() => {
@@ -167,8 +176,8 @@ export default function AdminOverviewPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="text-xs font-medium text-accent uppercase tracking-wide">Aktiv nå</p>
-                      <p className="text-lg font-semibold mt-0.5">{event.title}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Aktiv nå</p>
+                      <p className="text-lg font-semibold mt-0.5 font-[var(--font-display)]">{event.title}</p>
                       <p className="text-sm text-text-secondary">
                         {formatDate(event.date, event.start_time)}
                       </p>
@@ -192,7 +201,7 @@ export default function AdminOverviewPage() {
                     </div>
                     <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-accent rounded-full transition-all"
+                        className="h-full rounded-full transition-all bg-gradient-to-r from-accent to-primary-container"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -233,7 +242,7 @@ export default function AdminOverviewPage() {
                       <div className="mt-4 pt-4 space-y-3">
                         {/* Kart */}
                         <Link href={`/kart?event=${event.id}`} className="block">
-                          <Button size="sm" variant="secondary" className="w-full">
+                          <Button size="sm" variant="secondary" className="w-full rounded-full">
                             <Map size={14} /> Se kart
                           </Button>
                         </Link>
@@ -243,7 +252,7 @@ export default function AdminOverviewPage() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="w-full bg-warning/10 text-warning"
+                            className="w-full bg-warning/10 text-warning rounded-full"
                             onClick={() => handleSendHelp(event)}
                           >
                             <Bell size={14} />
@@ -256,6 +265,7 @@ export default function AdminOverviewPage() {
                           <Button
                             size="sm"
                             variant="secondary"
+                            className="rounded-full"
                             loading={updatingId === event.id}
                             onClick={() => handleDeactivateClick(event)}
                           >
@@ -265,7 +275,7 @@ export default function AdminOverviewPage() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="bg-success/10 text-success hover:bg-success/20"
+                            className="bg-success/10 text-success hover:bg-success/20 rounded-full"
                             loading={updatingId === event.id}
                             onClick={() => handleStatusChange(event.id, 'completed')}
                           >
@@ -283,24 +293,24 @@ export default function AdminOverviewPage() {
                               exit={{ opacity: 0, height: 0 }}
                               className="overflow-hidden"
                             >
-                              <div className="rounded-2xl overflow-hidden border border-warning/20">
-                                <div className="bg-warning/5 p-4 text-center">
+                              <div className="rounded-2xl overflow-hidden bg-warning/5">
+                                <div className="p-4 text-center">
                                   <AlertTriangle size={28} className="text-warning mx-auto mb-2" />
-                                  <p className="text-[15px] font-medium mb-1">Deaktivere?</p>
+                                  <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Deaktivere?</p>
                                   <p className="text-sm text-text-secondary">
                                     {event.claimedZones} soner er tatt. Claims beholdes men skjules.
                                   </p>
                                 </div>
-                                <div className="flex border-t border-warning/20">
+                                <div className="flex gap-2 px-4 pb-4">
                                   <button
                                     onClick={() => setDeactivateConfirmId(null)}
-                                    className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-surface-low"
+                                    className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
                                   >
                                     Avbryt
                                   </button>
                                   <button
                                     onClick={() => handleStatusChange(event.id, 'upcoming')}
-                                    className="flex-1 py-3 text-sm font-medium text-warning active:bg-warning/10"
+                                    className="flex-1 py-3 text-sm font-medium text-warning rounded-full bg-warning/10 active:bg-warning/20"
                                   >
                                     Deaktiver
                                   </button>
@@ -318,14 +328,15 @@ export default function AdminOverviewPage() {
           })}
 
           {/* Navigasjon */}
+          <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-3 mt-6">Administrer</p>
           <div className="flex flex-col gap-3">
             <Link href="/admin/hendelser">
-              <Card className="p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+              <Card className="p-4 flex items-center gap-4 rounded-2xl">
+                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
                   <Calendar size={20} className="text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium">Hendelser</p>
+                  <p className="font-medium font-[var(--font-display)]">Hendelser</p>
                   <p className="text-sm text-text-secondary">Opprett og administrer</p>
                 </div>
                 {upcomingEvents.length > 0 && (
@@ -336,12 +347,12 @@ export default function AdminOverviewPage() {
             </Link>
 
             <Link href="/admin/medlemmer">
-              <Card className="p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+              <Card className="p-4 flex items-center gap-4 rounded-2xl">
+                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
                   <Users size={20} className="text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium">Medlemmer</p>
+                  <p className="font-medium font-[var(--font-display)]">Medlemmer</p>
                   <p className="text-sm text-text-secondary">Roller, merker og oversikt</p>
                 </div>
                 <span className="text-lg font-bold font-mono text-text-secondary mr-1">{memberCount}</span>
@@ -350,12 +361,12 @@ export default function AdminOverviewPage() {
             </Link>
 
             <Link href="/admin/varsler">
-              <Card className="p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+              <Card className="p-4 flex items-center gap-4 rounded-2xl">
+                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
                   <Bell size={20} className="text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium">Varsler</p>
+                  <p className="font-medium font-[var(--font-display)]">Varsler</p>
                   <p className="text-sm text-text-secondary">Send push-meldinger</p>
                 </div>
                 <ChevronRight size={16} className="text-text-tertiary shrink-0" />

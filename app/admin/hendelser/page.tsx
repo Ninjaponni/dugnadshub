@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -431,10 +432,10 @@ export default function EventsAdminPage() {
     isLoading: boolean,
   ) {
     return (
-      <form onSubmit={onSubmit} className="space-y-3">
+      <form onSubmit={onSubmit} className="space-y-4">
         {/* Tittel */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Tittel</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Tittel</label>
           <input
             type="text"
             value={data.title}
@@ -448,7 +449,7 @@ export default function EventsAdminPage() {
         {/* Type + Område */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-text-secondary block mb-1">Type</label>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Type</label>
             <select
               value={data.type}
               onChange={e => setData(prev => ({ ...prev, type: e.target.value as EventType }))}
@@ -460,7 +461,7 @@ export default function EventsAdminPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-text-secondary block mb-1">Område</label>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Område</label>
             <select
               value={data.area}
               onChange={e => setData(prev => ({ ...prev, area: e.target.value as EventArea }))}
@@ -475,7 +476,7 @@ export default function EventsAdminPage() {
 
         {/* Dato */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Dato</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Dato</label>
           <input
             type="date"
             value={data.date}
@@ -488,7 +489,7 @@ export default function EventsAdminPage() {
         {/* Starttid + Sluttid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="min-w-0 overflow-hidden">
-            <label className="text-xs font-medium text-text-secondary block mb-1">Start (valgfritt)</label>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Start (valgfritt)</label>
             <input
               type="time"
               value={data.startTime}
@@ -497,7 +498,7 @@ export default function EventsAdminPage() {
             />
           </div>
           <div className="min-w-0 overflow-hidden">
-            <label className="text-xs font-medium text-text-secondary block mb-1">Slutt (valgfritt)</label>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Slutt (valgfritt)</label>
             <input
               type="time"
               value={data.endTime}
@@ -509,7 +510,7 @@ export default function EventsAdminPage() {
 
         {/* Beskrivelse */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Beskrivelse (valgfritt)</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Beskrivelse (valgfritt)</label>
           <textarea
             value={data.description}
             onChange={e => setData(prev => ({ ...prev, description: e.target.value }))}
@@ -521,7 +522,7 @@ export default function EventsAdminPage() {
 
         {/* Sjåførnotat */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Sjåførnotat (valgfritt)</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Sjåførnotat (valgfritt)</label>
           <textarea
             value={data.driverNotes}
             onChange={e => setData(prev => ({ ...prev, driverNotes: e.target.value }))}
@@ -533,7 +534,7 @@ export default function EventsAdminPage() {
 
         {/* Telefon dugnadsansvarlig */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Telefon dugnadsansvarlig (valgfritt)</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Telefon dugnadsansvarlig (valgfritt)</label>
           <input
             type="tel"
             value={data.contactPhone}
@@ -547,7 +548,7 @@ export default function EventsAdminPage() {
         {submitLabel === 'Lagre endringer' && (
           <>
             <div>
-              <label className="text-xs font-medium text-text-secondary block mb-1">Sekker levert (valgfritt)</label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Sekker levert (valgfritt)</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -558,7 +559,7 @@ export default function EventsAdminPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-text-secondary block mb-1">Fullføringsnotat (valgfritt)</label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Fullføringsnotat (valgfritt)</label>
               <textarea
                 value={data.completionNotes}
                 onChange={e => setData(prev => ({ ...prev, completionNotes: e.target.value }))}
@@ -570,7 +571,7 @@ export default function EventsAdminPage() {
           </>
         )}
 
-        <Button type="submit" loading={isLoading} className="w-full">
+        <Button type="submit" loading={isLoading} className="w-full rounded-full">
           {submitLabel}
         </Button>
       </form>
@@ -578,13 +579,22 @@ export default function EventsAdminPage() {
   }
 
   return (
-    <div>
+    <div className="pb-28">
+      {/* Dugnadshub header */}
+      <div className="flex items-center gap-3 mb-6">
+        <KorpsLogo size={32} />
+        <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+          Dugnadshub
+        </span>
+      </div>
+
+      {/* Tilbake + tittel + ny-knapp */}
       <div className="flex items-center gap-3 mb-4">
-        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-          <ArrowLeft size={18} className="text-text-secondary" />
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low shrink-0">
+          <ArrowLeft size={20} className="text-accent" />
         </Link>
-        <h2 className="text-xl font-semibold font-[var(--font-display)] flex-1">Hendelser</h2>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+        <h2 className="text-xl font-bold text-accent font-[var(--font-display)] flex-1">Hendelser</h2>
+        <Button size="sm" className="rounded-full" onClick={() => setShowForm(!showForm)}>
           {showForm ? <X size={16} /> : <Plus size={16} />}
           {showForm ? 'Avbryt' : 'Ny hendelse'}
         </Button>
@@ -592,7 +602,7 @@ export default function EventsAdminPage() {
 
       {/* Feilmelding */}
       {errorMsg && (
-        <div className="mb-4 p-3 rounded-xl bg-danger/10 text-danger text-sm font-medium flex items-center justify-between">
+        <div className="mb-4 p-3 rounded-2xl bg-danger/10 text-danger text-sm font-medium flex items-center justify-between">
           <span>{errorMsg}</span>
           <button onClick={() => setErrorMsg(null)} className="text-danger/60 ml-2">
             <X size={16} />
@@ -609,7 +619,8 @@ export default function EventsAdminPage() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden mb-4"
           >
-            <Card className="p-4">
+            <Card className="p-5 rounded-2xl">
+              <h3 className="text-sm font-bold text-accent font-[var(--font-display)] mb-4">Ny hendelse</h3>
               {renderForm(
                 form,
                 (fn) => setForm(fn),
@@ -624,7 +635,7 @@ export default function EventsAdminPage() {
 
       {/* Tab-navigasjon */}
       {!loading && events.length > 0 && (
-        <div className="flex gap-1 bg-surface-low rounded-xl p-1 mb-4">
+        <div className="flex gap-1 bg-surface-low rounded-full p-1 mb-4">
           {([
             ['active', 'Aktive', events.filter(e => e.status === 'active').length],
             ['upcoming', 'Kommende', events.filter(e => e.status === 'upcoming').length],
@@ -633,9 +644,9 @@ export default function EventsAdminPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab as Tab)}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex-1 py-2 text-sm font-medium rounded-full transition-colors ${
                 activeTab === tab
-                  ? 'bg-white shadow-sm text-text-primary'
+                  ? 'bg-accent text-white shadow-sm'
                   : 'text-text-secondary'
               }`}
             >
@@ -649,7 +660,7 @@ export default function EventsAdminPage() {
       {loading && (
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map(i => (
-            <div key={i} className="card p-4 space-y-2">
+            <div key={i} className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(57,56,43,0.08)] p-4 space-y-2">
               <div className="h-5 w-48 bg-surface-low rounded" />
               <div className="h-4 w-32 bg-surface-low rounded" />
               <div className="h-1.5 bg-surface-low rounded-full" />
@@ -660,9 +671,9 @@ export default function EventsAdminPage() {
 
       {/* Ingen hendelser */}
       {!loading && events.length === 0 && (
-        <Card className="p-6 text-center">
+        <Card className="p-6 text-center rounded-2xl">
           <Calendar size={32} className="text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-secondary">Ingen hendelser opprettet ennå</p>
+          <p className="text-text-secondary font-[var(--font-display)]">Ingen hendelser opprettet ennå</p>
           <p className="text-sm text-text-tertiary mt-1">
             Opprett en hendelse for å starte planlegging
           </p>
@@ -684,7 +695,7 @@ export default function EventsAdminPage() {
             completed: 'Ingen fullførte hendelser ennå',
           }
           return (
-            <Card className="p-6 text-center">
+            <Card className="p-6 text-center rounded-2xl">
               {activeTab === 'completed'
                 ? <CheckCircle size={32} className="text-text-tertiary mx-auto mb-3" />
                 : <Calendar size={32} className="text-text-tertiary mx-auto mb-3" />
@@ -711,7 +722,7 @@ export default function EventsAdminPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
               >
-                <Card animate={false} className="p-4">
+                <Card animate={false} className="p-4 rounded-2xl">
                   {/* Header — klikk for a ekspandere */}
                   <button
                     onClick={() => {
@@ -723,7 +734,7 @@ export default function EventsAdminPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[15px] truncate">{event.title}</p>
+                        <p className="font-semibold text-[15px] truncate font-[var(--font-display)]">{event.title}</p>
                         <p className="text-sm text-text-secondary mt-0.5">
                           {formatDate(event.date, event.start_time, event.end_time)} · {typeLabels[event.type]}
                         </p>
@@ -750,7 +761,7 @@ export default function EventsAdminPage() {
                               width: `${progress}%`,
                               background: event.zoneStats.completed === event.zoneStats.total && event.zoneStats.total > 0
                                 ? 'var(--color-success, #34c759)'
-                                : 'var(--color-accent)',
+                                : 'linear-gradient(to right, var(--color-accent), var(--color-primary-container, var(--color-accent)))',
                             }}
                           />
                         </div>
@@ -767,7 +778,7 @@ export default function EventsAdminPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="mt-3 pt-3 space-y-3">
+                        <div className="mt-4 pt-4 space-y-3">
                           {/* Beskrivelse */}
                           {event.description && !isEditing && (
                             <p className="text-sm text-text-secondary">{event.description}</p>
@@ -775,7 +786,7 @@ export default function EventsAdminPage() {
 
                           {/* Fullføringsinfo */}
                           {event.status === 'completed' && (event.bags_collected || event.completion_notes) && !isEditing && (
-                            <div className="p-3 bg-success/5 rounded-xl text-sm space-y-1">
+                            <div className="p-3 bg-success/5 rounded-2xl text-sm space-y-1">
                               {event.bags_collected && (
                                 <p><span className="font-medium">Sekker levert:</span> {event.bags_collected}</p>
                               )}
@@ -787,17 +798,17 @@ export default function EventsAdminPage() {
 
                           {/* Sonestatistikk */}
                           <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-teal/10 rounded-xl p-2 text-center">
-                              <p className="text-lg font-bold text-teal">{event.zoneStats.available}</p>
-                              <p className="text-[11px] text-teal">Ledige</p>
+                            <div className="bg-teal/10 rounded-2xl p-2 text-center">
+                              <p className="text-lg font-bold text-teal font-[var(--font-display)]">{event.zoneStats.available}</p>
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-teal">Ledige</p>
                             </div>
-                            <div className="bg-warning/10 rounded-xl p-2 text-center">
-                              <p className="text-lg font-bold text-warning">{event.zoneStats.claimed}</p>
-                              <p className="text-[11px] text-warning">Tatt</p>
+                            <div className="bg-warning/10 rounded-2xl p-2 text-center">
+                              <p className="text-lg font-bold text-warning font-[var(--font-display)]">{event.zoneStats.claimed}</p>
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-warning">Tatt</p>
                             </div>
-                            <div className="bg-success/10 rounded-xl p-2 text-center">
-                              <p className="text-lg font-bold text-success">{event.zoneStats.completed}</p>
-                              <p className="text-[11px] text-success">Ferdig</p>
+                            <div className="bg-success/10 rounded-2xl p-2 text-center">
+                              <p className="text-lg font-bold text-success font-[var(--font-display)]">{event.zoneStats.completed}</p>
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-success">Ferdig</p>
                             </div>
                           </div>
 
@@ -810,7 +821,7 @@ export default function EventsAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="bg-surface-low rounded-xl p-3">
+                                <div className="bg-surface-low rounded-2xl p-4">
                                   {renderForm(
                                     editForm,
                                     (fn) => setEditForm(fn),
@@ -821,7 +832,7 @@ export default function EventsAdminPage() {
                                   <button
                                     type="button"
                                     onClick={() => setEditingId(null)}
-                                    className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-surface-low rounded-xl"
+                                    className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-surface-low rounded-full"
                                   >
                                     Avbryt
                                   </button>
@@ -830,7 +841,7 @@ export default function EventsAdminPage() {
                             )}
                           </AnimatePresence>
 
-                          {/* Slettebekreftelse — iOS-stil */}
+                          {/* Slettebekreftelse */}
                           <AnimatePresence>
                             {isDeleteConfirm && (
                               <motion.div
@@ -839,25 +850,25 @@ export default function EventsAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="rounded-2xl overflow-hidden border border-danger/20">
-                                  <div className="bg-danger/5 p-4 text-center">
+                                <div className="rounded-2xl overflow-hidden bg-danger/5">
+                                  <div className="p-4 text-center">
                                     <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1">Slette hendelsen?</p>
+                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Slette hendelsen?</p>
                                     <p className="text-sm text-text-secondary">
                                       Hendelsen og alle sonetildelinger blir permanent slettet.
                                     </p>
                                   </div>
-                                  <div className="flex border-t border-danger/20">
+                                  <div className="flex gap-2 px-4 pb-4">
                                     <button
                                       onClick={() => setDeleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-surface-low"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
                                     <button
                                       onClick={() => handleDelete(event.id)}
                                       disabled={deleting}
-                                      className="flex-1 py-3 text-sm font-medium text-danger active:bg-danger/10"
+                                      className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
                                     >
                                       {deleting ? 'Sletter...' : 'Slett'}
                                     </button>
@@ -876,18 +887,18 @@ export default function EventsAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="rounded-2xl overflow-hidden border border-warning/20">
-                                  <div className="bg-warning/5 p-4 text-center">
+                                <div className="rounded-2xl overflow-hidden bg-warning/5">
+                                  <div className="p-4 text-center">
                                     <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1">Deaktivere hendelsen?</p>
+                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Deaktivere hendelsen?</p>
                                     <p className="text-sm text-text-secondary">
                                       {event.zoneStats.claimed + event.zoneStats.completed} soner er tatt av deltakere. Claims beholdes men skjules for brukerne.
                                     </p>
                                   </div>
-                                  <div className="flex border-t border-warning/20">
+                                  <div className="flex gap-2 px-4 pb-4">
                                     <button
                                       onClick={() => setDeactivateConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-surface-low"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
@@ -896,7 +907,7 @@ export default function EventsAdminPage() {
                                         setDeactivateConfirmId(null)
                                         handleStatusChange(event.id, 'upcoming')
                                       }}
-                                      className="flex-1 py-3 text-sm font-medium text-warning active:bg-warning/10"
+                                      className="flex-1 py-3 text-sm font-medium text-warning rounded-full bg-warning/10 active:bg-warning/20"
                                     >
                                       Deaktiver
                                     </button>
@@ -915,25 +926,25 @@ export default function EventsAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="rounded-2xl overflow-hidden border border-danger/20">
-                                  <div className="bg-danger/5 p-4 text-center">
+                                <div className="rounded-2xl overflow-hidden bg-danger/5">
+                                  <div className="p-4 text-center">
                                     <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1">Nullstille alle claims?</p>
+                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Nullstille alle claims?</p>
                                     <p className="text-sm text-text-secondary">
                                       Alle {event.zoneStats.claimed + event.zoneStats.completed} tatte soner slettes permanent. Deltakerne mister sine valgte soner.
                                     </p>
                                   </div>
-                                  <div className="flex border-t border-danger/20">
+                                  <div className="flex gap-2 px-4 pb-4">
                                     <button
                                       onClick={() => setResetConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-surface-low"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
                                     <button
                                       onClick={() => handleResetClaims(event.id)}
                                       disabled={resetting}
-                                      className="flex-1 py-3 text-sm font-medium text-danger active:bg-danger/10"
+                                      className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
                                     >
                                       {resetting ? 'Nullstiller...' : 'Nullstill'}
                                     </button>
@@ -952,13 +963,13 @@ export default function EventsAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="rounded-2xl overflow-hidden border border-success/20">
-                                  <div className="bg-success/5 p-4">
+                                <div className="rounded-2xl overflow-hidden bg-success/5">
+                                  <div className="p-4">
                                     <CheckCircle size={32} className="text-success mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-3 text-center">Fullfør hendelsen</p>
+                                    <p className="text-[15px] font-medium mb-3 text-center font-[var(--font-display)]">Fullfør hendelsen</p>
                                     <div className="space-y-3">
                                       <div>
-                                        <label className="text-xs font-medium text-text-secondary block mb-1">Hvor mange sekker ble levert?</label>
+                                        <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Hvor mange sekker ble levert?</label>
                                         <input
                                           type="number"
                                           inputMode="numeric"
@@ -969,7 +980,7 @@ export default function EventsAdminPage() {
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-xs font-medium text-text-secondary block mb-1">Annet å notere? (valgfritt)</label>
+                                        <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Annet å notere? (valgfritt)</label>
                                         <textarea
                                           value={completeNotes}
                                           onChange={e => setCompleteNotes(e.target.value)}
@@ -980,10 +991,10 @@ export default function EventsAdminPage() {
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex border-t border-success/20">
+                                  <div className="flex gap-2 px-4 pb-4">
                                     <button
                                       onClick={() => setCompleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-success/20 active:bg-surface-low"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
@@ -999,7 +1010,7 @@ export default function EventsAdminPage() {
                                         handleStatusChange(event.id, 'completed')
                                       }}
                                       disabled={updatingId === event.id}
-                                      className="flex-1 py-3 text-sm font-medium text-success active:bg-success/10"
+                                      className="flex-1 py-3 text-sm font-medium text-success rounded-full bg-success/10 active:bg-success/20"
                                     >
                                       {updatingId === event.id ? 'Fullføres...' : 'Fullfør'}
                                     </button>
@@ -1017,7 +1028,7 @@ export default function EventsAdminPage() {
                                 <Button
                                   size="sm"
                                   variant="secondary"
-                                  className="w-full"
+                                  className="w-full rounded-full"
                                   loading={updatingId === event.id}
                                   onClick={() => handleStatusChange(event.id, 'active')}
                                 >
@@ -1032,7 +1043,7 @@ export default function EventsAdminPage() {
                                     <Button
                                       size="sm"
                                       variant="secondary"
-                                      className="w-full bg-warning/10 text-warning"
+                                      className="w-full bg-warning/10 text-warning rounded-full"
                                       onClick={() => handleSendHelp(event)}
                                     >
                                       <Bell size={14} />
@@ -1043,6 +1054,7 @@ export default function EventsAdminPage() {
                                     <Button
                                       size="sm"
                                       variant="secondary"
+                                      className="rounded-full"
                                       loading={updatingId === event.id}
                                       onClick={() => handleDeactivateClick(event)}
                                     >
@@ -1051,7 +1063,7 @@ export default function EventsAdminPage() {
                                     <Button
                                       size="sm"
                                       variant="secondary"
-                                      className="bg-success/10 text-success hover:bg-success/20"
+                                      className="bg-success/10 text-success hover:bg-success/20 rounded-full"
                                       loading={updatingId === event.id}
                                       onClick={() => {
                                         setCompleteConfirmId(event.id)
@@ -1070,7 +1082,7 @@ export default function EventsAdminPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="w-full text-text-secondary"
+                                  className="w-full text-text-secondary rounded-full"
                                   onClick={() => {
                                     setResetConfirmId(event.id)
                                     setEditingId(null)
@@ -1086,7 +1098,7 @@ export default function EventsAdminPage() {
                                 <Button
                                   size="sm"
                                   variant="secondary"
-                                  className="w-full"
+                                  className="w-full rounded-full"
                                   loading={exporting === event.id}
                                   onClick={() => handleExportCSV(event.id)}
                                 >
@@ -1100,6 +1112,7 @@ export default function EventsAdminPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
+                                  className="rounded-full"
                                   onClick={() => startEditing(event)}
                                 >
                                   <Pencil size={14} />
@@ -1108,6 +1121,7 @@ export default function EventsAdminPage() {
                                 <Button
                                   size="sm"
                                   variant="danger"
+                                  className="rounded-full"
                                   onClick={() => {
                                     setDeleteConfirmId(event.id)
                                     setEditingId(null)

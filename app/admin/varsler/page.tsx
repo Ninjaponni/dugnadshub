@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import { ArrowLeft, Send, AlertTriangle, Check } from 'lucide-react'
 import Link from 'next/link'
 
@@ -86,18 +87,27 @@ export default function AdminNotificationsPage() {
   const canSend = title.trim() && body.trim() && (sendToAll || selectedRoles.length > 0 || selectedGroups.length > 0)
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-4">
-        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-          <ArrowLeft size={18} className="text-text-secondary" />
-        </Link>
-        <h2 className="text-xl font-semibold font-[var(--font-display)] flex-1">Send varsel</h2>
+    <div className="pb-28">
+      {/* Dugnadshub header */}
+      <div className="flex items-center gap-3 mb-6">
+        <KorpsLogo size={32} />
+        <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+          Dugnadshub
+        </span>
       </div>
 
-      <Card className="p-4 space-y-4">
+      {/* Tilbake + tittel */}
+      <div className="flex items-center gap-3 mb-5">
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low shrink-0">
+          <ArrowLeft size={20} className="text-accent" />
+        </Link>
+        <h2 className="text-xl font-bold text-accent font-[var(--font-display)] flex-1">Varsler</h2>
+      </div>
+
+      <Card className="p-5 space-y-5 rounded-2xl">
         {/* Tittel */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Tittel</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Tittel</label>
           <input
             type="text"
             value={title}
@@ -109,7 +119,7 @@ export default function AdminNotificationsPage() {
 
         {/* Melding */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Melding</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Melding</label>
           <textarea
             value={body}
             onChange={e => setBody(e.target.value)}
@@ -121,7 +131,7 @@ export default function AdminNotificationsPage() {
 
         {/* URL (valgfritt) */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-1">Lenke (valgfritt)</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Lenke (valgfritt)</label>
           <input
             type="text"
             value={url}
@@ -133,7 +143,7 @@ export default function AdminNotificationsPage() {
 
         {/* Mottakere */}
         <div>
-          <label className="text-xs font-medium text-text-secondary block mb-2">Mottakere</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-3">Mottakere</label>
 
           {/* Alle-toggle */}
           <button
@@ -146,8 +156,8 @@ export default function AdminNotificationsPage() {
           </button>
 
           {/* Rolle-filter */}
-          <p className="text-[11px] text-text-tertiary mt-2 mb-1">Roller</p>
-          <div className="flex flex-wrap gap-1.5 mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mt-3 mb-1.5">Roller</p>
+          <div className="flex flex-wrap gap-1.5 mb-3">
             {Object.entries(roleLabels).map(([role, label]) => (
               <button
                 key={role}
@@ -162,7 +172,7 @@ export default function AdminNotificationsPage() {
           </div>
 
           {/* Barnegruppe-filter */}
-          <p className="text-[11px] text-text-tertiary mb-1">Barnegruppe</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5">Barnegruppe</p>
           <div className="flex flex-wrap gap-1.5">
             {groupLabels.map(group => (
               <button
@@ -180,7 +190,7 @@ export default function AdminNotificationsPage() {
 
         {/* Send-knapp */}
         <Button
-          className="w-full"
+          className="w-full rounded-full"
           disabled={!canSend}
           onClick={() => setShowConfirm(true)}
         >
@@ -196,7 +206,7 @@ export default function AdminNotificationsPage() {
           <div className="fixed left-6 right-6 top-1/3 z-50 bg-card rounded-2xl overflow-hidden shadow-xl max-w-sm mx-auto">
             <div className="p-5 text-center">
               <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
-              <p className="font-medium mb-1">Send varsel?</p>
+              <p className="font-medium mb-1 font-[var(--font-display)]">Send varsel?</p>
               <p className="text-sm text-text-secondary">
                 {sendToAll ? 'Sendes til alle brukere' :
                   [
@@ -207,17 +217,17 @@ export default function AdminNotificationsPage() {
               </p>
               <p className="text-sm font-medium mt-2">&quot;{title}&quot;</p>
             </div>
-            <div className="flex">
+            <div className="flex gap-2 px-4 pb-4">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-3 text-sm font-medium text-text-secondary active:bg-surface-low"
+                className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
               >
                 Avbryt
               </button>
               <button
                 onClick={handleSend}
                 disabled={sending}
-                className="flex-1 py-3 text-sm font-medium text-accent active:bg-accent/10"
+                className="flex-1 py-3 text-sm font-medium text-accent rounded-full bg-accent/10 active:bg-accent/20"
               >
                 {sending ? 'Sender...' : 'Send'}
               </button>
@@ -228,16 +238,18 @@ export default function AdminNotificationsPage() {
 
       {/* Resultat */}
       {result && (
-        <Card className="p-4 mt-4 text-center">
-          <Check size={24} className="text-success mx-auto mb-2" />
-          <p className="font-medium">Varsel sendt!</p>
-          <p className="text-sm text-text-secondary">
+        <Card className="p-5 mt-4 text-center rounded-2xl">
+          <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
+            <Check size={20} className="text-success" />
+          </div>
+          <p className="font-medium font-[var(--font-display)]">Varsel sendt!</p>
+          <p className="text-sm text-text-secondary mt-1">
             {result.sent} mottok · {result.failed} feilet
           </p>
           <Button
             size="sm"
             variant="ghost"
-            className="mt-3"
+            className="mt-3 rounded-full"
             onClick={() => { setResult(null); setTitle(''); setBody(''); setUrl('') }}
           >
             Send nytt varsel

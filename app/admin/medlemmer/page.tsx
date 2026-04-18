@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown, Trash2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -200,12 +201,21 @@ export default function MembersAdminPage() {
   }
 
   return (
-    <div>
+    <div className="pb-28">
+      {/* Dugnadshub header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
-          <ArrowLeft size={18} className="text-text-secondary" />
+        <KorpsLogo size={32} />
+        <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+          Dugnadshub
+        </span>
+      </div>
+
+      {/* Tilbake + tittel */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low">
+          <ArrowLeft size={20} className="text-accent" />
         </Link>
-        <h2 className="text-xl font-semibold font-[var(--font-display)] flex-1">Medlemmer</h2>
+        <h2 className="text-xl font-bold text-accent font-[var(--font-display)] flex-1">Medlemmer</h2>
         <span className="text-sm text-text-secondary">
           {loading ? '...' : `${profiles.length} totalt`}
         </span>
@@ -255,7 +265,7 @@ export default function MembersAdminPage() {
       {loading && (
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="card p-4 flex items-center gap-3">
+            <div key={i} className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(57,56,43,0.08)] p-4 flex items-center gap-3">
               <div className="w-10 h-10 bg-surface-low rounded-full" />
               <div className="flex-1 space-y-2">
                 <div className="h-4 w-32 bg-surface-low rounded" />
@@ -268,9 +278,9 @@ export default function MembersAdminPage() {
 
       {/* Ingen resultater */}
       {!loading && filtered.length === 0 && (
-        <Card className="p-6 text-center">
+        <Card className="p-6 text-center rounded-2xl">
           <Users size={32} className="text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-secondary">
+          <p className="text-text-secondary font-[var(--font-display)]">
             {searchQuery ? 'Ingen treff på søket' : 'Ingen medlemmer registrert ennå'}
           </p>
         </Card>
@@ -290,21 +300,21 @@ export default function MembersAdminPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i * 0.02, 0.3) }}
               >
-                <Card animate={false} className="p-0 overflow-hidden">
+                <Card animate={false} className="p-0 overflow-hidden rounded-2xl">
                   {/* Kort-header */}
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : profile.id)}
                     className="w-full text-left p-4 flex items-center gap-3"
                   >
                     {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
                       <span className="text-sm font-semibold text-accent">
                         {(profile.full_name || profile.email)[0].toUpperCase()}
                       </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[15px] truncate">
+                      <p className="font-medium text-[15px] truncate font-[var(--font-display)]">
                         {profile.full_name || 'Ukjent'}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-text-secondary mt-0.5">
@@ -349,14 +359,14 @@ export default function MembersAdminPage() {
 
                           {/* Rollevelger */}
                           <div>
-                            <label className="text-xs font-medium text-text-secondary block mb-1.5">Rolle</label>
+                            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Rolle</label>
                             <div className="grid grid-cols-4 gap-1.5">
                               {(Object.keys(roleLabels) as Role[]).map(role => (
                                 <button
                                   key={role}
                                   onClick={() => handleRoleChange(profile.id, role)}
                                   disabled={updatingRole === profile.id}
-                                  className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                  className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
                                     profile.role === role
                                       ? 'bg-accent text-white'
                                       : 'bg-surface-low text-text-secondary hover:bg-surface-low'
@@ -370,7 +380,7 @@ export default function MembersAdminPage() {
 
                           {/* Merker */}
                           <div>
-                            <label className="text-xs font-medium text-text-secondary block mb-1.5">
+                            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
                               <Award size={12} className="inline mr-1" />
                               Merker
                             </label>
@@ -435,7 +445,7 @@ export default function MembersAdminPage() {
                           {/* Opptjente merker */}
                           {userBadgeList.length > 0 && (
                             <div>
-                              <label className="text-xs font-medium text-text-secondary block mb-1.5">
+                              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
                                 Opptjente merker
                               </label>
                               <div className="grid grid-cols-4 gap-3">
@@ -461,25 +471,25 @@ export default function MembersAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="rounded-2xl overflow-hidden border border-danger/20">
-                                  <div className="bg-danger/5 p-4 text-center">
+                                <div className="rounded-2xl overflow-hidden bg-danger/5">
+                                  <div className="p-4 text-center">
                                     <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1">Slette {profile.full_name || 'dette medlemmet'}?</p>
+                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Slette {profile.full_name || 'dette medlemmet'}?</p>
                                     <p className="text-sm text-text-secondary">
                                       Profil, merker og claims fjernes permanent.
                                     </p>
                                   </div>
-                                  <div className="flex border-t border-danger/20">
+                                  <div className="flex gap-2 px-4 pb-4">
                                     <button
                                       onClick={() => setDeleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-surface-low"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
                                     <button
                                       onClick={() => handleDeleteMember(profile.id)}
                                       disabled={deleting}
-                                      className="flex-1 py-3 text-sm font-medium text-danger active:bg-danger/10"
+                                      className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
                                     >
                                       {deleting ? 'Sletter...' : 'Slett'}
                                     </button>
@@ -490,7 +500,7 @@ export default function MembersAdminPage() {
                               <Button
                                 size="sm"
                                 variant="danger"
-                                className="w-full"
+                                className="w-full rounded-full"
                                 onClick={() => setDeleteConfirmId(profile.id)}
                               >
                                 <Trash2 size={14} />
