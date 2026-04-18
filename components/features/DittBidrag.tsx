@@ -60,7 +60,7 @@ export default function DittBidrag({ data }: DittBidragProps) {
       {/* Overskrift */}
       <div className="flex items-center gap-2 mb-4">
         <Heart size={18} className="text-accent" fill="currentColor" />
-        <h3 className="font-semibold text-[15px] font-[var(--font-display)]">Sammen har vi</h3>
+        <h3 className="font-semibold text-[15px] font-[var(--font-display)]">Sammen har vi i {new Date().getFullYear()}</h3>
       </div>
 
       {/* 2x3 grid */}
