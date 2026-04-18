@@ -69,6 +69,7 @@ export default function ProfilePage() {
           phone: p.phone || '',
         })
         setChildren(p.children?.length ? p.children : [{ name: '', group: 'Aspirant' as const }])
+        setAvatarId(p.avatar_url || getRandomAvatarId())
 
         // Hent dugnad-historikk: claims → assignments → events (completed)
         const { data: claims } = await supabaseRef.current
@@ -555,11 +556,20 @@ export default function ProfilePage() {
       {showAvatarPicker && (
         <AvatarPicker
           currentAvatarId={avatarId}
-          onSelect={(newId) => {
+          onSelect={async (newId) => {
             setAvatarId(newId)
             setShowAvatarPicker(false)
-            // Lagre til localStorage (i prod: lagre til Supabase profiles.avatar_url)
-            localStorage.setItem('dugnadshub_avatar', newId)
+            if (isMockMode()) {
+              localStorage.setItem('dugnadshub_avatar', newId)
+            } else {
+              const { data: { user } } = await supabaseRef.current.auth.getUser()
+              if (user) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (supabaseRef.current.from('profiles') as any)
+                  .update({ avatar_url: newId })
+                  .eq('id', user.id)
+              }
+            }
           }}
           onClose={() => setShowAvatarPicker(false)}
         />
