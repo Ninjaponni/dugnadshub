@@ -1,33 +1,40 @@
 @import "tailwindcss";
 
-/* Dugnadshub designsystem — Apple/iOS-estetikk */
+/* Dugnadshub designsystem — Editorial Claymorphism & Scandi-Minimalism */
+
+/* ===== LIGHT MODE (standard) ===== */
 @theme {
   /* Bakgrunner */
-  --color-bg: #F5F5F7;
-  --color-card: #FFFFFF;
+  --color-bg: #fbf6f0;
+  --color-card: #ffffff;
+  --color-surface-low: #f5f0ea;
 
-  /* Tekst */
-  --color-text-primary: #1D1D1F;
-  --color-text-secondary: #86868B;
-  --color-text-tertiary: #AEAEB2;
+  /* Tekst — matcher Stitch on-surface */
+  --color-text-primary: #39382b;
+  --color-text-secondary: #666556;
+  --color-text-tertiary: #b0ada7;
 
-  /* Aksenter (iOS-farger) */
-  --color-accent: #007AFF;
-  --color-accent-hover: #0066D6;
-  --color-success: #34C759;
-  --color-warning: #FF9500;
-  --color-danger: #FF3B30;
-  --color-purple: #AF52DE;
-  --color-teal: #5AC8FA;
+  /* Aksenter — matcher Stitch primary */
+  --color-accent: #a24a33;
+  --color-accent-hover: #8a3d2a;
+  --color-primary-container: #ff784e;
+  --color-success: #6B8F71;
+  --color-warning: #FFD54F;
+  --color-danger: #b31b25;
+  --color-purple: #843d99;
+  --color-tertiary-container: #ea9bff;
+  --color-teal: #5C9CE6;
+  --color-secondary: #a03838;
 
   /* Sonefarger (kart) */
-  --color-zone-available: #EF4444;
-  --color-zone-partial: #F59E0B;
-  --color-zone-complete: #22C55E;
-  --color-zone-picked-up: #8B5CF6;
+  --color-zone-available: #E57373;
+  --color-zone-partial: #FFD54F;
+  --color-zone-complete: #6B8F71;
+  --color-zone-picked-up: #9C7DB8;
 
-  /* Font */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Fonter */
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -44,18 +51,94 @@ body {
   min-height: 100dvh;
 }
 
-/* Apple-stil kort */
-.card {
-  background: var(--color-card);
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+/* ===== DARK MODE ===== */
+[data-theme="dark"] {
+  --color-bg: #1a1816;
+  --color-card: #2a2622;
+  --color-surface-low: #232019;
+
+  --color-text-primary: #ede8e1;
+  --color-text-secondary: #a09c97;
+  --color-text-tertiary: #6b6560;
+
+  --color-accent: #ff784e;
+  --color-accent-hover: #ff9370;
+  --color-primary-container: #a83206;
+  --color-success: #8bb491;
+  --color-warning: #FFD54F;
+  --color-danger: #ff6b6b;
+  --color-purple: #d4a0e8;
+  --color-tertiary-container: #5a2070;
+  --color-teal: #7db8f0;
+  --color-secondary: #e06060;
+
+  --color-zone-available: #ff8a8a;
+  --color-zone-partial: #ffe082;
+  --color-zone-complete: #8bb491;
+  --color-zone-picked-up: #c4a8d8;
 }
 
-/* Glassmorfisme (for tab bar, modaler) */
+/* System-preferanse (når brukeren har valgt "System") */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --color-bg: #1a1816;
+    --color-card: #2a2622;
+    --color-surface-low: #232019;
+
+    --color-text-primary: #ede8e1;
+    --color-text-secondary: #a09c97;
+    --color-text-tertiary: #6b6560;
+
+    --color-accent: #ff784e;
+    --color-accent-hover: #ff9370;
+    --color-primary-container: #a83206;
+    --color-success: #8bb491;
+    --color-warning: #FFD54F;
+    --color-danger: #ff6b6b;
+    --color-purple: #d4a0e8;
+    --color-tertiary-container: #5a2070;
+    --color-teal: #7db8f0;
+    --color-secondary: #e06060;
+
+    --color-zone-available: #ff8a8a;
+    --color-zone-partial: #ffe082;
+    --color-zone-complete: #8bb491;
+    --color-zone-picked-up: #c4a8d8;
+  }
+}
+
+/* Claymorphism-kort — varme skygger, runde hjørner */
+.card {
+  background: var(--color-card);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 16px rgba(160, 120, 80, 0.10);
+}
+
+[data-theme="dark"] .card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Glassmorfisme — varm glass for tab bar, modaler */
 .glass {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(251, 246, 240, 0.80);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+[data-theme="dark"] .glass {
+  background: rgba(26, 24, 22, 0.85);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .glass {
+    background: rgba(26, 24, 22, 0.85);
+  }
 }
 
 /* Safe area for PWA */
@@ -75,7 +158,7 @@ body {
   display: inline-block;
 }
 
-/* Gull-shine på opptjente merker */
+/* Gull-shine på opptjente merker — varm variant */
 .badge-shine {
   position: absolute;
   top: -50%;

@@ -3,7 +3,7 @@
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import { forwardRef } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'confirm'
 type Size = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
@@ -14,21 +14,27 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-accent text-white hover:bg-accent-hover',
-  secondary: 'bg-text-primary/5 text-text-primary hover:bg-text-primary/10',
+  primary: 'text-white',
+  secondary: 'bg-surface-low text-text-primary hover:bg-surface-low/80',
   ghost: 'text-accent hover:bg-accent/5',
   danger: 'bg-danger/10 text-danger hover:bg-danger/20',
+  confirm: 'bg-success text-white hover:bg-success/90',
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2.5 text-[15px]',
-  lg: 'px-6 py-3.5 text-[17px]',
+  sm: 'px-4 py-1.5 text-sm',
+  md: 'px-5 py-2.5 text-[15px]',
+  lg: 'px-8 py-3.5 text-[17px]',
 }
 
-// Knapp med Apple-stil haptic feedback-følelse
+// Knapp med claymorphism-stil — gradient primær, varm palett
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', loading, className = '', children, disabled, ...props }, ref) => {
+  ({ variant = 'primary', size = 'md', loading, className = '', children, disabled, style, ...props }, ref) => {
+    // Gradient-bakgrunn for primær-knapp
+    const gradientStyle = variant === 'primary'
+      ? { ...style, background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }
+      : style
+
     return (
       <motion.button
         ref={ref}
@@ -36,11 +42,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         className={`
           inline-flex items-center justify-center gap-2
-          font-semibold rounded-xl
+          font-semibold font-[var(--font-display)]
+          rounded-full
           transition-colors duration-150
           disabled:opacity-40 disabled:pointer-events-none
           ${variants[variant]} ${sizes[size]} ${className}
         `}
+        style={gradientStyle}
         disabled={disabled || loading}
         {...props}
       >

@@ -4,12 +4,18 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
-import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Plus, Trash2 } from 'lucide-react'
+import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Plus, Trash2, Sun, Moon, Monitor, ArrowLeft, Pencil, PlusCircle, ChevronRight } from 'lucide-react'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import type { Child } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
+import { isMockMode } from '@/lib/mock/useMock'
+import { mockProfile, mockHistory, mockDittBidrag } from '@/lib/mock/data'
+import type { DittBidragData } from '@/lib/mock/data'
+import DittBidrag from '@/components/features/DittBidrag'
+import AvatarPicker, { getAvatarUrl, getRandomAvatarId } from '@/components/features/AvatarPicker'
+import { useTheme } from '@/lib/hooks/useTheme'
 
 // Profilside — brukerinfo + innstillinger
 export default function ProfilePage() {
@@ -26,10 +32,25 @@ export default function ProfilePage() {
   // Mine dugnader — historikk over fullførte hendelser
   const [history, setHistory] = useState<Array<{ title: string; date: string; zones: number }>>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [dittBidrag, setDittBidrag] = useState<DittBidragData | null>(null)
+  const [avatarId, setAvatarId] = useState<string>('')
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const { theme, setTheme } = useTheme()
   const router = useRouter()
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
+    if (isMockMode()) {
+      setProfile(mockProfile)
+      setForm({ full_name: mockProfile.full_name || '', phone: mockProfile.phone || '' })
+      setChildren(mockProfile.children || [{ name: '', group: 'Aspirant' as const }])
+      setHistory(mockHistory)
+      setDittBidrag(mockDittBidrag)
+      const savedAvatar = localStorage.getItem('dugnadshub_avatar')
+      setAvatarId(savedAvatar || mockProfile.avatar_url || getRandomAvatarId())
+      setHistoryLoaded(true)
+      return
+    }
     async function load() {
       const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) return
@@ -180,61 +201,100 @@ export default function ProfilePage() {
     router.replace('/logg-inn')
   }
 
-  const inputClass = `w-full px-4 py-3 rounded-xl bg-bg border-0 text-[17px]
-    placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30`
+  const inputClass = `w-full px-4 py-3 rounded-[12px] bg-surface-low border-0 text-[17px]
+    placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/20`
 
   return (
-    <div className="px-4 pt-14 safe-top">
-      <h1 className="text-[34px] font-bold tracking-tight mb-6">Profil</h1>
-
+    <div className={editing ? 'px-4 pt-14 safe-top' : ''}>
       {editing ? (
+        <>
+        {/* Tilbake-pil + "Profil" i terrakotta */}
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={() => setEditing(false)} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low">
+            <ArrowLeft size={20} className="text-accent" />
+          </button>
+          <h1 className="text-xl font-bold text-accent font-[var(--font-display)]">Profil</h1>
+        </div>
         <form onSubmit={handleSave}>
-          <Card className="p-5 space-y-4">
-            <h2 className="text-lg font-semibold">
-              {profile ? 'Rediger profil' : 'Fullfør profilen din'}
-            </h2>
+          <section className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(57,56,43,0.08)] p-6 mb-8">
+            {/* Avatar + tittel */}
+            <div className="flex flex-col items-center mb-8">
+              <h2 className="font-bold text-accent text-lg mb-5 font-[var(--font-display)]">
+                {profile ? 'Rediger profil' : 'Fullfør profilen din'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                className="relative w-20 h-20"
+              >
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  {avatarId ? (
+                    <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-surface-low flex items-center justify-center">
+                      <User size={32} className="text-text-tertiary" />
+                    </div>
+                  )}
+                </div>
+                <div className="absolute bottom-0 right-0 bg-accent text-white w-7 h-7 rounded-full shadow-lg flex items-center justify-center border-2 border-card">
+                  <Pencil size={13} className="text-white" />
+                </div>
+              </button>
+            </div>
 
-            <label className="block">
-              <span className="text-sm font-medium text-text-secondary mb-1 block">Navn</span>
-              <input
-                type="text"
-                value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                placeholder="Ola Nordmann"
-                required
-                className={inputClass}
-              />
-            </label>
+            {/* Form */}
+            <div className="space-y-5">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Navn</label>
+                <input
+                  type="text"
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  placeholder="Ola Nordmann"
+                  required
+                  className={inputClass}
+                />
+              </div>
 
-            <label className="block">
-              <span className="text-sm font-medium text-text-secondary mb-1 block">Telefon</span>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="912 34 567"
-                className={inputClass}
-              />
-            </label>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Telefon</label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="912 34 567"
+                  className={inputClass}
+                />
+              </div>
 
-            {/* Barn */}
-            <div>
-              <span className="text-sm font-medium text-text-secondary mb-2 block">Barn</span>
-              <div className="space-y-3">
-                {children.map((child, i) => (
-                  <div key={i} className="flex gap-2 items-start">
-                    <div className="flex-1 space-y-2">
-                      <input
-                        type="text"
-                        value={child.name}
-                        onChange={(e) => {
-                          const updated = [...children]
-                          updated[i] = { ...updated[i], name: e.target.value }
-                          setChildren(updated)
-                        }}
-                        placeholder="Barnets navn"
-                        className={inputClass}
-                      />
+              {/* Barn */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Barn</label>
+                <div className="space-y-3">
+                  {children.map((child, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={child.name}
+                          onChange={(e) => {
+                            const updated = [...children]
+                            updated[i] = { ...updated[i], name: e.target.value }
+                            setChildren(updated)
+                          }}
+                          placeholder="Barnets navn"
+                          className={`${inputClass} flex-1`}
+                        />
+                        {children.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setChildren(children.filter((_, j) => j !== i))}
+                            className="p-2 rounded-full active:bg-surface-low shrink-0"
+                          >
+                            <Trash2 size={14} className="text-text-tertiary" />
+                          </button>
+                        )}
+                      </div>
                       <select
                         value={child.group}
                         onChange={(e) => {
@@ -249,174 +309,260 @@ export default function ProfilePage() {
                         <option value="Hovedkorps">Hovedkorps</option>
                       </select>
                     </div>
-                    {children.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setChildren(children.filter((_, j) => j !== i))}
-                        className="mt-3 p-2 rounded-full active:bg-black/5"
-                      >
-                        <Trash2 size={16} className="text-text-tertiary" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setChildren([...children, { name: '', group: 'Aspirant' as const }])}
+                  className="flex items-center gap-2 text-sm text-accent font-bold mt-3 active:opacity-70 px-1"
+                >
+                  <PlusCircle size={18} />
+                  Legg til barn
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setChildren([...children, { name: '', group: 'Aspirant' as const }])}
-                className="flex items-center gap-1.5 text-xs text-accent font-medium mt-3 active:opacity-70"
-              >
-                <Plus size={14} />
-                Legg til barn
-              </button>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            {/* Knapper — outline avbryt + solid lagre */}
+            <div className="flex gap-4 mt-10">
               {profile && (
-                <Button
+                <button
                   type="button"
-                  variant="secondary"
-                  size="md"
-                  className="flex-1"
                   onClick={() => setEditing(false)}
+                  className="flex-1 py-3.5 rounded-full border-2 border-accent bg-card text-text-primary font-bold text-sm tracking-wide active:scale-95 transition-all"
                 >
                   Avbryt
-                </Button>
+                </button>
               )}
-              <Button type="submit" size="md" loading={saving} className="flex-1">
-                Lagre
-              </Button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 py-3.5 rounded-full text-white font-bold text-sm tracking-wide active:scale-95 transition-all disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+              >
+                {saving ? 'Lagrer...' : 'Lagre'}
+              </button>
             </div>
-          </Card>
+          </section>
         </form>
+        </>
       ) : (
         <>
-          {/* Profilkort */}
-          <Card className="p-5 mb-4">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
-                <User size={28} className="text-accent" />
+          {/* Dugnadshub header */}
+          <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+            <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
+              <div className="flex items-center gap-3">
+                <KorpsLogo size={32} />
+                <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">Dugnadshub</span>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold">{profile?.full_name}</h2>
-                <p className="text-sm text-text-secondary">{profile?.email}</p>
-              </div>
+              <div className="w-9" />
             </div>
+          </header>
 
-            {profile?.children && profile.children.length > 0 && (
-              <div className="text-sm text-text-secondary space-y-0.5">
-                {profile?.children.map((c, i) => (
-                  <p key={i}>{c.name}{c.group ? ` — ${c.group}` : ''}</p>
-                ))}
-              </div>
-            )}
+          <main className="pt-20 pb-28 px-5 space-y-5">
+            {/* Sidetittel */}
+            <h2 className="text-3xl font-extrabold text-text-primary tracking-tight font-[var(--font-display)]">Profil</h2>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-4"
-              onClick={() => {
-                setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
-                setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
-                setEditing(true)
-              }}
-            >
-              Rediger profil
-            </Button>
-          </Card>
-
-          {/* Mine dugnader — historikk */}
-          {historyLoaded && history.length > 0 && (
-            <Card className="p-5 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <ClipboardList size={18} className="text-accent" />
-                <h3 className="font-semibold text-[15px]">Gjennomførte dugnader</h3>
-              </div>
-              <div className="space-y-2">
-                {history.map((h, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-black/5 last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{h.title}</p>
-                      <p className="text-xs text-text-secondary">
-                        {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                      {h.zones} {h.zones === 1 ? 'sone' : 'soner'}
-                    </span>
+            {/* Profilkort — sentrert layout */}
+            <Card className="p-6">
+              <div className="flex flex-col items-center">
+                {/* Avatar */}
+                <button
+                  onClick={() => setShowAvatarPicker(true)}
+                  className="relative group mb-3"
+                >
+                  <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-accent/20 group-active:ring-accent transition-all">
+                    {avatarId ? (
+                      <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-accent/10 flex items-center justify-center">
+                        <User size={32} className="text-accent" />
+                      </div>
+                    )}
                   </div>
-                ))}
+                  <div className="absolute bottom-0 right-0 w-7 h-7 bg-accent rounded-full flex items-center justify-center border-2 border-card shadow-lg">
+                    <Pencil size={13} className="text-white" />
+                  </div>
+                </button>
+
+                {/* Navn + e-post */}
+                <h3 className="text-lg font-bold font-[var(--font-display)] text-text-primary">{profile?.full_name}</h3>
+                <p className="text-sm text-text-secondary mb-3">{profile?.email}</p>
+
+                {/* Barn */}
+                {profile?.children && profile.children.length > 0 && (
+                  <div className="flex flex-col items-center gap-1 mt-3 mb-4">
+                    {profile.children.map((c, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm text-accent font-medium">
+                        <span className="text-base">🎵</span>
+                        <span>{c.name}{c.group ? ` — ${c.group}` : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Rediger-knapp */}
+                <button
+                  onClick={() => {
+                    setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
+                    setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
+                    setEditing(true)
+                  }}
+                  className="px-6 py-2.5 rounded-full border-2 border-accent text-accent font-bold text-sm tracking-wide active:scale-95 transition-all"
+                >
+                  Rediger profil
+                </button>
               </div>
             </Card>
-          )}
 
-          {/* Admin-lenke (kun for admins) */}
-          {profile?.role === 'admin' && (
-            <Link href="/admin/oversikt">
-              <Card className="p-4 mb-4 flex items-center gap-3">
-                <Shield size={20} className="text-accent" />
-                <span className="font-medium">Administrasjon</span>
+            {/* Ditt bidrag — korps-total */}
+            {dittBidrag && <DittBidrag data={dittBidrag} />}
+
+            {/* Gjennomførte dugnader */}
+            {historyLoaded && history.length > 0 && (
+              <Card className="p-5">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <ClipboardList size={20} className="text-accent" />
+                  <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
+                </div>
+                <div className="space-y-1">
+                  {history.map((h, i) => (
+                    <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">{h.title}</p>
+                        <p className="text-xs text-text-secondary mt-0.5">
+                          {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full">
+                        {h.zones} {h.zones === 1 ? 'SONE' : 'SONER'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </Card>
-            </Link>
-          )}
+            )}
 
-          {/* Push-varsel toggle */}
-          {pushSupported && (
-            <Card className="p-4 mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bell size={20} className="text-accent" />
-                <div>
-                  <p className="font-medium text-sm">Push-varsler</p>
+            {/* Admin-lenke (kun for admins) */}
+            {profile?.role === 'admin' && (
+              <Link href="/admin/oversikt" className="block mb-5">
+                <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
+                  <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                    <Shield size={20} className="text-accent" />
+                  </div>
+                  <span className="font-bold text-sm flex-1">Administrasjon</span>
+                  <ChevronRight size={18} className="text-text-tertiary" />
+                </Card>
+              </Link>
+            )}
+
+            {/* Push-varsel toggle */}
+            {pushSupported && (
+              <Card animate={false} className="p-4 mb-5 flex items-center gap-3 rounded-2xl">
+                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                  <Bell size={20} className="text-accent" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-sm">Push-varsler</p>
                   <p className="text-xs text-text-secondary">
                     {pushEnabled ? 'Aktivert' : 'Deaktivert'}
                   </p>
                 </div>
+                <button
+                  onClick={togglePush}
+                  disabled={pushLoading}
+                  className={`w-12 h-7 rounded-full transition-colors relative ${
+                    pushEnabled ? 'bg-accent' : 'bg-surface-low'
+                  }`}
+                >
+                  <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                    pushEnabled ? 'left-[22px]' : 'left-0.5'
+                  }`} />
+                </button>
+              </Card>
+            )}
+
+            {/* Tema-velger — System / Lys / Mørk */}
+            <Card animate={false} className="p-4 rounded-2xl">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                  {theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                    ? <Moon size={20} className="text-accent" />
+                    : <Sun size={20} className="text-accent" />
+                  }
+                </div>
+                <p className="font-bold text-sm">Utseende</p>
               </div>
+              <div className="flex rounded-full bg-surface-low p-1 gap-1 ml-[52px]">
+                {([
+                  { value: 'system' as const, label: 'System', icon: Monitor },
+                  { value: 'light' as const, label: 'Lys', icon: Sun },
+                  { value: 'dark' as const, label: 'Mørk', icon: Moon },
+                ]).map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-medium transition-colors ${
+                      theme === value
+                        ? 'bg-card text-text-primary shadow-sm'
+                        : 'text-text-secondary'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            {/* Vis onboarding på nytt */}
+            <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
+              <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                <RotateCcw size={20} className="text-accent" />
+              </div>
+              <p className="font-bold text-sm flex-1">Vis velkomstguiden på nytt</p>
               <button
-                onClick={togglePush}
-                disabled={pushLoading}
-                className={`w-12 h-7 rounded-full transition-colors relative ${
-                  pushEnabled ? 'bg-accent' : 'bg-black/10'
-                }`}
+                onClick={() => {
+                  localStorage.removeItem('onboarding_complete')
+                  router.push('/hjem')
+                }}
+                className="text-accent text-sm font-medium"
               >
-                <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
-                  pushEnabled ? 'left-[22px]' : 'left-0.5'
-                }`} />
+                Vis
               </button>
             </Card>
-          )}
 
-          {/* Vis onboarding på nytt */}
-          <Card className="p-4 mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <RotateCcw size={20} className="text-accent" />
-              <p className="font-medium text-sm">Vis velkomstguiden på nytt</p>
+            {/* Versjon */}
+            <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
+              Tillerbyen Skolekorps Dugnadshub v 7.0
+            </p>
+
+            {/* Logg ut */}
+            <div className="flex justify-center pt-1 pb-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-bold text-sm tracking-wide active:scale-95 transition-all"
+                style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+              >
+                <LogOut size={16} />
+                <span>Logg ut</span>
+              </button>
             </div>
-            <button
-              onClick={() => {
-                localStorage.removeItem('onboarding_complete')
-                router.push('/hjem')
-              }}
-              className="text-accent text-sm font-medium"
-            >
-              Vis
-            </button>
-          </Card>
-
-          {/* Versjon */}
-          <p className="text-center text-[11px] text-text-tertiary mt-8">
-            Tillerbyen Skolekorps Dugnadshub v 6.7
-          </p>
-
-          {/* Logg ut */}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 text-danger py-3 mt-1"
-          >
-            <LogOut size={18} />
-            <span>Logg ut</span>
-          </button>
+          </main>
         </>
+      )}
+
+      {/* Avatar-velger */}
+      {showAvatarPicker && (
+        <AvatarPicker
+          currentAvatarId={avatarId}
+          onSelect={(newId) => {
+            setAvatarId(newId)
+            setShowAvatarPicker(false)
+            // Lagre til localStorage (i prod: lagre til Supabase profiles.avatar_url)
+            localStorage.setItem('dugnadshub_avatar', newId)
+          }}
+          onClose={() => setShowAvatarPicker(false)}
+        />
       )}
     </div>
   )

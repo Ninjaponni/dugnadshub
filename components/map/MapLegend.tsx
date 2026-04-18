@@ -5,11 +5,11 @@ import { ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 
 const items: Array<{ color: string; label: string; border?: boolean }> = [
-  { color: '#EF4444', label: 'Ledig' },
-  { color: '#F59E0B', label: 'Delvis tatt' },
-  { color: '#007AFF', label: 'Fullt bemannet' },
-  { color: '#22C55E', label: 'Ferdigplukket' },
-  { color: '#8B5CF6', label: 'Hentet' },
+  { color: '#E57373', label: 'Ledig' },
+  { color: '#FFD54F', label: 'Delvis tatt' },
+  { color: '#6B8F71', label: 'Fullt bemannet' },
+  { color: '#6B8F71', label: 'Ferdigplukket' },
+  { color: '#9C7DB8', label: 'Hentet' },
 ]
 
 // Kompakt kartlegende med toggle

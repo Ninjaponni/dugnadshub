@@ -24,7 +24,7 @@ export default function DropPointMarkers({ activeArea }: DropPointMarkersProps) 
           anchor="center"
         >
           <div
-            className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center border border-black/10"
+            className="w-6 h-6 rounded-full bg-card shadow-md flex items-center justify-center"
             title={dp.properties.name}
           >
             <Package size={12} className="text-text-secondary" />

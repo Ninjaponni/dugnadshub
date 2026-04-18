@@ -8,11 +8,11 @@ interface CardProps {
   animate?: boolean
 }
 
-// Apple-stil kort med subtil skygge
+// Claymorphism-kort med varme skygger
 export default function Card({ children, className = '', animate = true }: CardProps) {
   if (!animate) {
     return (
-      <div className={`card p-4 ${className}`}>
+      <div className={`card p-5 ${className}`}>
         {children}
       </div>
     )
@@ -23,7 +23,7 @@ export default function Card({ children, className = '', animate = true }: CardP
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className={`card p-4 ${className}`}
+      className={`card p-5 ${className}`}
     >
       {children}
     </motion.div>

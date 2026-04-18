@@ -30,7 +30,7 @@ function findDropPoint(zoneName: string, area: string) {
 // Visuell status basert på claims og sonetype
 function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string } {
   const isLapper = zone.zone_type === 'lapper'
-  if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple-500' }
+  if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple' }
   if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : 'Ferdigplukket', color: 'bg-success' }
   if (zone.claims.length >= zone.collectors_needed) return { label: 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
@@ -270,10 +270,16 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       {zone.zone_type !== 'lapper' && dropPoint && (
         <button
           onClick={handleDropPointClick}
-          className="flex items-center gap-2 text-sm text-accent mb-3 active:opacity-70"
+          className="flex items-center gap-3 p-3 bg-surface-low/60 rounded-xl mb-3 active:scale-[0.98] transition-all w-full text-left"
         >
-          <Navigation size={14} className="shrink-0" />
-          <span className="underline underline-offset-2">Oppsamling: {dropPoint.properties.name}</span>
+          <div className="w-9 h-9 bg-success/15 rounded-full flex items-center justify-center shrink-0">
+            <Navigation size={16} className="text-success" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-success uppercase tracking-wider">Oppsamling</p>
+            <p className="text-sm font-semibold text-text-primary">{dropPoint.properties.name}</p>
+          </div>
+          <span className="text-text-tertiary text-sm">›</span>
         </button>
       )}
 
@@ -294,7 +300,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                   {(isAdmin || userHasClaimed) && claim.phone && claim.user_id !== userId && (
                     <a
                       href={`tel:${claim.phone}`}
-                      className="p-1 rounded-full active:bg-black/10"
+                      className="p-1 rounded-full active:bg-surface-low"
                       aria-label={`Ring ${claim.full_name}`}
                     >
                       <Phone size={14} className="text-accent" />
@@ -309,7 +315,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setAdminUnclaimTarget(null)}
-                          className="text-xs text-text-tertiary px-1.5 py-0.5 rounded active:bg-black/5"
+                          className="text-xs text-text-tertiary px-1.5 py-0.5 rounded active:bg-surface-low"
                         >
                           Avbryt
                         </button>
@@ -324,7 +330,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                     ) : (
                       <button
                         onClick={() => setAdminUnclaimTarget(claim.user_id)}
-                        className="p-1 rounded-full active:bg-black/10"
+                        className="p-1 rounded-full active:bg-surface-low"
                         aria-label="Fjern samler"
                       >
                         <XIcon size={14} className="text-text-tertiary" />
@@ -353,13 +359,13 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                     onChange={e => setNoteText(e.target.value)}
                     rows={2}
                     placeholder="F.eks. Med 3 barn: Ola, Kari, Per"
-                    className="w-full px-3 py-2 rounded-xl bg-black/5 text-sm outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+                    className="w-full px-3 py-2 rounded-[12px] bg-surface-low text-sm outline-none focus:ring-2 focus:ring-accent/30 resize-none"
                     autoFocus
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => setEditingNote(false)}
-                      className="flex-1 py-1.5 text-sm font-medium text-text-secondary rounded-lg active:bg-black/5"
+                      className="flex-1 py-1.5 text-sm font-medium text-text-secondary rounded-lg active:bg-surface-low"
                     >
                       Avbryt
                     </button>
@@ -412,15 +418,13 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
 
           {/* Admin: tildel medlem */}
           {isAdmin && !isFull && !isFinished && !showMemberPicker && (
-            <Button
-              size="md"
-              loading={assignLoading}
+            <button
               onClick={() => setShowMemberPicker(true)}
-              className="w-full bg-black/5 !text-text-primary hover:bg-black/10"
+              disabled={assignLoading}
+              className="w-full text-text-secondary text-xs font-semibold uppercase tracking-wider py-2 hover:opacity-80 transition-opacity"
             >
-              <UserPlus size={16} className="mr-1.5" />
               Tildel medlem
-            </Button>
+            </button>
           )}
           {isAdmin && showMemberPicker && (
             <MemberPicker
@@ -430,11 +434,15 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             />
           )}
 
-          {/* Marker som ferdig — med bekreftelse */}
+          {/* Marker som ferdig — sekundær grønn knapp */}
           {canMarkComplete && !showCompleteConfirm && !editingNote && (
-            <Button size="lg" loading={loading} onClick={() => setShowCompleteConfirm(true)} className="w-full bg-success hover:bg-success/90">
+            <button
+              onClick={() => setShowCompleteConfirm(true)}
+              disabled={loading}
+              className="w-full py-3 rounded-full border-2 border-success text-success font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
+            >
               Marker som ferdig
-            </Button>
+            </button>
           )}
           {showCompleteConfirm && (
             <div className="rounded-2xl overflow-hidden border border-success/20">
@@ -450,7 +458,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               <div className="flex border-t border-success/20">
                 <button
                   onClick={() => setShowCompleteConfirm(false)}
-                  className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-success/20 active:bg-black/5"
+                  className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-success/20 active:bg-surface-low"
                 >
                   Avbryt
                 </button>
@@ -465,11 +473,15 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             </div>
           )}
 
-          {/* Gi opp sonen — med bekreftelse */}
+          {/* Gi opp sonen — tekst-lenke */}
           {canUnclaim && !showUnclaimConfirm && !showCompleteConfirm && !editingNote && (
-            <Button size="md" variant="danger" loading={loading} onClick={() => setShowUnclaimConfirm(true)} className="w-full">
+            <button
+              onClick={() => setShowUnclaimConfirm(true)}
+              disabled={loading}
+              className="w-full text-danger text-xs font-semibold py-2 hover:opacity-80 transition-opacity disabled:opacity-40"
+            >
               Gi opp sonen
-            </Button>
+            </button>
           )}
           {showUnclaimConfirm && (
             <div className="rounded-2xl overflow-hidden border border-warning/20">
@@ -481,7 +493,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               <div className="flex border-t border-warning/20">
                 <button
                   onClick={() => setShowUnclaimConfirm(false)}
-                  className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-black/5"
+                  className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-surface-low"
                 >
                   Avbryt
                 </button>

@@ -10,7 +10,7 @@ interface BottomSheetProps {
   title?: string
 }
 
-// Apple-stil bottom sheet med drag-håndtak
+// Bottom sheet med drag-håndtak — varm claymorphism
 export default function BottomSheet({ open, onClose, children, title }: BottomSheetProps) {
   const dragControls = useDragControls()
 
@@ -46,7 +46,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl max-h-[85dvh] flex flex-col pb-20"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-bg rounded-t-[28px] max-h-[85dvh] flex flex-col pb-20 shadow-[0_-12px_30px_rgba(61,53,48,0.08)]"
           >
             {/* Drag-håndtak — kun dette området trigger drag-to-close */}
             <div
@@ -57,7 +57,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             </div>
 
             {title && (
-              <h2 className="text-xl font-semibold px-5 pb-3 shrink-0">{title}</h2>
+              <h2 className="text-xl font-semibold font-[var(--font-display)] px-5 pb-3 shrink-0">{title}</h2>
             )}
 
             <div className="overflow-auto flex-1 overscroll-contain">

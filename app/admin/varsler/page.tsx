@@ -29,7 +29,7 @@ export default function AdminNotificationsPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null)
 
-  const inputClass = 'w-full min-w-0 px-3 py-2 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
+  const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-surface-low text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
 
   function toggleRole(role: string) {
     setSendToAll(false)
@@ -88,10 +88,10 @@ export default function AdminNotificationsPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center shrink-0">
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center shrink-0">
           <ArrowLeft size={18} className="text-text-secondary" />
         </Link>
-        <h2 className="text-xl font-semibold flex-1">Send varsel</h2>
+        <h2 className="text-xl font-semibold font-[var(--font-display)] flex-1">Send varsel</h2>
       </div>
 
       <Card className="p-4 space-y-4">
@@ -139,7 +139,7 @@ export default function AdminNotificationsPage() {
           <button
             onClick={handleAllToggle}
             className={`px-3 py-1.5 rounded-full text-xs font-medium mr-2 mb-2 transition-colors ${
-              sendToAll ? 'bg-accent text-white' : 'bg-black/5 text-text-secondary'
+              sendToAll ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
             }`}
           >
             Alle
@@ -153,7 +153,7 @@ export default function AdminNotificationsPage() {
                 key={role}
                 onClick={() => toggleRole(role)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  selectedRoles.includes(role) ? 'bg-accent text-white' : 'bg-black/5 text-text-secondary'
+                  selectedRoles.includes(role) ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
                 }`}
               >
                 {label}
@@ -169,7 +169,7 @@ export default function AdminNotificationsPage() {
                 key={group}
                 onClick={() => toggleGroup(group)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  selectedGroups.includes(group) ? 'bg-accent text-white' : 'bg-black/5 text-text-secondary'
+                  selectedGroups.includes(group) ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
                 }`}
               >
                 {group}
@@ -207,10 +207,10 @@ export default function AdminNotificationsPage() {
               </p>
               <p className="text-sm font-medium mt-2">&quot;{title}&quot;</p>
             </div>
-            <div className="flex border-t border-black/5">
+            <div className="flex">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-black/5 active:bg-black/5"
+                className="flex-1 py-3 text-sm font-medium text-text-secondary active:bg-surface-low"
               >
                 Avbryt
               </button>

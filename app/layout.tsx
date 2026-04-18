@@ -1,11 +1,21 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans, Manrope } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({
+// Display-font for overskrifter (Manrope — som i Stitch)
+const manrope = Manrope({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-display',
+  weight: ['400', '500', '600', '700', '800'],
+})
+
+// Body-font for brødtekst (Plus Jakarta Sans — som i Stitch)
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -24,7 +34,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: 'cover',
-  themeColor: '#F5F5F7',
+  themeColor: '#fbf6f0',
 }
 
 export default function RootLayout({
@@ -33,8 +43,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="nb" className={inter.variable}>
+    <html lang="nb" className={`${plusJakarta.variable} ${manrope.variable}`}>
       <body className="bg-bg min-h-dvh">
+        {/* Dark mode init — vanlig script som kjører umiddelbart */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t)}else{document.documentElement.setAttribute('data-theme','system')}}catch(e){document.documentElement.setAttribute('data-theme','system')}})()`,
+          }}
+        />
         {children}
         <script
           dangerouslySetInnerHTML={{

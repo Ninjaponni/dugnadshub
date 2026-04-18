@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Truck, MapPin, Check, Package, Info } from 'lucide-react'
+import { Truck, MapPin, Check, Package, Info, Phone } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import type { DugnadEvent } from '@/lib/supabase/types'
+import { isMockMode } from '@/lib/mock/useMock'
+import { mockEvents, mockDriverZones, mockTrailerGroups } from '@/lib/mock/data'
 
 interface DriverZone {
   assignmentId: string
@@ -42,6 +44,14 @@ export default function DriverPage() {
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
+    if (isMockMode()) {
+      setEvents(mockEvents)
+      setZones(mockDriverZones)
+      setTrailerGroups(mockTrailerGroups)
+      setMyTrailer({ area: 'NORD', trailerGroup: 1 })
+      setLoading(false)
+      return
+    }
     loadData()
   }, [])
 
@@ -246,249 +256,193 @@ export default function DriverPage() {
   const areas = [...new Set(trailerGroups.map(g => g.area))]
   const hasMultipleAreas = areas.length > 1
 
-  // Rendrer et sone-kort (klare for henting)
-  function renderReadyZone(zone: DriverZone, i: number) {
+  // Hjelper: initialer fra navn
+  function getInitials(name: string | null) {
+    if (!name) return '?'
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  }
+
+  // Rendrer en sone — enkel, flat layout uten nesting
+  function renderZone(zone: DriverZone, i: number) {
     return (
       <motion.div
         key={zone.assignmentId}
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: i * 0.05 }}
+        transition={{ delay: i * 0.04 }}
+        className="card rounded-2xl p-5"
       >
-        <Card className="p-4 border-l-4 border-l-success">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <p className="font-semibold text-[15px]">{zone.zoneName}</p>
-              <p className="text-xs text-text-secondary">
-                {zone.area === 'NORD' ? 'Nord' : 'Sør'}
-                {zone.households > 0 && ` · ${zone.households} hus`}
-              </p>
-            </div>
-            <Link href={`/kart?event=${zone.eventId}&sone=${zone.zoneId}`}>
-              <span className="text-xs text-accent font-medium flex items-center gap-1">
-                <MapPin size={12} /> Kart
-              </span>
-            </Link>
+        {/* Sonenavn + kart-lenke */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="font-bold text-text-primary font-[var(--font-display)]">{zone.zoneName}</p>
+            <p className="text-xs text-text-secondary">
+              {zone.area === 'NORD' ? 'Nord' : 'Sør'}{zone.households > 0 && ` · ${zone.households} hus`}
+            </p>
           </div>
+          <Link href={`/kart?event=${zone.eventId}&sone=${zone.zoneId}`}
+            className="text-xs text-accent font-bold flex items-center gap-1">
+            <MapPin size={12} /> Kart
+          </Link>
+        </div>
 
-          {/* Samlere med kontaktinfo */}
-          {zone.collectors.length > 0 && (
-            <div className="mb-3">
-              <p className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1">
-                Samlere
-              </p>
-              {zone.collectors.map((c, j) => (
-                <div key={j}>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span>{c.full_name || 'Ukjent'}</span>
-                    {c.phone && (
-                      <a href={`tel:${c.phone}`} className="text-accent text-xs">
-                        {c.phone}
-                      </a>
-                    )}
+        {/* Samlere — enkel liste */}
+        {zone.collectors.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {zone.collectors.map((c, j) => (
+              <div key={j} className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-bold text-accent">{getInitials(c.full_name)}</span>
                   </div>
-                  {c.notes && (
-                    <p className="text-xs text-text-tertiary ml-0 mt-0.5">{c.notes}</p>
-                  )}
+                  <span className="text-sm text-text-primary truncate">{c.full_name || 'Ukjent'}</span>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {confirmPickUp === zone.assignmentId ? (
-            <div className="space-y-2">
-              <p className="text-sm text-text-secondary text-center">
-                Er alle flasker hentet i denne sonen?
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => setConfirmPickUp(null)}
-                >
-                  Avbryt
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  loading={pickingUp === zone.assignmentId}
-                  onClick={() => { setConfirmPickUp(null); handlePickUp(zone.assignmentId) }}
-                >
-                  <Check size={14} />
-                  Ja, hentet
-                </Button>
+                {c.phone && (
+                  <a href={`tel:${c.phone}`} className="text-xs text-accent font-medium ml-2 shrink-0">
+                    Ring
+                  </a>
+                )}
               </div>
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={() => setConfirmPickUp(zone.assignmentId)}
+            ))}
+          </div>
+        )}
+
+        {/* Hent-knapp eller bekreftelse */}
+        {confirmPickUp === zone.assignmentId ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmPickUp(null)}
+              className="flex-1 py-2.5 text-sm font-medium text-text-secondary bg-surface-low rounded-full"
             >
-              <Check size={14} />
-              Marker som hentet
-            </Button>
-          )}
-        </Card>
+              Avbryt
+            </button>
+            <button
+              disabled={pickingUp === zone.assignmentId}
+              onClick={() => { setConfirmPickUp(null); handlePickUp(zone.assignmentId) }}
+              className="flex-1 py-2.5 text-sm font-medium text-white bg-success rounded-full flex items-center justify-center gap-1 disabled:opacity-40"
+            >
+              <Check size={14} /> Hentet
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmPickUp(zone.assignmentId)}
+            className="w-full py-3 text-sm font-bold text-success border-2 border-success rounded-full active:scale-[0.98] transition-all"
+          >
+            Marker som hentet
+          </button>
+        )}
       </motion.div>
     )
   }
 
-  // Rendrer en hengergruppe (for både klare og hentede soner)
-  function renderTrailerGroup(group: TrailerGroup, filterStatus: 'completed' | 'picked_up') {
-    const filteredZones = group.zones.filter(z => z.status === filterStatus)
-    const isMine = isMyGroup(group)
-    const isPickedUp = filterStatus === 'picked_up'
-
-    return (
-      <div
-        key={`${group.area}-${group.trailerGroup}-${filterStatus}`}
-        className={`rounded-xl p-3 mb-3 ${
-          isMine
-            ? 'border-l-4 border-l-accent bg-accent/5'
-            : 'bg-black/[0.02]'
-        } ${isPickedUp ? 'opacity-60' : ''}`}
-      >
-        {/* Henger-header */}
-        <div className="flex items-center gap-2 mb-2">
-          <Truck size={14} className={isMine ? 'text-accent' : 'text-text-tertiary'} />
-          <span className="text-sm font-semibold">
-            Henger {group.trailerGroup}
-            {group.driverName && <span className="font-normal text-text-secondary"> — {group.driverName}</span>}
-          </span>
-          {isMine && (
-            <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">din</span>
-          )}
-        </div>
-
-        {/* Soner i gruppen */}
-        {filteredZones.length > 0 ? (
-          <div className="space-y-3">
-            {isPickedUp ? (
-              // Kompakt visning for hentede soner
-              filteredZones.map(zone => (
-                <div key={zone.assignmentId} className="flex items-center gap-2 py-1">
-                  <Check size={14} className="text-purple-500 shrink-0" />
-                  <span className="text-sm">{zone.zoneName}</span>
-                  {zone.households > 0 && (
-                    <span className="text-xs text-text-tertiary">({zone.households} hus)</span>
-                  )}
-                </div>
-              ))
-            ) : (
-              filteredZones.map((zone, i) => renderReadyZone(zone, i))
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-text-tertiary italic">
-            {isPickedUp ? 'Ingen soner hentet ennå' : 'Ingen soner klare ennå'}
-          </p>
-        )}
-      </div>
-    )
-  }
-
   return (
-    <div className="px-4 pt-14 pb-28 safe-top">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-          <Truck size={22} className="text-accent" />
-        </div>
-        <div>
-          <h1 className="text-[28px] font-bold tracking-tight">Henting</h1>
-          {events.length > 0 && (
-            <p className="text-sm text-text-secondary">{events.map(e => e.title).join(' · ')}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Sjåførnotater fra aktive hendelser */}
-      {!loading && events.filter(e => e.driver_notes).map(e => (
-        <div key={e.id} className="mb-4 flex items-start gap-3 rounded-xl bg-blue-50 p-3">
-          <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold text-blue-600 mb-0.5">{e.title}</p>
-            <p className="text-sm text-blue-800">{e.driver_notes}</p>
+    <>
+      {/* Header — fast topp med logo */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+        <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
+          <div className="flex items-center gap-3">
+            <KorpsLogo size={32} />
+            <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+              Dugnadshub
+            </span>
           </div>
+          <div className="w-9" />
         </div>
-      ))}
+      </header>
 
-      {/* Skeleton */}
-      {loading && (
-        <div className="space-y-3 animate-pulse">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="card p-4 h-24" />
-          ))}
-        </div>
-      )}
-
-      {!loading && zones.length === 0 && trailerGroups.length === 0 && (
-        <Card className="p-6 text-center">
-          <Package size={32} className="text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-secondary">
-            {events.length === 0
-              ? 'Ingen aktive hendelser akkurat nå.'
-              : 'Ingen soner er ferdigplukket ennå.'}
+      <main className="pt-20 pb-28 px-5 space-y-6">
+        {/* Sidetittel */}
+        <section className="pt-2">
+          <h1 className="text-3xl font-extrabold tracking-tight font-[var(--font-display)] text-text-primary">
+            Klar for rute
+          </h1>
+          <p className="text-text-secondary mt-1">
+            {events.length > 0 ? events.map(e => e.title).join(' · ') : 'Ingen aktive hendelser'}
           </p>
-        </Card>
-      )}
+        </section>
 
-      {/* Feilmelding */}
-      {error && (
-        <div className="mb-4 p-3 rounded-xl bg-danger/10 text-danger text-sm text-center">
-          {error}
-        </div>
-      )}
+        {/* Sjåførnotater fra aktive hendelser */}
+        {!loading && events.filter(e => e.driver_notes).map(e => (
+          <div key={e.id} className="bg-surface-low rounded-2xl p-4 flex items-start gap-3">
+            <Info size={18} className="text-accent shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-accent mb-0.5">{e.title}</p>
+              <p className="text-sm text-text-primary">{e.driver_notes}</p>
+            </div>
+          </div>
+        ))}
 
-      {/* Klare for henting — gruppert per henger */}
-      {!loading && trailerGroups.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-            Klare for henting
-          </h2>
-          {hasMultipleAreas ? (
-            // Grupper per område med overskrift
-            areas.map(area => (
-              <div key={`ready-${area}`}>
-                <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mt-4 mb-2">
-                  {area === 'NORD' ? 'Nord' : 'Sør'}
-                </h3>
-                {trailerGroups
-                  .filter(g => g.area === area)
-                  .map(group => renderTrailerGroup(group, 'completed'))}
+        {/* Feilmelding */}
+        {error && (
+          <div className="p-3 rounded-2xl bg-danger/10 text-danger text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Skeleton */}
+        {loading && (
+          <div className="space-y-4 animate-pulse">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="card rounded-[2.5rem] p-6 h-32" />
+            ))}
+          </div>
+        )}
+
+        {/* Tom tilstand */}
+        {!loading && zones.length === 0 && trailerGroups.length === 0 && (
+          <div className="card rounded-[2.5rem] p-8 text-center">
+            <Package size={32} className="text-text-tertiary mx-auto mb-3" />
+            <p className="text-text-secondary">
+              {events.length === 0
+                ? 'Ingen aktive hendelser akkurat nå.'
+                : 'Ingen soner er ferdigplukket ennå.'}
+            </p>
+          </div>
+        )}
+
+        {/* Soner — flat liste, gruppert per henger */}
+        {!loading && trailerGroups.length > 0 && trailerGroups.map(group => {
+          const readyZones = group.zones.filter(z => z.status === 'completed')
+          const pickedZones = group.zones.filter(z => z.status === 'picked_up')
+          const isMine = isMyGroup(group)
+          if (readyZones.length === 0 && pickedZones.length === 0) return null
+
+          return (
+            <div key={`${group.area}-${group.trailerGroup}`} className="space-y-3">
+              {/* Henger-header — enkel linje */}
+              <div className="flex items-center gap-2 px-1">
+                <Truck size={16} className={isMine ? 'text-accent' : 'text-text-tertiary'} />
+                <span className="text-sm font-bold text-text-primary font-[var(--font-display)]">
+                  Henger {group.trailerGroup}
+                </span>
+                {isMine && (
+                  <span className="text-[10px] font-bold text-white bg-accent px-1.5 py-0.5 rounded-full">Din</span>
+                )}
+                {group.driverName && (
+                  <span className="text-xs text-text-secondary ml-auto">{group.driverName}</span>
+                )}
               </div>
-            ))
-          ) : (
-            trailerGroups.map(group => renderTrailerGroup(group, 'completed'))
-          )}
-        </div>
-      )}
 
-      {/* Hentet — gruppert per henger, kompakt */}
-      {!loading && zones.some(z => z.status === 'picked_up') && (
-        <div>
-          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-            Hentet
-          </h2>
-          {hasMultipleAreas ? (
-            areas.map(area => (
-              <div key={`picked-${area}`}>
-                <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mt-4 mb-2">
-                  {area === 'NORD' ? 'Nord' : 'Sør'}
-                </h3>
-                {trailerGroups
-                  .filter(g => g.area === area && g.zones.some(z => z.status === 'picked_up'))
-                  .map(group => renderTrailerGroup(group, 'picked_up'))}
-              </div>
-            ))
-          ) : (
-            trailerGroups
-              .filter(g => g.zones.some(z => z.status === 'picked_up'))
-              .map(group => renderTrailerGroup(group, 'picked_up'))
-          )}
-        </div>
-      )}
-    </div>
+              {/* Klare soner */}
+              {readyZones.map((zone, i) => renderZone(zone, i))}
+
+              {/* Hentede soner — kompakt, dempet */}
+              {pickedZones.length > 0 && (
+                <div className="bg-surface-low rounded-2xl p-4 opacity-60">
+                  {pickedZones.map(zone => (
+                    <div key={zone.assignmentId} className="flex items-center gap-2 py-1">
+                      <Check size={14} className="text-success shrink-0" />
+                      <span className="text-sm text-text-primary">{zone.zoneName}</span>
+                      <span className="text-xs text-text-tertiary ml-auto">Hentet</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </main>
+    </>
   )
 }

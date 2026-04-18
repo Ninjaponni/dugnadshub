@@ -22,7 +22,7 @@ export default function BadgesStep() {
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-bold mb-2"
+        className="text-2xl font-bold mb-2 font-[var(--font-display)]"
       >
         23 merker å jakte på
       </motion.h2>
@@ -47,7 +47,7 @@ export default function BadgesStep() {
             <img
               src={badge.icon}
               alt={badge.name}
-              className="w-16 h-16 mx-auto rounded-[14px] ring-1 ring-amber-300/50 shadow-md mb-2"
+              className="w-16 h-16 mx-auto rounded-[14px] ring-1 ring-warning/30 shadow-md mb-2"
             />
             <p className="text-xs font-semibold">{badge.name}</p>
           </motion.div>
@@ -63,7 +63,7 @@ export default function BadgesStep() {
         {Object.values(categoryLabels).map(label => (
           <span
             key={label}
-            className="text-[11px] font-medium text-text-tertiary bg-black/5 px-2.5 py-1 rounded-full"
+            className="text-[11px] font-medium text-text-tertiary bg-surface-low px-2.5 py-1 rounded-full"
           >
             {label}
           </span>

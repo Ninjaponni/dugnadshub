@@ -15,6 +15,9 @@ import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
 import MapInfoSheet from '@/components/features/MapInfoSheet'
 import { Map as MapIcon, Satellite, ChevronDown, Info } from 'lucide-react'
+import { useTheme } from '@/lib/hooks/useTheme'
+import { isMockMode, MOCK_USER_ID } from '@/lib/mock/useMock'
+import { mockEvents, mockZones } from '@/lib/mock/data'
 
 const DugnadMap = dynamic(() => import('@/components/map/DugnadMap'), {
   ssr: false,
@@ -101,6 +104,7 @@ function MapPageContent() {
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [selectedBase, setSelectedBase] = useState<Base | null>(null)
   const [isSatellite, setIsSatellite] = useState(false)
+  const { isDark } = useTheme()
   const [userId, setUserId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null)
@@ -109,6 +113,11 @@ function MapPageContent() {
   const [showInfo, setShowInfo] = useState(false)
 
   useEffect(() => {
+    if (isMockMode()) {
+      setUserId(MOCK_USER_ID)
+      setUserRole('admin')
+      return
+    }
     supabaseRef.current.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         setUserId(user.id)
@@ -205,23 +214,23 @@ function MapPageContent() {
         initialBounds={initialBounds}
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
-        mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : MAP_CONFIG.style}
+        mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : (isDark ? MAP_CONFIG.darkStyle : MAP_CONFIG.style)}
         onBaseClick={(base) => { setSelectedBase(base); setSelectedZone(null) }}
       />
 
       {/* Satellitt/kart-toggle */}
       <button
         onClick={() => setIsSatellite(s => !s)}
-        className="absolute top-[168px] right-[10px] z-10 safe-top w-[29px] h-[29px] bg-white rounded-md shadow flex items-center justify-center"
+        className="absolute top-[168px] right-[10px] z-10 safe-top w-[29px] h-[29px] bg-card rounded-lg shadow-sm flex items-center justify-center"
         aria-label={isSatellite ? 'Vis kart' : 'Vis satellitt'}
       >
-        {isSatellite ? <MapIcon size={16} className="text-gray-700" /> : <Satellite size={16} className="text-gray-700" />}
+        {isSatellite ? <MapIcon size={16} className="text-text-secondary" /> : <Satellite size={16} className="text-text-secondary" />}
       </button>
 
       {/* Info-knapp */}
       <button
         onClick={() => setShowInfo(true)}
-        className="absolute bottom-28 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center"
+        className="absolute bottom-28 right-4 z-10 w-10 h-10 bg-card rounded-full shadow-sm flex items-center justify-center"
         aria-label="Hjelp"
       >
         <Info size={18} className="text-accent" />
@@ -236,7 +245,7 @@ function MapPageContent() {
 
       {!eventLoading && !eventsLoading && (
         <div className="absolute top-14 left-4 right-16 z-10 safe-top">
-          <div className="glass rounded-xl px-3 py-2 shadow-lg">
+          <div className="bg-bg rounded-[20px] px-4 py-3 shadow-[0_8px_24px_rgba(61,53,48,0.06)]">
             {hasActiveEvent && event ? (
               <div>
                 {/* Klikkbar header hvis flere hendelser */}
@@ -245,7 +254,7 @@ function MapPageContent() {
                   className="w-full text-left"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs font-medium text-accent uppercase tracking-wide">
+                    <p className="text-[10px] font-bold text-accent uppercase tracking-widest">
                       {event.status === 'active' ? 'Pågår nå' : 'Kommende'}
                     </p>
                     {allEvents.length > 1 && !overrideEventId && (
@@ -255,27 +264,27 @@ function MapPageContent() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm font-semibold mb-1.5">{event.title}</p>
+                  <p className="text-sm font-extrabold text-text-primary mb-2 font-[var(--font-display)]">{event.title}</p>
                 </button>
                 <div className="flex items-center gap-2 flex-wrap text-xs text-text-secondary">
                   {availableCount > 0 && <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#EF4444' }} />
+                    <span className="w-2 h-2 rounded-full bg-zone-available" />
                     {availableCount}
                   </span>}
                   {partialCount > 0 && <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
+                    <span className="w-2 h-2 rounded-full bg-zone-partial" />
                     {partialCount}
                   </span>}
                   {fullCount > 0 && <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#007AFF' }} />
+                    <span className="w-2 h-2 rounded-full bg-teal" />
                     {fullCount}
                   </span>}
                   {doneCount > 0 && <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#22C55E' }} />
+                    <span className="w-2 h-2 rounded-full bg-zone-complete" />
                     {doneCount}
                   </span>}
                   {pickedUpCount > 0 && <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
+                    <span className="w-2 h-2 rounded-full bg-zone-picked-up" />
                     {pickedUpCount}
                   </span>}
                 </div>
@@ -289,7 +298,7 @@ function MapPageContent() {
 
           {/* Hendelse-velger dropdown */}
           {showEventPicker && allEvents.length > 1 && (
-            <div className="glass rounded-xl mt-1 shadow-lg overflow-hidden">
+            <div className="bg-card rounded-2xl mt-2 shadow-lg overflow-hidden">
               {allEvents.map((ev, i) => (
                 <button
                   key={ev.id}
@@ -298,14 +307,14 @@ function MapPageContent() {
                     setShowEventPicker(false)
                     setSelectedZone(null)
                   }}
-                  className={`w-full text-left px-3 py-2.5 text-sm border-b border-black/5 last:border-0 active:bg-black/5 ${
+                  className={`w-full text-left px-4 py-3 text-sm active:bg-surface-low ${
                     i === selectedEventIndex ? 'bg-accent/5 font-semibold' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span>{ev.title}</span>
                     <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                      ev.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      ev.status === 'active' ? 'bg-success/10 text-success' : 'bg-teal/10 text-teal'
                     }`}>
                       {ev.status === 'active' ? 'Aktiv' : 'Kommende'}
                     </span>

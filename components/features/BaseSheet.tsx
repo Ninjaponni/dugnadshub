@@ -52,10 +52,13 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
   useEffect(() => { setShowConfirm(false); setShowAdminConfirm(false) }, [assignment?.user_id])
 
   return (
-    <div className="py-3">
-      {/* Rad 1: hengernavn + sonetrekkspill */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold">Henger {trailerGroup}</span>
+    <div className="bg-card rounded-2xl p-4 shadow-sm">
+      {/* Header: hengernavn + sonetrekkspill */}
+      <div className="flex items-center gap-2 mb-1">
+        <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+          <Truck size={16} className="text-accent" />
+        </div>
+        <span className="text-sm font-bold font-[var(--font-display)]">Henger {trailerGroup}</span>
         {zoneNames.length > 0 && (
           <button
             onClick={() => setShowZones(v => !v)}
@@ -65,35 +68,35 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
             <ChevronDown size={10} className={`transition-transform ${showZones ? 'rotate-180' : ''}`} />
           </button>
         )}
-        {/* Ledig-status på samme rad som header når ingen er påmeldt */}
-        {!assignment && (
-          <>
-            <div className="flex-1" />
-            <span className="text-sm text-text-secondary">Ledig</span>
-            {!disabled && (
-              <Button size="sm" onClick={onClaim} loading={loading}>
-                Meld deg
-              </Button>
-            )}
-            {isAdmin && (
-              <Button size="sm" variant="ghost" onClick={onAdminAssign} aria-label="Tildel">
-                <UserPlus size={14} />
-              </Button>
-            )}
-          </>
-        )}
       </div>
 
       {/* Sonenavn — trekkspill */}
       {showZones && zoneNames.length > 0 && (
-        <p className="text-xs text-text-tertiary mt-1.5 leading-relaxed">
+        <p className="text-xs text-text-tertiary mt-1 mb-2 leading-relaxed ml-10">
           {zoneNames.join(' · ')}
         </p>
       )}
 
-      {/* Rad 2: påmeldt person (egen rad under header) */}
+      {/* Ledig — vis knapp */}
+      {!assignment && (
+        <div className="flex items-center gap-2 mt-2 ml-10">
+          <span className="text-sm text-text-secondary flex-1">Ledig</span>
+          {!disabled && (
+            <Button size="sm" variant="secondary" onClick={onClaim} loading={loading}>
+              Meld deg
+            </Button>
+          )}
+          {isAdmin && (
+            <button onClick={onAdminAssign} className="p-2 rounded-full active:bg-surface-low" aria-label="Tildel">
+              <UserPlus size={14} className="text-text-tertiary" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Påmeldt person */}
       {assignment && (
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 ml-10 flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
             {assignment.full_name?.charAt(0) || '?'}
           </div>
@@ -102,14 +105,14 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
             <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full shrink-0">deg</span>
           )}
           {isAdmin && assignment.phone && (
-            <a href={`tel:${assignment.phone}`} className="w-9 h-9 flex items-center justify-center rounded-full active:bg-black/10 shrink-0" aria-label="Ring">
+            <a href={`tel:${assignment.phone}`} className="w-9 h-9 flex items-center justify-center rounded-full active:bg-surface-low shrink-0" aria-label="Ring">
               <Phone size={16} className="text-accent" />
             </a>
           )}
           {isAdmin && !isMe && (
             showAdminConfirm ? (
               <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary py-1 px-2 rounded active:bg-black/5">
+                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary py-1 px-2 rounded active:bg-surface-low">
                   Avbryt
                 </button>
                 <button onClick={() => { setShowAdminConfirm(false); onAdminUnclaim() }} className="text-xs text-danger font-medium py-1 px-2 rounded active:bg-danger/10">
@@ -117,7 +120,7 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
                 </button>
               </div>
             ) : (
-              <button onClick={() => setShowAdminConfirm(true)} className="w-9 h-9 flex items-center justify-center rounded-full active:bg-black/10 shrink-0" aria-label="Fjern sjåfør">
+              <button onClick={() => setShowAdminConfirm(true)} className="w-9 h-9 flex items-center justify-center rounded-full active:bg-surface-low shrink-0" aria-label="Fjern sjåfør">
                 <XIcon size={16} className="text-text-tertiary" />
               </button>
             )
@@ -125,9 +128,9 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
         </div>
       )}
 
-      {/* Rad 3: «Gi opp» — egen rad med god avstand */}
+      {/* «Gi opp» */}
       {assignment && isMe && !showConfirm && (
-        <div className="mt-2 pt-1">
+        <div className="mt-2 ml-10">
           <button
             onClick={() => setShowConfirm(true)}
             className="text-xs text-danger font-medium py-1.5 active:opacity-70"
@@ -137,8 +140,8 @@ function TrailerCard({ trailerGroup, zoneNames, assignment, userId, isAdmin, loa
         </div>
       )}
       {assignment && isMe && showConfirm && (
-        <div className="mt-2 pt-1 flex items-center gap-3">
-          <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-black/5">
+        <div className="mt-2 ml-10 flex items-center gap-3">
+          <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-surface-low">
             Avbryt
           </button>
           <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium py-1.5 px-2 rounded active:bg-danger/10">
@@ -173,10 +176,13 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabl
   useEffect(() => { setShowConfirm(false); setShowAdminConfirm(false) }, [assignment?.user_id])
 
   return (
-    <div className="py-3">
-      {/* Rad 1: plassnummer + person/status */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-text-secondary shrink-0">Plass {slotNumber}:</span>
+    <div className="bg-card rounded-2xl p-4 shadow-sm">
+      {/* Plassnummer + person/status */}
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+          <Wrench size={16} className="text-accent" />
+        </div>
+        <span className="text-sm font-bold font-[var(--font-display)] shrink-0">Plass {slotNumber}</span>
         {assignment ? (
           <>
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
@@ -191,22 +197,22 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabl
           <>
             <span className="text-sm text-text-secondary flex-1">Ledig</span>
             {!disabled && (
-              <Button size="sm" onClick={onClaim} loading={loading}>
+              <Button size="sm" variant="secondary" onClick={onClaim} loading={loading}>
                 Meld deg
               </Button>
             )}
             {isAdmin && (
-              <Button size="sm" variant="ghost" onClick={onAdminAssign} aria-label="Tildel">
-                <UserPlus size={14} />
-              </Button>
+              <button onClick={onAdminAssign} className="p-2 rounded-full active:bg-surface-low" aria-label="Tildel">
+                <UserPlus size={14} className="text-text-tertiary" />
+              </button>
             )}
           </>
         )}
       </div>
 
-      {/* Rad 2: handlinger — god avstand, 44px touch targets */}
+      {/* Handlinger */}
       {assignment && (isMe || isAdmin) && (
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-2 ml-10 flex items-center gap-3">
           {isAdmin && assignment.phone && (
             <a href={`tel:${assignment.phone}`} className="flex items-center gap-1.5 text-xs text-accent font-medium py-1.5 active:opacity-70" aria-label="Ring">
               <Phone size={14} />
@@ -223,7 +229,7 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabl
           )}
           {isMe && showConfirm && (
             <div className="flex items-center gap-3">
-              <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-black/5">
+              <button onClick={() => setShowConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-surface-low">
                 Avbryt
               </button>
               <button onClick={() => { setShowConfirm(false); onUnclaim() }} disabled={loading} className="text-xs text-danger font-medium py-1.5 px-2 rounded active:bg-danger/10">
@@ -234,7 +240,7 @@ function StrapperSlot({ slotNumber, assignment, userId, isAdmin, loading, disabl
           {isAdmin && !isMe && (
             showAdminConfirm ? (
               <div className="flex items-center gap-3">
-                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-black/5">
+                <button onClick={() => setShowAdminConfirm(false)} className="text-xs text-text-tertiary py-1.5 px-2 rounded active:bg-surface-low">
                   Avbryt
                 </button>
                 <button onClick={() => { setShowAdminConfirm(false); onAdminUnclaim() }} className="text-xs text-danger font-medium py-1.5 px-2 rounded active:bg-danger/10">
@@ -457,7 +463,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
               <Truck size={12} />
               Sjåfører
             </p>
-            <div className="rounded-2xl bg-black/[0.03] px-4 divide-y divide-black/5">
+            <div className="space-y-3">
               {trailerGroups.map(tg => (
                 <TrailerCard
                   key={tg}
@@ -487,7 +493,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
               <Wrench size={12} />
               Stripsere
             </p>
-            <div className="rounded-2xl bg-black/[0.03] px-4 py-1 divide-y divide-black/5">
+            <div className="space-y-3">
               {[1, 2].map(slot => (
                 <StrapperSlot
                   key={slot}
@@ -515,7 +521,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
       {loading && (
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-2xl bg-black/[0.03] h-24" />
+            <div key={i} className="rounded-2xl bg-surface-low h-24" />
           ))}
         </div>
       )}

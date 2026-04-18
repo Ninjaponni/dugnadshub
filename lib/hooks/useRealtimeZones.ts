@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneAssignment, ZoneClaim, Zone } from '@/lib/supabase/types'
+import { isMockMode } from '@/lib/mock/useMock'
+import { mockZones } from '@/lib/mock/data'
 
 export interface ZoneWithStatus extends Zone {
   assignment_id: string | null
@@ -15,8 +17,17 @@ export function useRealtimeZones(eventId: string | null) {
   const [zones, setZones] = useState<ZoneWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const supabaseRef = useRef(createClient())
+  const mock = isMockMode()
+
+  // Mock-modus: returner statiske soner uten Supabase
+  useEffect(() => {
+    if (!mock) return
+    setZones(mockZones)
+    setLoading(false)
+  }, [mock, eventId])
 
   const fetchZones = useCallback(async () => {
+    if (mock) return
     // null = ikke hent noe (venter på event-data)
     if (!eventId) {
       setZones([])
@@ -80,11 +91,13 @@ export function useRealtimeZones(eventId: string | null) {
 
   // Tøm soner og vis loading ved bytte av hendelse — forhindrer flash av gamle soner
   useEffect(() => {
+    if (mock) return
     setZones([])
     setLoading(true)
-  }, [eventId])
+  }, [eventId, mock])
 
   useEffect(() => {
+    if (mock) return
     fetchZones()
 
     if (!eventId || eventId === 'all') return

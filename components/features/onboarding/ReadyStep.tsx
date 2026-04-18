@@ -11,7 +11,7 @@ function Confetti() {
     y: (Math.random() - 0.5) * 300 - 80,
     rotate: Math.random() * 360,
     scale: 0.4 + Math.random() * 0.6,
-    color: ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF3B30', '#5AC8FA'][Math.floor(Math.random() * 6)],
+    color: ['var(--color-accent)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-purple)', 'var(--color-danger)', 'var(--color-teal)'][Math.floor(Math.random() * 6)],
   }))
 
   return (
@@ -53,7 +53,7 @@ export default function ReadyStep({ onStart }: ReadyStepProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="text-[28px] font-bold mb-3"
+        className="text-[28px] font-bold mb-3 font-[var(--font-display)]"
       >
         Du er klar!
       </motion.h2>

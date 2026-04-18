@@ -20,7 +20,7 @@ export default function WelcomeStep() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="text-[28px] font-bold tracking-tight mb-3"
+        className="text-[28px] font-bold tracking-tight mb-3 font-[var(--font-display)]"
       >
         Velkommen til Dugnadshub!
       </motion.h1>

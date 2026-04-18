@@ -202,10 +202,10 @@ export default function MembersAdminPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center">
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
           <ArrowLeft size={18} className="text-text-secondary" />
         </Link>
-        <h2 className="text-xl font-semibold flex-1">Medlemmer</h2>
+        <h2 className="text-xl font-semibold font-[var(--font-display)] flex-1">Medlemmer</h2>
         <span className="text-sm text-text-secondary">
           {loading ? '...' : `${profiles.length} totalt`}
         </span>
@@ -219,7 +219,7 @@ export default function MembersAdminPage() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Søk etter navn, e-post eller barn..."
-          className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30"
+          className="w-full pl-9 pr-9 py-2.5 rounded-[12px] bg-surface-low text-[15px] outline-none focus:ring-2 focus:ring-accent/30"
         />
         {searchQuery && (
           <button
@@ -242,7 +242,7 @@ export default function MembersAdminPage() {
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 sortMode === mode
                   ? 'bg-accent text-white'
-                  : 'bg-black/5 text-text-secondary active:bg-black/10'
+                  : 'bg-surface-low text-text-secondary active:bg-surface-low'
               }`}
             >
               {sortLabels[mode]}
@@ -256,10 +256,10 @@ export default function MembersAdminPage() {
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="card p-4 flex items-center gap-3">
-              <div className="w-10 h-10 bg-black/5 rounded-full" />
+              <div className="w-10 h-10 bg-surface-low rounded-full" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-32 bg-black/5 rounded" />
-                <div className="h-3 w-48 bg-black/5 rounded" />
+                <div className="h-4 w-32 bg-surface-low rounded" />
+                <div className="h-3 w-48 bg-surface-low rounded" />
               </div>
             </div>
           ))}
@@ -316,10 +316,10 @@ export default function MembersAdminPage() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        profile.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                        profile.role === 'driver' ? 'bg-blue-100 text-blue-700' :
-                        profile.role === 'strapper' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-600'
+                        profile.role === 'admin' ? 'bg-purple/10 text-purple' :
+                        profile.role === 'driver' ? 'bg-teal/10 text-teal' :
+                        profile.role === 'strapper' ? 'bg-warning/10 text-warning' :
+                        'bg-surface-low text-text-secondary'
                       }`}>
                         {roleLabels[profile.role]}
                       </span>
@@ -336,7 +336,7 @@ export default function MembersAdminPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="border-t border-black/5 px-4 py-3 space-y-4">
+                        <div className="px-4 py-3 space-y-4">
                           {/* Kontaktinfo */}
                           <div className="text-xs text-text-tertiary space-y-0.5">
                             <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
@@ -359,7 +359,7 @@ export default function MembersAdminPage() {
                                   className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                                     profile.role === role
                                       ? 'bg-accent text-white'
-                                      : 'bg-black/5 text-text-secondary hover:bg-black/10'
+                                      : 'bg-surface-low text-text-secondary hover:bg-surface-low'
                                   } ${updatingRole === profile.id ? 'opacity-50' : ''}`}
                                 >
                                   {roleLabels[role]}
@@ -407,7 +407,7 @@ export default function MembersAdminPage() {
                                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                                         hasBadge
                                           ? 'bg-accent/10 text-accent ring-1 ring-accent/20'
-                                          : 'bg-black/5 text-text-secondary hover:bg-black/10'
+                                          : 'bg-surface-low text-text-secondary hover:bg-surface-low'
                                       } ${isAwarding ? 'opacity-50' : ''}`}
                                     >
                                       <img src={badge.icon} alt={badge.name} className="w-4 h-4" />
@@ -472,7 +472,7 @@ export default function MembersAdminPage() {
                                   <div className="flex border-t border-danger/20">
                                     <button
                                       onClick={() => setDeleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-black/5"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>

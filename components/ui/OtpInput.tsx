@@ -89,8 +89,8 @@ export default function OtpInput({ onComplete, disabled, error }: OtpInputProps)
           onKeyDown={e => handleKeyDown(i, e)}
           onFocus={() => handleFocus(i)}
           className={`
-            w-12 h-14 text-center text-2xl font-semibold rounded-xl
-            bg-bg border-2 transition-colors duration-150
+            w-11 h-13 text-center text-xl font-semibold rounded-[12px]
+            bg-surface-low border-2 transition-colors duration-150
             focus:outline-none focus:ring-0
             disabled:opacity-40
             ${error

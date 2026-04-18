@@ -50,7 +50,7 @@ export default function ZoneMarkers({ zones, userId }: ZoneMarkersProps) {
           <Marker key={zone.id} longitude={lng} latitude={lat} anchor="center">
             {isCompleted || isPickedUp ? (
               // Grønn hake for ferdige soner
-              <div className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center shadow-md border-2 border-white">
+              <div className="w-7 h-7 rounded-full bg-success flex items-center justify-center shadow-md border-2 border-white">
                 <Check size={16} className="text-white" strokeWidth={3} />
               </div>
             ) : isMine ? (

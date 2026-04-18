@@ -39,7 +39,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
     load()
   }, [])
 
-  const inputClass = `w-full px-4 py-3 rounded-xl bg-white/80 border-0 text-[17px]
+  const inputClass = `w-full px-4 py-3 rounded-[12px] bg-surface-low border-0 text-[17px]
     placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30`
 
   async function handleSave() {
@@ -76,7 +76,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
         >
           <span className="text-4xl">✓</span>
         </motion.div>
-        <h2 className="text-2xl font-bold mb-2">Profil lagret!</h2>
+        <h2 className="text-2xl font-bold mb-2 font-[var(--font-display)]">Profil lagret!</h2>
         <p className="text-text-secondary">Du fikk merket «Profil-proffen»</p>
       </div>
     )
@@ -95,7 +95,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
         >
           <User size={32} className="text-accent" />
         </motion.div>
-        <h2 className="text-2xl font-bold mb-1">Hvem er du?</h2>
+        <h2 className="text-2xl font-bold mb-1 font-[var(--font-display)]">Hvem er du?</h2>
         <p className="text-text-secondary text-[15px]">Fyll ut så vi vet hvem du er — du får ditt første merke!</p>
       </div>
 
@@ -149,7 +149,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
                 <button
                   type="button"
                   onClick={() => setChildren(children.filter((_, j) => j !== i))}
-                  className="mt-3 p-2 rounded-full active:bg-black/5"
+                  className="mt-3 p-2 rounded-full active:bg-surface-low"
                 >
                   <Trash2 size={16} className="text-text-tertiary" />
                 </button>

@@ -59,9 +59,9 @@ const statusLabels: Record<EventStatus, string> = {
 }
 
 const statusColors: Record<EventStatus, string> = {
-  upcoming: 'bg-blue-100 text-blue-700',
-  active: 'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-500',
+  upcoming: 'bg-teal/10 text-teal',
+  active: 'bg-success/10 text-success',
+  completed: 'bg-surface-low text-text-secondary',
 }
 
 const typeLabels: Record<EventType, string> = {
@@ -79,7 +79,7 @@ const areaLabels: Record<EventArea, string> = {
 }
 
 // Inputfelt-klasse brukt gjennomgaende
-const inputClass = 'w-full min-w-0 px-3 py-2 rounded-xl bg-black/5 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
+const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-surface-low text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
 // Dato/tid-felt trenger ekstra styling for iOS Safari
 const dateTimeClass = `${inputClass} appearance-none max-w-full`
 
@@ -580,10 +580,10 @@ export default function EventsAdminPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center shrink-0">
+        <Link href="/admin/oversikt" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center shrink-0">
           <ArrowLeft size={18} className="text-text-secondary" />
         </Link>
-        <h2 className="text-xl font-semibold flex-1">Hendelser</h2>
+        <h2 className="text-xl font-semibold font-[var(--font-display)] flex-1">Hendelser</h2>
         <Button size="sm" onClick={() => setShowForm(!showForm)}>
           {showForm ? <X size={16} /> : <Plus size={16} />}
           {showForm ? 'Avbryt' : 'Ny hendelse'}
@@ -624,7 +624,7 @@ export default function EventsAdminPage() {
 
       {/* Tab-navigasjon */}
       {!loading && events.length > 0 && (
-        <div className="flex gap-1 bg-black/5 rounded-xl p-1 mb-4">
+        <div className="flex gap-1 bg-surface-low rounded-xl p-1 mb-4">
           {([
             ['active', 'Aktive', events.filter(e => e.status === 'active').length],
             ['upcoming', 'Kommende', events.filter(e => e.status === 'upcoming').length],
@@ -650,9 +650,9 @@ export default function EventsAdminPage() {
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map(i => (
             <div key={i} className="card p-4 space-y-2">
-              <div className="h-5 w-48 bg-black/5 rounded" />
-              <div className="h-4 w-32 bg-black/5 rounded" />
-              <div className="h-1.5 bg-black/5 rounded-full" />
+              <div className="h-5 w-48 bg-surface-low rounded" />
+              <div className="h-4 w-32 bg-surface-low rounded" />
+              <div className="h-1.5 bg-surface-low rounded-full" />
             </div>
           ))}
         </div>
@@ -743,7 +743,7 @@ export default function EventsAdminPage() {
                           <span>{event.zoneStats.claimed + event.zoneStats.completed}/{event.zoneStats.total} soner</span>
                           <span>{Math.round(progress)}%</span>
                         </div>
-                        <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{
@@ -767,7 +767,7 @@ export default function EventsAdminPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="border-t border-black/5 mt-3 pt-3 space-y-3">
+                        <div className="mt-3 pt-3 space-y-3">
                           {/* Beskrivelse */}
                           {event.description && !isEditing && (
                             <p className="text-sm text-text-secondary">{event.description}</p>
@@ -787,17 +787,17 @@ export default function EventsAdminPage() {
 
                           {/* Sonestatistikk */}
                           <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-blue-50 rounded-xl p-2 text-center">
-                              <p className="text-lg font-bold text-blue-600">{event.zoneStats.available}</p>
-                              <p className="text-[11px] text-blue-500">Ledige</p>
+                            <div className="bg-teal/10 rounded-xl p-2 text-center">
+                              <p className="text-lg font-bold text-teal">{event.zoneStats.available}</p>
+                              <p className="text-[11px] text-teal">Ledige</p>
                             </div>
-                            <div className="bg-amber-50 rounded-xl p-2 text-center">
-                              <p className="text-lg font-bold text-amber-600">{event.zoneStats.claimed}</p>
-                              <p className="text-[11px] text-amber-500">Tatt</p>
+                            <div className="bg-warning/10 rounded-xl p-2 text-center">
+                              <p className="text-lg font-bold text-warning">{event.zoneStats.claimed}</p>
+                              <p className="text-[11px] text-warning">Tatt</p>
                             </div>
-                            <div className="bg-green-50 rounded-xl p-2 text-center">
-                              <p className="text-lg font-bold text-green-600">{event.zoneStats.completed}</p>
-                              <p className="text-[11px] text-green-500">Ferdig</p>
+                            <div className="bg-success/10 rounded-xl p-2 text-center">
+                              <p className="text-lg font-bold text-success">{event.zoneStats.completed}</p>
+                              <p className="text-[11px] text-success">Ferdig</p>
                             </div>
                           </div>
 
@@ -810,7 +810,7 @@ export default function EventsAdminPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="bg-black/[0.02] rounded-xl p-3">
+                                <div className="bg-surface-low rounded-xl p-3">
                                   {renderForm(
                                     editForm,
                                     (fn) => setEditForm(fn),
@@ -821,7 +821,7 @@ export default function EventsAdminPage() {
                                   <button
                                     type="button"
                                     onClick={() => setEditingId(null)}
-                                    className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-black/5 rounded-xl"
+                                    className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-surface-low rounded-xl"
                                   >
                                     Avbryt
                                   </button>
@@ -850,7 +850,7 @@ export default function EventsAdminPage() {
                                   <div className="flex border-t border-danger/20">
                                     <button
                                       onClick={() => setDeleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-black/5"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
@@ -887,7 +887,7 @@ export default function EventsAdminPage() {
                                   <div className="flex border-t border-warning/20">
                                     <button
                                       onClick={() => setDeactivateConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-black/5"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
@@ -926,7 +926,7 @@ export default function EventsAdminPage() {
                                   <div className="flex border-t border-danger/20">
                                     <button
                                       onClick={() => setResetConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-black/5"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-danger/20 active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>
@@ -983,7 +983,7 @@ export default function EventsAdminPage() {
                                   <div className="flex border-t border-success/20">
                                     <button
                                       onClick={() => setCompleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-success/20 active:bg-black/5"
+                                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-success/20 active:bg-surface-low"
                                     >
                                       Avbryt
                                     </button>

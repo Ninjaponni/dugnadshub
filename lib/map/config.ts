@@ -7,16 +7,17 @@ export const MAP_CONFIG = {
   maxZoom: 18,
   // Mapbox-stiler
   style: 'mapbox://styles/mapbox/light-v11',
+  darkStyle: 'mapbox://styles/mapbox/dark-v11',
   satelliteStyle: 'mapbox://styles/mapbox/satellite-streets-v12',
 }
 
-// Statusfarger for sonepolygoner
+// Statusfarger for sonepolygoner — varm palett
 export const ZONE_COLORS: Record<string, string> = {
-  available: '#EF4444',   // Rød — ledig
-  claimed: '#F59E0B',     // Gul — delvis tatt
-  in_progress: '#F59E0B', // Gul — pågår
-  completed: '#22C55E',   // Grønn — ferdig
-  picked_up: '#8B5CF6',   // Lilla — hentet
+  available: '#E57373',   // Varm rød — ledig
+  claimed: '#FFD54F',     // Varm gul — delvis tatt
+  in_progress: '#FFD54F', // Varm gul — pågår
+  completed: '#6B8F71',   // Dempet grønn — ferdig
+  picked_up: '#9C7DB8',   // Varm lilla — hentet
 }
 
 // Opacity for sonepolygoner

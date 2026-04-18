@@ -20,7 +20,7 @@ export default function InstallStep() {
         >
           <Smartphone size={36} className="text-success" />
         </motion.div>
-        <h2 className="text-2xl font-bold mb-2">Allerede installert!</h2>
+        <h2 className="text-2xl font-bold mb-2 font-[var(--font-display)]">Allerede installert!</h2>
         <p className="text-text-secondary">Appen er lagt til på hjemskjermen din.</p>
       </div>
     )
@@ -37,7 +37,7 @@ export default function InstallStep() {
         <Smartphone size={32} className="text-accent" />
       </motion.div>
 
-      <h2 className="text-2xl font-bold mb-2">Legg til appen</h2>
+      <h2 className="text-2xl font-bold mb-2 font-[var(--font-display)]">Legg til appen</h2>
       <p className="text-text-secondary text-[15px] mb-8 max-w-[280px]">
         Få rask tilgang fra hjemskjermen — som en vanlig app.
       </p>

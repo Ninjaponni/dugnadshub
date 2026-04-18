@@ -8,8 +8,9 @@ import OtpInput from '@/components/ui/OtpInput'
 import { motion } from 'framer-motion'
 import { Mail } from 'lucide-react'
 import Image from 'next/image'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 
-// Innlogging — egen OTP via Resend
+// Innlogging — OTP via Resend, varm gradient-bakgrunn
 export default function LoginPage() {
   const [view, setView] = useState<'email' | 'otp'>('email')
   const [email, setEmail] = useState('')
@@ -102,31 +103,45 @@ export default function LoginPage() {
     setLoading(false)
   }, [email, router])
 
-  const inputClass = `w-full pl-10 pr-4 py-3 rounded-xl bg-bg border-0 text-[17px]
-    placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30`
+  const inputClass = `w-full pl-10 pr-4 py-3 rounded-[12px] bg-surface-low border-0 text-[17px]
+    placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-white/30`
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6">
+    <div
+      className="min-h-dvh flex flex-col items-center justify-center px-6"
+      style={{ backgroundColor: '#c4724a' }}
+    >
+      {/* Topp — logo + illustrasjon + tittel */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+        className="flex flex-col items-center justify-center pt-16"
+      >
+        <KorpsLogo size={80} className="mb-6 !fill-white" />
+        <Image
+          src="/korps.svg"
+          alt="Tillerbyen Skolekorps"
+          width={240}
+          height={120}
+          className="mb-6"
+          priority
+        />
+        <h1 className="text-[36px] font-extrabold tracking-tight text-white font-[var(--font-display)]">
+          Dugnadshub
+        </h1>
+        <p className="text-white/70 mt-1 text-[17px]">
+          Tillerbyen Skolekorps
+        </p>
+      </motion.div>
+
+      {/* Bunn — innlogging */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-        className="w-full max-w-sm"
+        transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.15 }}
+        className="w-full max-w-sm mt-8"
       >
-        {/* Logo/tittel */}
-        <div className="text-center mb-10">
-          <Image
-            src="/logo-korps.png"
-            alt="Tillerbyen Skolekorps"
-            width={80}
-            height={80}
-            className="mx-auto mb-4"
-          />
-          <h1 className="text-[34px] font-bold tracking-tight">Dugnadshub</h1>
-          <p className="text-text-secondary mt-2 text-[17px]">
-            Tillerbyen Skolekorps
-          </p>
-        </div>
 
         {view === 'otp' ? (
           <motion.div
@@ -134,7 +149,7 @@ export default function LoginPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="card p-6 text-center"
           >
-            <h2 className="text-xl font-semibold mb-2">Skriv inn koden</h2>
+            <h2 className="text-xl font-semibold mb-2 font-[var(--font-display)]">Skriv inn koden</h2>
             <p className="text-text-secondary text-[15px] mb-6">
               Vi sendte en 6-sifret kode til<br />
               <span className="font-medium text-text-primary">{email}</span>

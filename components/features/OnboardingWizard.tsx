@@ -114,7 +114,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               key={i}
               animate={{
                 width: i === step ? 24 : 8,
-                backgroundColor: i === step ? '#007AFF' : '#C7C7CC',
+                backgroundColor: i === step ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
               }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               className="h-2 rounded-full"

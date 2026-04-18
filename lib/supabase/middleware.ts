@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Oppdaterer auth-session og beskytter ruter
 export async function updateSession(request: NextRequest) {
+  // Mock-modus: bypass auth helt
+  if (process.env.NEXT_PUBLIC_MOCK_MODE === 'true') {
+    return NextResponse.next({ request })
+  }
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

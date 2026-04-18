@@ -122,19 +122,19 @@ export default function AdminOverviewPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/hjem" className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center">
+        <Link href="/hjem" className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
           <ArrowLeft size={18} className="text-text-secondary" />
         </Link>
-        <h1 className="text-[28px] font-bold">Administrasjon</h1>
+        <h1 className="text-[28px] font-bold font-[var(--font-display)]">Administrasjon</h1>
       </div>
 
       {/* Skeleton */}
       {loading && (
         <div className="space-y-4 animate-pulse">
           <div className="card p-5 space-y-3">
-            <div className="h-5 w-48 bg-black/5 rounded" />
-            <div className="h-4 w-36 bg-black/5 rounded" />
-            <div className="h-10 bg-black/5 rounded-xl" />
+            <div className="h-5 w-48 bg-surface-low rounded" />
+            <div className="h-4 w-36 bg-surface-low rounded" />
+            <div className="h-10 bg-surface-low rounded-xl" />
           </div>
           <div className="card p-4 h-16" />
           <div className="card p-4 h-16" />
@@ -190,7 +190,7 @@ export default function AdminOverviewPage() {
                       <span>{event.claimedZones}/{event.totalZones} soner tatt</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
-                    <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
                       <div
                         className="h-full bg-accent rounded-full transition-all"
                         style={{ width: `${progress}%` }}
@@ -201,20 +201,20 @@ export default function AdminOverviewPage() {
                   {/* Statistikk-chips */}
                   <div className="flex items-center gap-2 flex-wrap mt-2">
                     {event.availableZones > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      <span className="inline-flex items-center gap-1 text-xs bg-danger/10 text-danger px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-danger" />
                         {event.availableZones} ledige
                       </span>
                     )}
                     {(event.claimedZones - event.completedZones) > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      <span className="inline-flex items-center gap-1 text-xs bg-warning/10 text-warning px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                         {event.claimedZones - event.completedZones} pågår
                       </span>
                     )}
                     {event.completedZones > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      <span className="inline-flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-success" />
                         {event.completedZones} ferdig
                       </span>
                     )}
@@ -230,7 +230,7 @@ export default function AdminOverviewPage() {
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-black/5 mt-4 pt-4 space-y-3">
+                      <div className="mt-4 pt-4 space-y-3">
                         {/* Kart */}
                         <Link href={`/kart?event=${event.id}`} className="block">
                           <Button size="sm" variant="secondary" className="w-full">
@@ -294,7 +294,7 @@ export default function AdminOverviewPage() {
                                 <div className="flex border-t border-warning/20">
                                   <button
                                     onClick={() => setDeactivateConfirmId(null)}
-                                    className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-black/5"
+                                    className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-surface-low"
                                   >
                                     Avbryt
                                   </button>

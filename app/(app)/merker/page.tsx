@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import Card from '@/components/ui/Card'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
-import { Check, Lock, X } from 'lucide-react'
+import { Check, Lock, X, Sparkles } from 'lucide-react'
+import KorpsLogo from '@/components/ui/KorpsLogo'
+import { isMockMode } from '@/lib/mock/useMock'
+import { mockBadgeCounts } from '@/lib/mock/data'
 
 const categoryLabels: Record<string, string> = {
   starter: 'Startermerker',
@@ -23,6 +25,50 @@ const categoryDescriptions: Record<string, string> = {
   aktivitet: 'For alt det andre du gjør',
 }
 
+// Nivåsystem — 25 nivåer fra fersking til legende
+// 3 merker per nivå
+const levels = [
+  { min: 0, title: 'Sofaekspert' },
+  { min: 3, title: 'Nysgjerrig nabo' },
+  { min: 6, title: 'Dugnadsspire' },
+  { min: 9, title: 'Pantejeger' },
+  { min: 12, title: 'Sonevandrer' },
+  { min: 15, title: 'Flaskesamler' },
+  { min: 18, title: 'Dugnadsløve' },
+  { min: 21, title: 'Sonekriger' },
+  { min: 24, title: 'Nabolagshelt' },
+  { min: 27, title: 'Dugnadshelt' },
+  { min: 30, title: 'Pantekonge' },
+  { min: 33, title: 'Frivilligveteran' },
+  { min: 36, title: 'Dugnadsmaskin' },
+  { min: 39, title: 'Korpskjempe' },
+  { min: 42, title: 'Sonesjef' },
+  { min: 45, title: 'Pantelegende' },
+  { min: 48, title: 'Dugnadsdrott' },
+  { min: 51, title: 'Tillerlegenden' },
+  { min: 54, title: 'Dugnadsguru' },
+  { min: 57, title: 'Sonegeneral' },
+  { min: 60, title: 'Panteorakel' },
+  { min: 63, title: 'Dugnadsjarl' },
+  { min: 66, title: 'Korpslegende' },
+  { min: 69, title: 'Dugnadsmytisk' },
+  { min: 72, title: 'Tillerbyen Udødelig' },
+]
+
+// Finn nivå og neste nivå basert på totalt antall merker
+function getLevel(totalBadgeCount: number) {
+  let current = levels[0]
+  let next = levels[1] || null
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (totalBadgeCount >= levels[i].min) {
+      current = levels[i]
+      next = levels[i + 1] || null
+      break
+    }
+  }
+  return { current, next }
+}
+
 // Konfetti-partikkel
 function Confetti() {
   const particles = Array.from({ length: 20 }, (_, i) => ({
@@ -31,7 +77,7 @@ function Confetti() {
     y: (Math.random() - 0.5) * 200 - 50,
     rotate: Math.random() * 360,
     scale: 0.5 + Math.random() * 0.5,
-    color: ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF3B30', '#5AC8FA'][Math.floor(Math.random() * 6)],
+    color: ['#a24a33', '#6B8F71', '#ff784e', '#843d99', '#FFD54F', '#ea9bff'][Math.floor(Math.random() * 6)],
   }))
 
   return (
@@ -60,6 +106,11 @@ export default function BadgesPage() {
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
+    if (isMockMode()) {
+      setBadgeCounts(mockBadgeCounts)
+      setLoading(false)
+      return
+    }
     async function load() {
       const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) { setLoading(false); return }
@@ -106,122 +157,198 @@ export default function BadgesPage() {
 
   const earnedBadgeIds = new Set(badgeCounts.keys())
   const totalEarned = earnedBadgeIds.size
-  const totalBadges = badgeDefinitions.length
+
+  // Total badge-count inkludert duplikater (aktivitetsmerker kan gis flere ganger)
+  let totalBadgeCount = 0
+  badgeCounts.forEach(count => { totalBadgeCount += count })
+
+  const { current: currentLevel, next: nextLevel } = getLevel(totalBadgeCount)
+
+  // Progress mot neste nivå
+  const progressToNext = nextLevel
+    ? ((totalBadgeCount - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100
+    : 100
 
   return (
-    <div className="px-4 pt-14 pb-28 safe-top">
-      <h1 className="text-[34px] font-bold tracking-tight mb-2">Merker</h1>
-
-      {/* Oppsummering */}
-      {loading ? (
-        <div className="h-6 w-40 bg-black/5 rounded animate-pulse mb-6" />
-      ) : (
-        <div className="mb-6">
-          <p className="text-text-secondary text-[15px]">
-            {totalEarned === 0
-              ? 'Du har ingen merker ennå — delta på en dugnad for å begynne!'
-              : `Du har ${totalEarned} av ${totalBadges} merker`}
-          </p>
-          <div className="h-1.5 bg-black/5 rounded-full overflow-hidden mt-2 max-w-xs">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${(totalEarned / totalBadges) * 100}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="h-full bg-accent rounded-full"
-            />
+    <>
+      {/* Dugnadshub-header — samme som hjem */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+        <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
+          <div className="flex items-center gap-3">
+            <KorpsLogo size={32} />
+            <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
+              Dugnadshub
+            </span>
           </div>
+          <div className="w-9" />
         </div>
-      )}
+      </header>
 
-      {/* Skeleton */}
-      {loading && (
-        <div className="space-y-6 animate-pulse">
-          {[1, 2, 3].map(i => (
-            <div key={i}>
-              <div className="h-5 w-32 bg-black/5 rounded mb-3" />
-              <div className="grid grid-cols-3 gap-3">
-                {[1, 2, 3].map(j => (
-                  <div key={j} className="card p-4 h-24" />
-                ))}
+      <main className="pt-20 pb-28 px-5 space-y-6">
+        {/* Gradient merker-kort med nivåinfo */}
+        {loading ? (
+          <div className="rounded-2xl p-8 animate-pulse" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}>
+            <div className="h-10 w-32 bg-white/20 rounded mb-3" />
+            <div className="h-4 w-48 bg-white/20 rounded mb-6" />
+            <div className="h-4 bg-white/20 rounded-full" />
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-7 text-white relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+          >
+            <div className="relative z-10">
+              <div className="flex justify-between items-start mb-1">
+                <h1 className="text-4xl font-extrabold tracking-tight font-[var(--font-display)]">Merker</h1>
+                <span className="text-4xl font-bold font-[var(--font-display)]">{totalBadgeCount}</span>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Kategorier */}
-      {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet'] as const).map((category) => {
-        const badges = badgeDefinitions.filter((b) => b.category === category)
-        const earnedInCategory = badges.filter(b => earnedBadgeIds.has(b.id)).length
-
-        return (
-          <div key={category} className="mb-6">
-            <div className="flex items-baseline justify-between mb-1">
-              <h2 className="text-lg font-semibold text-text-primary">
-                {categoryLabels[category]}
-              </h2>
-              {earnedInCategory > 0 && (
-                <span className="text-xs text-accent font-medium">{earnedInCategory}/{badges.length}</span>
+              <p className="text-white/80 font-medium text-sm mb-5">Din innsats betyr noe</p>
+              <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressToNext}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className="h-full bg-white/90 rounded-full"
+                />
+              </div>
+              <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/70">
+                Ditt nivå: {currentLevel.title}
+              </p>
+              {nextLevel && (
+                <p className="text-[11px] font-bold uppercase tracking-widest text-white/50">
+                  Neste: {nextLevel.title}
+                </p>
               )}
             </div>
-            <p className="text-xs text-text-tertiary mb-3">{categoryDescriptions[category]}</p>
+            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+          </motion.div>
+        )}
 
-            <div className="grid grid-cols-3 gap-3">
-              {badges.map((badge, i) => {
-                const earned = earnedBadgeIds.has(badge.id)
-                const isNew = newBadgeIds.has(badge.id)
-                const count = badgeCounts.get(badge.id) || 0
-                const isActivity = badge.category === 'aktivitet'
-
-                return (
-                  <motion.button
-                    key={badge.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={() => setSelectedBadge(badge)}
-                    className="text-left"
-                  >
-                    <div className="text-center relative">
-                      {/* Teller for aktivitetsmerker */}
-                      {earned && isActivity && count > 1 && (
-                        <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
-                          <span className="text-[10px] font-bold text-white">×{count}</span>
-                        </div>
-                      )}
-                      {/* Hake for vanlige opptjente */}
-                      {earned && (!isActivity || count <= 1) && (
-                        <div className="absolute -top-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-accent flex items-center justify-center shadow-sm z-10">
-                          <Check size={12} className="text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                      {/* Ny-indikator */}
-                      {isNew && (
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: 3, duration: 0.6 }}
-                          className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-danger z-10"
-                        />
-                      )}
-                      {/* Ikonet med rounded corners, outline og shadow direkte */}
-                      <img
-                        src={badge.icon}
-                        alt={badge.name}
-                        className={`w-full aspect-square rounded-[20px] ring-1 shadow-sm transition-all ${
-                          earned
-                            ? 'ring-amber-300/50 shadow-md'
-                            : 'ring-black/8 grayscale opacity-40'
-                        }`}
-                      />
-                      <p className={`text-xs font-medium leading-tight mt-2 ${earned ? 'text-text-primary' : 'text-text-tertiary'}`}>{badge.name}</p>
+        {/* Skeleton */}
+        {loading && (
+          <div className="space-y-6 animate-pulse">
+            {[1, 2].map(i => (
+              <div key={i} className="card rounded-2xl p-8">
+                <div className="h-5 w-32 bg-surface-low rounded mb-4" />
+                <div className="grid grid-cols-2 gap-6">
+                  {[1, 2, 3, 4].map(j => (
+                    <div key={j} className="flex flex-col items-center gap-3">
+                      <div className="w-20 h-20 rounded-full bg-surface-low" />
+                      <div className="h-3 w-16 bg-surface-low rounded" />
                     </div>
-                  </motion.button>
-                )
-              })}
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Kategorier — clay-kort per kategori */}
+        {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet'] as const).map((category) => {
+          const badges = badgeDefinitions.filter((b) => b.category === category)
+          const earnedInCategory = badges.filter(b => earnedBadgeIds.has(b.id)).length
+          const hasAnyEarned = earnedInCategory > 0
+
+          return (
+            <section key={category}>
+              <div className="flex items-center gap-3 mb-3 px-1">
+                {hasAnyEarned
+                  ? <Sparkles size={18} className="text-accent" />
+                  : <Lock size={18} className="text-text-tertiary opacity-60" />
+                }
+                <h2 className="text-xl font-bold text-text-primary font-[var(--font-display)]">
+                  {categoryLabels[category]}
+                </h2>
+              </div>
+
+              <div className="card rounded-2xl p-6">
+                <div className="grid grid-cols-2 gap-y-8 gap-x-4">
+                  {badges.map((badge, i) => {
+                    const earned = earnedBadgeIds.has(badge.id)
+                    const isNew = newBadgeIds.has(badge.id)
+                    const count = badgeCounts.get(badge.id) || 0
+                    const isActivity = badge.category === 'aktivitet'
+
+                    return (
+                      <motion.button
+                        key={badge.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.04 }}
+                        onClick={() => setSelectedBadge(badge)}
+                        className="flex flex-col items-center gap-3"
+                      >
+                        <div className="relative">
+                          {/* Rund badge-ikon */}
+                          <div className={`w-20 h-20 rounded-full overflow-hidden transition-all ${
+                            earned ? 'shadow-md' : ''
+                          }`}>
+                            <img
+                              src={badge.icon}
+                              alt={badge.name}
+                              className={`w-full h-full object-cover transition-all ${
+                                earned ? '' : 'grayscale opacity-40'
+                              }`}
+                            />
+                          </div>
+                          {/* Grønn checkmark i nedre høyre hjørne */}
+                          {earned && (!isActivity || count <= 1) && (
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-success text-white rounded-full flex items-center justify-center border-2 border-bg shadow-sm">
+                              <Check size={14} strokeWidth={3} />
+                            </div>
+                          )}
+                          {/* Teller for aktivitetsmerker */}
+                          {earned && isActivity && count > 1 && (
+                            <div className="absolute -bottom-1 -right-1 min-w-[24px] h-6 px-1 bg-accent text-white rounded-full flex items-center justify-center border-2 border-bg shadow-sm">
+                              <span className="text-[10px] font-bold">×{count}</span>
+                            </div>
+                          )}
+                          {/* Ny-indikator */}
+                          {isNew && (
+                            <motion.div
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{ repeat: 3, duration: 0.6 }}
+                              className="absolute -top-0.5 -left-0.5 w-3 h-3 rounded-full bg-danger z-10"
+                            />
+                          )}
+                        </div>
+                        <span className={`text-[12px] font-bold text-center uppercase tracking-tight ${
+                          earned ? 'text-text-secondary' : 'text-text-tertiary'
+                        }`}>
+                          {badge.name}
+                        </span>
+                      </motion.button>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )
+        })}
+
+      {/* Info-boks — hva er greia med merkene */}
+      {!loading && (
+        <section className="mt-4 mb-2">
+          <div className="bg-warning/10 rounded-2xl p-5 flex gap-4 items-start">
+            <div className="w-12 h-12 bg-warning/20 rounded-full flex items-center justify-center shrink-0">
+              <Sparkles size={22} className="text-warning" />
+            </div>
+            <div>
+              <h4 className="font-bold text-text-primary font-[var(--font-display)] mb-1">
+                Hva er greia med merkene?
+              </h4>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Merkene er din kvittering for god dugnadsinnsats — noe å være stolt av!
+                Men de er også lodd i trekningen under julekonserten.
+                Jo flere merker, jo større sjanse for premie.
+                Den med flest kåres til årets dugnadshelt.
+              </p>
             </div>
           </div>
-        )
-      })}
+        </section>
+      )}
 
       {/* Badge-detalj modal */}
       <AnimatePresence>
@@ -247,7 +374,7 @@ export default function BadgesPage() {
             >
               <button
                 onClick={() => setSelectedBadge(null)}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/5 flex items-center justify-center z-10"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-surface-low flex items-center justify-center z-10"
               >
                 <X size={14} className="text-text-secondary" />
               </button>
@@ -260,17 +387,17 @@ export default function BadgesPage() {
                     earnedBadgeIds.has(selectedBadge.id) ? '' : 'grayscale opacity-40'
                   }`}
                 />
-                <h3 className="text-xl font-bold mb-1">{selectedBadge.name}</h3>
+                <h3 className="text-xl font-bold mb-1 font-[var(--font-display)]">{selectedBadge.name}</h3>
 
                 {earnedBadgeIds.has(selectedBadge.id) ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-200/50 text-amber-700 text-sm font-medium mb-3">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/20 text-accent text-sm font-medium mb-3">
                     <Check size={14} strokeWidth={3} />
                     {(badgeCounts.get(selectedBadge.id) || 0) > 1
                       ? `Opptjent ×${badgeCounts.get(selectedBadge.id)}`
                       : 'Opptjent'}
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 text-text-tertiary text-sm font-medium mb-3">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-low text-text-tertiary text-sm font-medium mb-3">
                     <Lock size={14} />
                     Ikke opptjent
                   </div>
@@ -358,7 +485,8 @@ export default function BadgesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.9 }}
                   onClick={() => setRevealBadge(null)}
-                  className="bg-accent text-white font-semibold px-8 py-3 rounded-xl text-[15px]"
+                  className="text-white font-semibold px-8 py-3 rounded-full text-[15px] font-[var(--font-display)]"
+                  style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
                 >
                   Fantastisk!
                 </motion.button>
@@ -367,6 +495,7 @@ export default function BadgesPage() {
           </>
         )}
       </AnimatePresence>
-    </div>
+      </main>
+    </>
   )
 }

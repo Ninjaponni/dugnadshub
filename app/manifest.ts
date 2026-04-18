@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Organiser dugnader for Tillerbyen Skolekorps',
     start_url: '/',
     display: 'standalone',
-    background_color: '#F5F5F7',
-    theme_color: '#007AFF',
+    background_color: '#fbf6f0',
+    theme_color: '#a24a33',
     icons: [
       {
         src: '/icon-192.png',

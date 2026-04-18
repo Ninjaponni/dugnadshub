@@ -8,12 +8,12 @@ import zonesGeoJson from '@/lib/map/combined-zones-data'
 // Fargekoder for sonestatus
 // Rød=ledig, Gul=delvis tatt, Blå=fullt bemannet, Grønn=ferdigplukket, Lilla=hentet
 const COLORS = {
-  empty: '#EF4444',      // Rød — ingen har tatt
-  partial: '#F59E0B',    // Gul — noen plukkere, ikke nok
-  full: '#007AFF',       // Blå — alle plasser fylt, klar for plukking
-  completed: '#22C55E',  // Grønn — ferdigplukket, venter på henting
-  picked_up: '#8B5CF6',  // Lilla — sjåfør har hentet
-  mine_border: '#007AFF', // Blå kant for din sone
+  empty: '#E57373',      // Varm rød — ingen har tatt
+  partial: '#FFD54F',    // Varm gul — noen plukkere, ikke nok
+  full: '#6B8F71',       // Skogsgrønn — alle plasser fylt, klar for plukking
+  completed: '#6B8F71',  // Skogsgrønn — ferdigplukket, venter på henting
+  picked_up: '#9C7DB8',  // Varm lilla — sjåfør har hentet
+  mine_border: '#6B8F71', // Grønn kant for din sone
 }
 
 interface ZoneLayerProps {
@@ -142,7 +142,7 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
         type="line"
         filter={['all', ['==', ['get', 'isSelected'], true], ['!=', ['get', 'isMine'], true]]}
         paint={{
-          'line-color': '#007AFF',
+          'line-color': '#6B8F71',
           'line-width': 5,
           'line-opacity': 0.25,
           'line-blur': 4,

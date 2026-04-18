@@ -34,7 +34,7 @@ export default function HowItWorksStep() {
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-bold mb-2"
+        className="text-2xl font-bold mb-2 font-[var(--font-display)]"
       >
         Slik fungerer dugnaden
       </motion.h2>
