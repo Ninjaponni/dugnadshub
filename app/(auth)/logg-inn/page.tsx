@@ -176,7 +176,7 @@ export default function LoginPage() {
               <br />
               <button
                 onClick={() => { setView('email'); setError(''); setOtpError(false) }}
-                className="text-text-tertiary text-sm"
+                className="text-text-secondary text-sm"
               >
                 Bruk en annen e-post
               </button>
@@ -185,7 +185,7 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={handleSendOtp} className="card p-6">
             <label className="block mb-4">
-              <span className="text-sm font-medium text-text-secondary mb-1.5 block">E-postadresse</span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 block">E-postadresse</span>
               <div className="relative">
                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
