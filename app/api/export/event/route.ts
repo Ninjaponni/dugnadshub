@@ -216,8 +216,49 @@ export async function GET(request: NextRequest) {
     // Totalrad
     const totalRow = `,,,${totalCollectors},,,,,,`
 
-    // Bunnseksjon — sjåfører og stripsere fra driver_notes
+    // Bunnseksjon — sjåfører og stripsere fra driver_assignments
+    const { data: drivers } = await supabase
+      .from('driver_assignments')
+      .select('user_id, role, area, trailer_group, slot_number')
+      .eq('event_id', eventId)
+      .order('trailer_group', { ascending: true })
+      .order('slot_number', { ascending: true })
+
+    const driverRows = (drivers || []) as Array<{ user_id: string; role: string; area: string; trailer_group: number; slot_number: number }>
+    const driverUserIds = [...new Set(driverRows.map(d => d.user_id))]
+    const { data: driverProfiles } = driverUserIds.length > 0
+      ? await supabase.from('profiles').select('id, full_name, phone').in('id', driverUserIds)
+      : { data: [] }
+    const driverProfileMap = new Map((driverProfiles || []).map(p => [p.id, p]))
+
+    const sjaforer = driverRows.filter(d => d.role === 'driver')
+    const stripsere = driverRows.filter(d => d.role === 'strapper')
+
     const footerRows: string[] = ['', '']
+
+    function buildPersonRow(person: { user_id: string }, label: string | null): string {
+      const profile = driverProfileMap.get(person.user_id) as { full_name: string | null; phone: string | null } | undefined
+      const name = profile?.full_name || ''
+      const phone = profile?.phone || ''
+      const labelCell = label ? `${csvEscape(label)}` : ''
+      return `,${labelCell},,,${csvEscape(name)},${csvEscape(phone)},,,`
+    }
+
+    // Sjåfører — første person har "Bil med tilhenger:" som label
+    sjaforer.forEach((s, i) => {
+      footerRows.push(buildPersonRow(s, i === 0 ? 'Bil med tilhenger:' : null))
+    })
+
+    if (sjaforer.length > 0 && stripsere.length > 0) {
+      footerRows.push(',,,,,,,,')
+    }
+
+    // Stripsere — første person har "Stripse sekker:" som label
+    stripsere.forEach((s, i) => {
+      footerRows.push(buildPersonRow(s, i === 0 ? 'Stripse sekker:' : null))
+    })
+
+    // Hentested — fra driver_notes hvis satt (f.eks. "Infinitum: Torgardstrøa 5")
     if (event.driver_notes) {
       const noteLines = (event.driver_notes as string).split('\n').filter((l: string) => l.trim())
       for (const line of noteLines) {

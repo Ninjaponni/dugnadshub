@@ -317,6 +317,19 @@ export default function EventsAdminPage() {
       for (const uid of userIds) {
         evaluateBadges(uid).catch(() => {})
       }
+
+      // Tildel sjåfør/stripser-merker og tilbakestill roller
+      const { data: { session } } = await supabaseRef.current.auth.getSession()
+      if (session) {
+        fetch('/api/events/finalize-drivers', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ eventId }),
+        }).catch(() => {})
+      }
     }
 
     // Send push ved aktivering

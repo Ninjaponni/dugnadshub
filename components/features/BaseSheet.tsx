@@ -328,7 +328,18 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
     }
     setClaimLoading(null)
     await fetchAssignments()
+    syncRoleAfterChange()
     onAction()
+  }
+
+  async function syncRoleAfterChange(targetUserId?: string) {
+    const { data: { session } } = await supabaseRef.current.auth.getSession()
+    if (!session) return
+    fetch('/api/driver/sync-role', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: targetUserId ? JSON.stringify({ userId: targetUserId }) : undefined,
+    }).catch(() => {})
   }
 
   async function handleUnclaim() {
@@ -347,6 +358,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
     }
     setClaimLoading(null)
     await fetchAssignments()
+    syncRoleAfterChange()
     onAction()
   }
 
@@ -367,6 +379,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
     }
     setClaimLoading(null)
     await fetchAssignments()
+    syncRoleAfterChange(targetUserId)
     onAction()
   }
 
@@ -392,6 +405,7 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
     setMemberPickerTarget(null)
     setClaimLoading(null)
     await fetchAssignments()
+    syncRoleAfterChange(targetUserId)
     onAction()
   }
 
