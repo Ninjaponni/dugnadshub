@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
-import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Trash2, Sun, Moon, Monitor, ArrowLeft, Pencil, PlusCircle, ChevronRight } from 'lucide-react'
+import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Trash2, Sun, Moon, Monitor, ArrowLeft, Pencil, PlusCircle, ChevronRight, Music, Users } from 'lucide-react'
 import KorpsLogo from '@/components/ui/KorpsLogo'
-import type { Child } from '@/lib/supabase/types'
+import type { Child, ChildGroup } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
@@ -23,6 +23,8 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ full_name: '', phone: '' })
   const [children, setChildren] = useState<Child[]>([])
+  const [isMusician, setIsMusician] = useState(false)
+  const [musicianGroup, setMusicianGroup] = useState<ChildGroup>('Aspirant')
 
   const [saving, setSaving] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
@@ -69,6 +71,8 @@ export default function ProfilePage() {
           phone: p.phone || '',
         })
         setChildren(p.children?.length ? p.children : [{ name: '', group: 'Aspirant' as const }])
+        setIsMusician(!!p.is_musician)
+        if (p.musician_group) setMusicianGroup(p.musician_group)
         setAvatarId(p.avatar_url || getRandomAvatarId())
         setDittBidrag(mockDittBidrag)
 
@@ -186,7 +190,9 @@ export default function ProfilePage() {
         email: user.email!,
         full_name: form.full_name || null,
         phone: form.phone || null,
-        children: children.filter(c => c.name.trim()),
+        children: isMusician ? [] : children.filter(c => c.name.trim()),
+        is_musician: isMusician,
+        musician_group: isMusician ? musicianGroup : null,
       })
 
     if (!error) {
@@ -259,7 +265,10 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Telefon</label>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">
+                  Telefon
+                  {isMusician && <span className="ml-1 normal-case font-normal text-text-tertiary tracking-normal">(valgfritt)</span>}
+                </label>
                 <input
                   type="tel"
                   value={form.phone}
@@ -269,7 +278,53 @@ export default function ProfilePage() {
                 />
               </div>
 
-              {/* Barn */}
+              {/* Type-velger: forelder eller musikant */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Du er</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsMusician(false)}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-[12px] text-sm font-bold transition-all ${
+                      !isMusician
+                        ? 'bg-accent text-white'
+                        : 'bg-surface-low text-text-secondary active:bg-surface-medium'
+                    }`}
+                  >
+                    <Users size={16} />
+                    Forelder
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMusician(true)}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-[12px] text-sm font-bold transition-all ${
+                      isMusician
+                        ? 'bg-accent text-white'
+                        : 'bg-surface-low text-text-secondary active:bg-surface-medium'
+                    }`}
+                  >
+                    <Music size={16} />
+                    Musikant
+                  </button>
+                </div>
+              </div>
+
+              {isMusician ? (
+                /* Musikant-gruppe */
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Min gruppe</label>
+                  <select
+                    value={musicianGroup}
+                    onChange={(e) => setMusicianGroup(e.target.value as ChildGroup)}
+                    className={inputClass}
+                  >
+                    <option value="Aspirant">Aspirant</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Hovedkorps">Hovedkorps</option>
+                  </select>
+                </div>
+              ) : (
+              /* Barn */
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Barn</label>
                 <div className="space-y-3">
@@ -322,6 +377,7 @@ export default function ProfilePage() {
                   Legg til barn
                 </button>
               </div>
+              )}
             </div>
 
             {/* Knapper — outline avbryt + solid lagre */}
@@ -390,8 +446,13 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-bold font-[var(--font-display)] text-text-primary">{profile?.full_name}</h3>
                 <p className="text-sm text-text-secondary mb-3">{profile?.email}</p>
 
-                {/* Barn */}
-                {profile?.children && profile.children.length > 0 && (
+                {/* Musikant-chip eller barn-liste */}
+                {profile?.is_musician ? (
+                  <div className="flex items-center gap-2 mt-3 mb-4 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium">
+                    <Music size={14} />
+                    <span>Musikant{profile.musician_group ? ` — ${profile.musician_group}` : ''}</span>
+                  </div>
+                ) : profile?.children && profile.children.length > 0 ? (
                   <div className="flex flex-col items-center gap-1 mt-3 mb-4">
                     {profile.children.map((c, i) => (
                       <div key={i} className="flex items-center gap-2 text-sm text-accent font-medium">
@@ -400,13 +461,15 @@ export default function ProfilePage() {
                       </div>
                     ))}
                   </div>
-                )}
+                ) : null}
 
                 {/* Rediger-knapp */}
                 <button
                   onClick={() => {
                     setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
                     setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
+                    setIsMusician(!!profile?.is_musician)
+                    if (profile?.musician_group) setMusicianGroup(profile.musician_group)
                     setEditing(true)
                   }}
                   className="px-6 py-2.5 rounded-full border-2 border-accent text-accent font-bold text-sm tracking-wide active:scale-95 transition-all"
@@ -535,7 +598,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 7.0
+              Tillerbyen Skolekorps Dugnadshub v 7.1
             </p>
 
             {/* Logg ut */}

@@ -13,6 +13,8 @@ export const mockProfile: Profile = {
   role: 'admin',
   avatar_url: null,
   created_at: '2026-01-15T10:00:00Z',
+  is_musician: false,
+  musician_group: null,
 }
 
 // --- Hendelser ---

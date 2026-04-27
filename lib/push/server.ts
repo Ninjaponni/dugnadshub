@@ -53,7 +53,11 @@ async function getSubscriptions(filter: SendFilter) {
     const validGroups = new Set(['Aspirant', 'Junior', 'Hovedkorps'])
     const safeGroups = filter.childGroups.filter(g => validGroups.has(g))
     if (safeGroups.length > 0) {
-      const orClauses = safeGroups.map(g => `children.cs.[{"group":"${g}"}]`).join(',')
+      // Match både foreldre med barn i gruppa og musikanter i gruppa
+      const orClauses = safeGroups.flatMap(g => [
+        `children.cs.[{"group":"${g}"}]`,
+        `musician_group.eq.${g}`,
+      ]).join(',')
       profileQuery = profileQuery.or(orClauses)
     }
   }

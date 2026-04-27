@@ -5,12 +5,12 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import KorpsLogo from '@/components/ui/KorpsLogo'
-import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown, Trash2, AlertTriangle } from 'lucide-react'
+import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown, Trash2, AlertTriangle, Music } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import type { Child } from '@/lib/supabase/types'
-import type { Profile, Role, UserBadge, ZoneClaim, DugnadEvent } from '@/lib/supabase/types'
+import type { Profile, Role, UserBadge, ZoneClaim } from '@/lib/supabase/types'
 
 type SortMode = 'alpha' | 'badges' | 'least_active'
 
@@ -35,11 +35,9 @@ export default function MembersAdminPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userBadges, setUserBadges] = useState<UserBadge[]>([])
   const [allClaims, setAllClaims] = useState<ZoneClaim[]>([])
-  const [events, setEvents] = useState<DugnadEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
-  const [filterEventId, setFilterEventId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
@@ -48,17 +46,15 @@ export default function MembersAdminPage() {
   const supabaseRef = useRef(createClient())
 
   async function loadData() {
-    const [profilesRes, badgesRes, claimsRes, eventsRes] = await Promise.all([
+    const [profilesRes, badgesRes, claimsRes] = await Promise.all([
       supabaseRef.current.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
       supabaseRef.current.from('user_badges').select('*') as unknown as Promise<{ data: UserBadge[] | null }>,
       supabaseRef.current.from('zone_claims').select('*') as unknown as Promise<{ data: ZoneClaim[] | null }>,
-      supabaseRef.current.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
     ])
 
     setProfiles(profilesRes.data || [])
     setUserBadges(badgesRes.data || [])
     setAllClaims(claimsRes.data || [])
-    setEvents(eventsRes.data || [])
     setLoading(false)
   }
 
@@ -87,12 +83,6 @@ export default function MembersAdminPage() {
         roleLabel.toLowerCase().includes(q) ||
         (p.role || '').toLowerCase().includes(q)
       )
-    })
-    .filter(p => {
-      if (!filterEventId) return true
-      // Vis kun medlemmer som har claims i valgt hendelse
-      // TODO: trenger assignment_id → event_id mapping for full filtrering
-      return true
     })
     .sort((a, b) => {
       switch (sortMode) {
@@ -319,9 +309,20 @@ export default function MembersAdminPage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[15px] truncate font-[var(--font-display)]">
-                        {profile.full_name || 'Ukjent'}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="font-medium text-[15px] truncate font-[var(--font-display)]">
+                          {profile.full_name || 'Ukjent'}
+                        </p>
+                        {profile.is_musician && (
+                          <span
+                            title={profile.musician_group ? `Musikant — ${profile.musician_group}` : 'Musikant'}
+                            className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            <Music size={10} />
+                            {profile.musician_group ? profile.musician_group.slice(0, 2).toUpperCase() : 'M'}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-xs text-text-secondary mt-0.5">
                         <span>{getBadgeCountForUser(profile.id)} {getBadgeCountForUser(profile.id) === 1 ? 'merke' : 'merker'}</span>
                         <span className="text-text-tertiary">·</span>
@@ -356,9 +357,13 @@ export default function MembersAdminPage() {
                           <div className="text-xs text-text-tertiary space-y-0.5">
                             <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
                             {profile.phone && <p>Telefon: <a href={`tel:${profile.phone}`} className="text-accent">{profile.phone}</a></p>}
-                            {profile.children && profile.children.length > 0 && profile.children.map((c: Child, i: number) => (
-                              <p key={i}>Barn: {c.name}{c.group ? ` (${c.group})` : ''}</p>
-                            ))}
+                            {profile.is_musician ? (
+                              <p>Musikant{profile.musician_group ? ` (${profile.musician_group})` : ''}</p>
+                            ) : profile.children && profile.children.length > 0 ? (
+                              profile.children.map((c: Child, i: number) => (
+                                <p key={i}>Barn: {c.name}{c.group ? ` (${c.group})` : ''}</p>
+                              ))
+                            ) : null}
                             <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
                           </div>
 

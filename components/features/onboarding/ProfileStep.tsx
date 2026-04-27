@@ -2,21 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Trash2, PlusCircle, Pencil } from 'lucide-react'
+import { Trash2, PlusCircle, Pencil, Users, Music, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { evaluateBadges } from '@/lib/badges/evaluator'
 import Button from '@/components/ui/Button'
 import AvatarPicker, { getAvatarUrl, getRandomAvatarId } from '@/components/features/AvatarPicker'
-import type { Child } from '@/lib/supabase/types'
+import type { Child, ChildGroup } from '@/lib/supabase/types'
 
 interface ProfileStepProps {
   onProfileSaved: () => void
 }
 
-// Steg 2: Profil-utfylling med avatar-velger
+type UserType = 'parent' | 'musician'
+
+// Steg 2: Profil-utfylling — velger først om man er forelder eller musikant
 export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
+  const [userType, setUserType] = useState<UserType | null>(null)
   const [form, setForm] = useState({ full_name: '', phone: '' })
   const [children, setChildren] = useState<Child[]>([{ name: '', group: 'Aspirant' }])
+  const [musicianGroup, setMusicianGroup] = useState<ChildGroup>('Aspirant')
   const [avatarId, setAvatarId] = useState(() => getRandomAvatarId())
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -29,7 +33,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoaded(true); return }
-      const { data } = await supabase.from('profiles').select('full_name, phone, children, avatar_url').eq('id', user.id).single() as unknown as { data: { full_name: string | null; phone: string | null; children: Child[] | null; avatar_url: string | null } | null }
+      const { data } = await supabase.from('profiles').select('full_name, phone, children, avatar_url, is_musician, musician_group').eq('id', user.id).single() as unknown as { data: { full_name: string | null; phone: string | null; children: Child[] | null; avatar_url: string | null; is_musician: boolean | null; musician_group: ChildGroup | null } | null }
       if (data) {
         setForm({
           full_name: data.full_name || '',
@@ -37,6 +41,13 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
         })
         if (data.children?.length) setChildren(data.children)
         if (data.avatar_url) setAvatarId(data.avatar_url)
+        if (data.is_musician) {
+          setUserType('musician')
+          if (data.musician_group) setMusicianGroup(data.musician_group)
+        } else if (data.full_name || data.children?.length) {
+          // Eksisterende forelder — hopp over type-velger
+          setUserType('parent')
+        }
       }
       setLoaded(true)
     }
@@ -52,14 +63,18 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
+    const isMusician = userType === 'musician'
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase.from('profiles') as any).upsert({
       id: user.id,
       email: user.email!,
       full_name: form.full_name || null,
       phone: form.phone || null,
-      children: children.filter(c => c.name.trim()),
+      children: isMusician ? [] : children.filter(c => c.name.trim()),
       avatar_url: avatarId,
+      is_musician: isMusician,
+      musician_group: isMusician ? musicianGroup : null,
     })
 
     if (!error) {
@@ -89,11 +104,63 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
 
   if (!loaded) return null
 
+  // Steg 1: Velg brukertype
+  if (userType === null) {
+    return (
+      <div className="flex flex-col h-full px-6 pt-12">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold mb-2 font-[var(--font-display)]">Hvem er du?</h2>
+          <p className="text-text-secondary">Velg det som passer best</p>
+        </div>
+
+        <div className="space-y-3 flex-1">
+          <button
+            onClick={() => setUserType('parent')}
+            className="w-full p-5 rounded-[20px] bg-surface-low active:bg-surface-medium flex items-center gap-4 text-left transition-colors"
+          >
+            <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+              <Users size={22} className="text-accent" />
+            </div>
+            <div className="flex-1">
+              <div className="font-bold text-[17px]">Forelder</div>
+              <div className="text-sm text-text-secondary">Jeg har barn i korpset</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setUserType('musician')}
+            className="w-full p-5 rounded-[20px] bg-surface-low active:bg-surface-medium flex items-center gap-4 text-left transition-colors"
+          >
+            <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+              <Music size={22} className="text-accent" />
+            </div>
+            <div className="flex-1">
+              <div className="font-bold text-[17px]">Musikant</div>
+              <div className="text-sm text-text-secondary">Jeg spiller selv i korpset</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Steg 2: Fyll ut profil
   return (
-    <div className="flex flex-col h-full px-6 pt-8">
+    <div className="flex flex-col h-full px-6 pt-6">
+      {/* Tilbake-knapp til type-valg */}
+      <button
+        onClick={() => setUserType(null)}
+        className="self-start flex items-center gap-1 text-sm text-text-secondary mb-2 active:opacity-70"
+      >
+        <ArrowLeft size={16} />
+        Bytt
+      </button>
+
       {/* Avatar-velger */}
       <div className="text-center mb-5">
-        <h2 className="text-2xl font-bold mb-4 font-[var(--font-display)]">Hvem er du?</h2>
+        <h2 className="text-2xl font-bold mb-4 font-[var(--font-display)]">
+          {userType === 'musician' ? 'Hvem er du?' : 'Hvem er du?'}
+        </h2>
         <button
           onClick={() => setShowAvatarPicker(true)}
           className="relative mx-auto block"
@@ -116,12 +183,14 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
             type="text"
             value={form.full_name}
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            placeholder="Ditt navn"
+            placeholder={userType === 'musician' ? 'Ditt navn' : 'Ditt navn'}
             className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Telefon</label>
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">
+            Telefon{userType === 'musician' && <span className="ml-1 normal-case font-normal text-text-tertiary tracking-normal">(valgfritt)</span>}
+          </label>
           <input
             type="tel"
             value={form.phone}
@@ -131,59 +200,75 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
           />
         </div>
 
-        {/* Barn */}
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Barn</label>
-          <div className="space-y-3">
-            {children.map((child, i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    value={child.name}
+        {userType === 'musician' ? (
+          /* Musikant-gruppe */
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Din gruppe</label>
+            <select
+              value={musicianGroup}
+              onChange={(e) => setMusicianGroup(e.target.value as ChildGroup)}
+              className={inputClass}
+            >
+              <option value="Aspirant">Aspirant</option>
+              <option value="Junior">Junior</option>
+              <option value="Hovedkorps">Hovedkorps</option>
+            </select>
+          </div>
+        ) : (
+          /* Barn */
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5 px-1">Barn</label>
+            <div className="space-y-3">
+              {children.map((child, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={child.name}
+                      onChange={(e) => {
+                        const updated = [...children]
+                        updated[i] = { ...updated[i], name: e.target.value }
+                        setChildren(updated)
+                      }}
+                      placeholder="Barnets navn"
+                      className={`${inputClass} flex-1`}
+                    />
+                    {children.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setChildren(children.filter((_, j) => j !== i))}
+                        className="p-2 rounded-full active:bg-surface-low shrink-0"
+                      >
+                        <Trash2 size={14} className="text-text-tertiary" />
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    value={child.group}
                     onChange={(e) => {
                       const updated = [...children]
-                      updated[i] = { ...updated[i], name: e.target.value }
+                      updated[i] = { ...updated[i], group: e.target.value as Child['group'] }
                       setChildren(updated)
                     }}
-                    placeholder="Barnets navn"
-                    className={`${inputClass} flex-1`}
-                  />
-                  {children.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setChildren(children.filter((_, j) => j !== i))}
-                      className="p-2 rounded-full active:bg-surface-low shrink-0"
-                    >
-                      <Trash2 size={14} className="text-text-tertiary" />
-                    </button>
-                  )}
+                    className={inputClass}
+                  >
+                    <option value="Aspirant">Aspirant</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Hovedkorps">Hovedkorps</option>
+                  </select>
                 </div>
-                <select
-                  value={child.group}
-                  onChange={(e) => {
-                    const updated = [...children]
-                    updated[i] = { ...updated[i], group: e.target.value as Child['group'] }
-                    setChildren(updated)
-                  }}
-                  className={inputClass}
-                >
-                  <option value="Aspirant">Aspirant</option>
-                  <option value="Junior">Junior</option>
-                  <option value="Hovedkorps">Hovedkorps</option>
-                </select>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setChildren([...children, { name: '', group: 'Aspirant' }])}
-              className="flex items-center gap-2 text-sm text-accent font-bold active:opacity-70 px-1"
-            >
-              <PlusCircle size={18} />
-              Legg til barn
-            </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setChildren([...children, { name: '', group: 'Aspirant' }])}
+                className="flex items-center gap-2 text-sm text-accent font-bold active:opacity-70 px-1"
+              >
+                <PlusCircle size={18} />
+                Legg til barn
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="pb-8 pt-4 shrink-0">

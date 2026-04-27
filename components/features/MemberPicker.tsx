@@ -8,6 +8,8 @@ interface Member {
   id: string
   full_name: string | null
   children: Array<{ name: string; group: string }> | null
+  is_musician: boolean | null
+  musician_group: string | null
 }
 
 interface MemberPickerProps {
@@ -25,7 +27,7 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
   useEffect(() => {
     supabaseRef.current
       .from('profiles')
-      .select('id, full_name, children')
+      .select('id, full_name, children, is_musician, musician_group')
       .order('full_name')
       .then(({ data }) => {
         if (data) setMembers(data as Member[])
@@ -73,6 +75,9 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
         ) : (
           filtered.map((m) => {
             const childNames = m.children?.map(c => c.name).filter(Boolean).join(', ')
+            const subtitle = m.is_musician
+              ? `Musikant${m.musician_group ? ` — ${m.musician_group}` : ''}`
+              : childNames
             return (
               <button
                 key={m.id}
@@ -84,8 +89,8 @@ export default function MemberPicker({ onSelect, onCancel, excludeUserIds = [] }
                 </div>
                 <div className="min-w-0">
                   <span className="block truncate">{m.full_name || 'Ukjent'}</span>
-                  {childNames && (
-                    <span className="block text-xs text-text-tertiary truncate">{childNames}</span>
+                  {subtitle && (
+                    <span className="block text-xs text-text-tertiary truncate">{subtitle}</span>
                   )}
                 </div>
               </button>

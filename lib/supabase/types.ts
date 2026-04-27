@@ -20,6 +20,8 @@ export interface Profile {
   role: Role
   avatar_url: string | null
   created_at: string
+  is_musician: boolean
+  musician_group: ChildGroup | null
 }
 
 export interface Zone {
