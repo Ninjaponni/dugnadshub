@@ -319,10 +319,10 @@ export interface DittBidragData {
 }
 
 export const mockDittBidrag: DittBidragData = {
-  sekkerPant: 70,
+  sekkerPant: 123,
   lapperDeltUt: 3400,
-  kakerBakt: 8,
+  kakerBakt: 9,
   premierSkaffet: 42,
-  dugnader: 3,
-  kronerOpptjent: 29000,
+  dugnader: 4,
+  kronerOpptjent: 49000,
 }
