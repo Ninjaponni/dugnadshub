@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { syncRoleForUser } from '@/app/api/driver/sync-role/route'
+import { syncRoleForUser } from '@/lib/driver/sync-role'
 
 // Kalles når admin markerer en hendelse som fullført. Tildeler Sjåfør (id 14)
 // og Stripser (id 15) til alle med driver_assignments på hendelsen, og
