@@ -326,20 +326,27 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
       setClaimLoading(null)
       return
     }
-    setClaimLoading(null)
     await fetchAssignments()
-    syncRoleAfterChange()
+    await syncRoleAfterChange()
+    setClaimLoading(null)
     onAction()
   }
 
   async function syncRoleAfterChange(targetUserId?: string) {
     const { data: { session } } = await supabaseRef.current.auth.getSession()
     if (!session) return
-    fetch('/api/driver/sync-role', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-      body: targetUserId ? JSON.stringify({ userId: targetUserId }) : undefined,
-    }).catch(() => {})
+    try {
+      const res = await fetch('/api/driver/sync-role', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: targetUserId ? JSON.stringify({ userId: targetUserId }) : undefined,
+      })
+      if (!res.ok) {
+        setError('Plassen er lagret, men vi fikk ikke oppdatert rolla. Prøv å laste siden på nytt.')
+      }
+    } catch {
+      setError('Plassen er lagret, men vi fikk ikke oppdatert rolla. Prøv å laste siden på nytt.')
+    }
   }
 
   async function handleUnclaim() {
@@ -356,9 +363,9 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
       setClaimLoading(null)
       return
     }
-    setClaimLoading(null)
     await fetchAssignments()
-    syncRoleAfterChange()
+    await syncRoleAfterChange()
+    setClaimLoading(null)
     onAction()
   }
 
@@ -377,9 +384,9 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
       setClaimLoading(null)
       return
     }
-    setClaimLoading(null)
     await fetchAssignments()
-    syncRoleAfterChange(targetUserId)
+    await syncRoleAfterChange(targetUserId)
+    setClaimLoading(null)
     onAction()
   }
 
@@ -403,9 +410,9 @@ export default function BaseSheet({ base, eventId, userId, isAdmin, onClose, onA
       return
     }
     setMemberPickerTarget(null)
-    setClaimLoading(null)
     await fetchAssignments()
-    syncRoleAfterChange(targetUserId)
+    await syncRoleAfterChange(targetUserId)
+    setClaimLoading(null)
     onAction()
   }
 
