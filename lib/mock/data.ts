@@ -44,6 +44,8 @@ export interface MockEventWithProgress extends DugnadEvent {
   totalZones: number
   claimedZones: number
   completedZones: number
+  totalNeeded: number
+  totalClaims: number
 }
 
 export const mockEventsWithProgress: MockEventWithProgress[] = [
@@ -52,6 +54,8 @@ export const mockEventsWithProgress: MockEventWithProgress[] = [
     totalZones: 12,
     claimedZones: 8,
     completedZones: 3,
+    totalNeeded: 24,
+    totalClaims: 14,
   },
 ]
 

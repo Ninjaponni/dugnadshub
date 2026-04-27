@@ -17,6 +17,8 @@ interface EventWithProgress extends DugnadEvent {
   totalZones: number
   claimedZones: number
   completedZones: number
+  totalNeeded: number
+  totalClaims: number
 }
 
 interface MyZone {
@@ -71,7 +73,7 @@ export default function HomePage() {
 
       const [assignRes, zonesRes] = await Promise.all([
         supabaseRef.current.from('zone_assignments').select('*').in('event_id', eventIds),
-        supabaseRef.current.from('zones').select('id, name, area'),
+        supabaseRef.current.from('zones').select('id, name, area, collectors_needed'),
       ])
 
       const assignments = (assignRes.data || []) as unknown as Array<{ id: string; event_id: string; zone_id: string; status: string }>
@@ -82,19 +84,23 @@ export default function HomePage() {
         : { data: [] }
 
       const claims = (claimData || []) as unknown as Array<{ id: string; assignment_id: string; user_id: string; profiles: { full_name: string } | null }>
-      const zoneMap = new Map((zonesRes.data || []).map((z: { id: string; name: string; area: string }) => [z.id, z]))
+      const zoneMap = new Map((zonesRes.data || []).map((z: { id: string; name: string; area: string; collectors_needed: number }) => [z.id, z]))
 
       const eventsWithProgress: EventWithProgress[] = allEvents.map(event => {
         const eventAssignments = assignments.filter(a => a.event_id === event.id)
         const total = eventAssignments.length
         let zonesWithClaims = 0
         let completed = 0
+        let totalNeeded = 0
+        let totalClaims = 0
         for (const a of eventAssignments) {
-          const hasClaims = claims.some(c => c.assignment_id === a.id)
-          if (hasClaims) zonesWithClaims++
+          const claimsOnAssignment = claims.filter(c => c.assignment_id === a.id).length
+          totalClaims += claimsOnAssignment
+          totalNeeded += zoneMap.get(a.zone_id)?.collectors_needed || 0
+          if (claimsOnAssignment > 0) zonesWithClaims++
           if (a.status === 'completed' || a.status === 'picked_up') completed++
         }
-        return { ...event, totalZones: total, claimedZones: zonesWithClaims, completedZones: completed }
+        return { ...event, totalZones: total, claimedZones: zonesWithClaims, completedZones: completed, totalNeeded, totalClaims }
       })
 
       const activeEventIds = new Set(allEvents.filter(e => e.status === 'active').map(e => e.id))
@@ -207,8 +213,9 @@ export default function HomePage() {
           <>
             {/* Aktive dugnader — store clay-kort */}
             {activeEvents.map((event) => {
-              const progress = event.totalZones > 0
-                ? Math.round((event.claimedZones / event.totalZones) * 100) : 0
+              // Reell bemanning: andel av påkrevde plasser som er fylt
+              const progress = event.totalNeeded > 0
+                ? Math.round((event.totalClaims / event.totalNeeded) * 100) : 0
 
               return (
                 <motion.section
@@ -238,7 +245,7 @@ export default function HomePage() {
                     <div className="space-y-2 mb-6 relative">
                       <div className="flex justify-between items-end">
                         <span className="text-sm font-bold text-text-secondary">{event.claimedZones}/{event.totalZones} soner tatt</span>
-                        <span className="text-sm font-bold text-accent">{progress}%</span>
+                        <span className="text-sm font-bold text-accent">{progress}% bemannet</span>
                       </div>
                       <div className="w-full h-3 bg-surface-low rounded-full overflow-hidden">
                         <motion.div

@@ -29,6 +29,7 @@ export default function AdminNotificationsPage() {
   const [sending, setSending] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null)
+  const [toastSuccess, setToastSuccess] = useState<{ sent: number } | null>(null)
 
   const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-card ring-1 ring-text-tertiary/20 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
 
@@ -77,7 +78,20 @@ export default function AdminNotificationsPage() {
         body: JSON.stringify({ title, body, url: url || undefined, filter }),
       })
       const data = await res.json()
-      setResult(data)
+      if (res.ok && data.sent > 0) {
+        // Vellykket — tøm felt og vis toast
+        setTitle('')
+        setBody('')
+        setUrl('')
+        setSelectedRoles([])
+        setSelectedGroups([])
+        setSendToAll(true)
+        setToastSuccess({ sent: data.sent })
+        setTimeout(() => setToastSuccess(null), 4000)
+      } else {
+        // Ingen ble nådd eller feil — vis info-card
+        setResult(data)
+      }
     } catch {
       setResult({ sent: 0, failed: 0 })
     }
@@ -241,13 +255,15 @@ export default function AdminNotificationsPage() {
         </>
       )}
 
-      {/* Resultat */}
+      {/* Feil/ingen-mottakere-info — vellykkede sendinger viser toast i stedet */}
       {result && (
         <Card className="p-5 mt-4 text-center rounded-2xl">
-          <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
-            <Check size={20} className="text-success" />
+          <div className="w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center mx-auto mb-3">
+            <AlertTriangle size={20} className="text-danger" />
           </div>
-          <p className="font-medium font-[var(--font-display)]">Varsel sendt!</p>
+          <p className="font-medium font-[var(--font-display)]">
+            {result.sent === 0 ? 'Ingen mottok varselet' : 'Sending feilet'}
+          </p>
           <p className="text-sm text-text-secondary mt-1">
             {result.sent} mottok · {result.failed} feilet
           </p>
@@ -255,13 +271,21 @@ export default function AdminNotificationsPage() {
             size="sm"
             variant="ghost"
             className="mt-3 rounded-full"
-            onClick={() => { setResult(null); setTitle(''); setBody(''); setUrl('') }}
+            onClick={() => setResult(null)}
           >
-            Send nytt varsel
+            Lukk
           </Button>
         </Card>
       )}
-    </div>
+      </div>
+
+      {/* Suksess-toast */}
+      {toastSuccess && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-success text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <Check size={16} />
+          <span className="text-sm font-medium">Varsel sendt til {toastSuccess.sent}</span>
+        </div>
+      )}
     </>
   )
 }

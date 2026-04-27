@@ -5,15 +5,16 @@ import { Source, Layer } from 'react-map-gl/mapbox'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
 
-// Fargekoder for sonestatus
+// Fargekoder for sonestatus — speiler tokens i app/globals.css
 // Rød=ledig, Gul=delvis tatt, Blå=fullt bemannet, Grønn=ferdigplukket, Lilla=hentet
+// Mapbox krever rene hex-verdier, derfor hardkodet her
 const COLORS = {
-  empty: '#E57373',      // Varm rød — ingen har tatt
-  partial: '#FFD54F',    // Varm gul — noen plukkere, ikke nok
-  full: '#6B8F71',       // Skogsgrønn — alle plasser fylt, klar for plukking
-  completed: '#6B8F71',  // Skogsgrønn — ferdigplukket, venter på henting
-  picked_up: '#9C7DB8',  // Varm lilla — sjåfør har hentet
-  mine_border: '#6B8F71', // Grønn kant for din sone
+  empty: '#E57373',      // --color-zone-available
+  partial: '#FFD54F',    // --color-zone-partial
+  full: '#5C9CE6',       // --color-zone-full — alle plasser fylt
+  completed: '#6B8F71',  // --color-zone-complete — ferdigplukket
+  picked_up: '#9C7DB8',  // --color-zone-picked-up
+  mine_border: '#6B8F71',
 }
 
 interface ZoneLayerProps {

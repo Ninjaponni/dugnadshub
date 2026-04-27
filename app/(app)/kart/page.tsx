@@ -14,7 +14,7 @@ import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
 import MapInfoSheet from '@/components/features/MapInfoSheet'
-import { Map as MapIcon, Satellite, ChevronDown, Info } from 'lucide-react'
+import { Map as MapIcon, Satellite, ChevronDown, Info, RotateCcw } from 'lucide-react'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { isMockMode, MOCK_USER_ID } from '@/lib/mock/useMock'
 import { mockEvents, mockZones } from '@/lib/mock/data'
@@ -104,6 +104,7 @@ function MapPageContent() {
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [selectedBase, setSelectedBase] = useState<Base | null>(null)
   const [isSatellite, setIsSatellite] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const { isDark } = useTheme()
   const [userId, setUserId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -225,6 +226,16 @@ function MapPageContent() {
         aria-label={isSatellite ? 'Vis kart' : 'Vis satellitt'}
       >
         {isSatellite ? <MapIcon size={16} className="text-text-secondary" /> : <Satellite size={16} className="text-text-secondary" />}
+      </button>
+
+      {/* Refresh-knapp — henter ferskt sone-data */}
+      <button
+        onClick={() => { setRefreshing(true); refetch().finally(() => setTimeout(() => setRefreshing(false), 400)) }}
+        disabled={refreshing}
+        className="absolute top-[203px] right-[10px] z-10 safe-top w-[29px] h-[29px] bg-card rounded-lg shadow-sm flex items-center justify-center disabled:opacity-60"
+        aria-label="Oppdater kart"
+      >
+        <RotateCcw size={14} className={`text-text-secondary ${refreshing ? 'animate-spin' : ''}`} />
       </button>
 
       {/* Info-knapp */}

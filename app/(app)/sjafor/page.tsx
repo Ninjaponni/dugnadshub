@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Button from '@/components/ui/Button'
-import { Truck, MapPin, Check, Package, Info, Phone } from 'lucide-react'
+import { Truck, MapPin, Check, Package, Info, Phone, StickyNote } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import KorpsLogo from '@/components/ui/KorpsLogo'
@@ -286,21 +286,29 @@ export default function DriverPage() {
           </Link>
         </div>
 
-        {/* Samlere — enkel liste */}
+        {/* Samlere — enkel liste med eventuelt notat per claim */}
         {zone.collectors.length > 0 && (
-          <div className="mb-4 space-y-2">
+          <div className="mb-4 space-y-2.5">
             {zone.collectors.map((c, j) => (
-              <div key={j} className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                    <span className="text-[10px] font-bold text-accent">{getInitials(c.full_name)}</span>
+              <div key={j} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                      <span className="text-[10px] font-bold text-accent">{getInitials(c.full_name)}</span>
+                    </div>
+                    <span className="text-sm text-text-primary truncate">{c.full_name || 'Ukjent'}</span>
                   </div>
-                  <span className="text-sm text-text-primary truncate">{c.full_name || 'Ukjent'}</span>
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} className="text-xs text-accent font-medium ml-2 shrink-0">
+                      Ring
+                    </a>
+                  )}
                 </div>
-                {c.phone && (
-                  <a href={`tel:${c.phone}`} className="text-xs text-accent font-medium ml-2 shrink-0">
-                    Ring
-                  </a>
+                {c.notes && (
+                  <div className="ml-9 flex items-start gap-1.5 bg-warning/10 rounded-[10px] px-2.5 py-1.5">
+                    <StickyNote size={12} className="text-warning shrink-0 mt-0.5" />
+                    <span className="text-xs text-text-primary leading-snug">{c.notes}</span>
+                  </div>
                 )}
               </div>
             ))}
@@ -309,20 +317,28 @@ export default function DriverPage() {
 
         {/* Hent-knapp eller bekreftelse */}
         {confirmPickUp === zone.assignmentId ? (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmPickUp(null)}
-              className="flex-1 py-2.5 text-sm font-medium text-text-secondary bg-surface-low rounded-full"
-            >
-              Avbryt
-            </button>
-            <button
-              disabled={pickingUp === zone.assignmentId}
-              onClick={() => { setConfirmPickUp(null); handlePickUp(zone.assignmentId) }}
-              className="flex-1 py-2.5 text-sm font-medium text-white bg-success rounded-full flex items-center justify-center gap-1 disabled:opacity-40"
-            >
-              <Check size={14} /> Hentet
-            </button>
+          <div className="space-y-2.5 bg-surface-low rounded-[16px] p-3">
+            <p className="text-sm font-bold text-text-primary text-center">
+              Bekreft henting av {zone.zoneName}?
+            </p>
+            <p className="text-xs text-text-secondary text-center">
+              Trykk «Ja, hentet» når flaskene er lastet i hengeren
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setConfirmPickUp(null)}
+                className="flex-1 py-2.5 text-sm font-medium text-text-secondary bg-card rounded-full"
+              >
+                Ikke ennå
+              </button>
+              <button
+                disabled={pickingUp === zone.assignmentId}
+                onClick={() => { setConfirmPickUp(null); handlePickUp(zone.assignmentId) }}
+                className="flex-1 py-3 text-sm font-bold text-white bg-success rounded-full flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all disabled:opacity-40"
+              >
+                <Check size={16} /> Ja, hentet
+              </button>
+            </div>
           </div>
         ) : (
           <button

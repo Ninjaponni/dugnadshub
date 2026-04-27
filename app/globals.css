@@ -29,6 +29,7 @@
   /* Sonefarger (kart) */
   --color-zone-available: #E57373;
   --color-zone-partial: #FFD54F;
+  --color-zone-full: #5C9CE6;
   --color-zone-complete: #6B8F71;
   --color-zone-picked-up: #9C7DB8;
 
@@ -74,6 +75,7 @@ body {
 
   --color-zone-available: #ff8a8a;
   --color-zone-partial: #ffe082;
+  --color-zone-full: #7db8f0;
   --color-zone-complete: #8bb491;
   --color-zone-picked-up: #c4a8d8;
 }

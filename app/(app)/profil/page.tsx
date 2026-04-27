@@ -607,7 +607,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 8.0
+              Tillerbyen Skolekorps Dugnadshub v 8.1
             </p>
 
             {/* Logg ut */}
