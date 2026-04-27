@@ -321,12 +321,19 @@ export default function EventsAdminPage() {
       // Tildel sjåfør/stripser-merker og tilbakestill roller
       const { data: { session } } = await supabaseRef.current.auth.getSession()
       if (session) {
+        const headers = {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        }
         fetch('/api/events/finalize-drivers', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
+          body: JSON.stringify({ eventId }),
+        }).catch(() => {})
+        // Sikre at Førstemann er korrekt tildelt — sikkerhetsnett ved completion
+        fetch('/api/events/recompute-first-user', {
+          method: 'POST',
+          headers,
           body: JSON.stringify({ eventId }),
         }).catch(() => {})
       }
