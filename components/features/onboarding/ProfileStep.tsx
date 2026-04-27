@@ -20,6 +20,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
   const [userType, setUserType] = useState<UserType | null>(null)
   const [form, setForm] = useState({ full_name: '', phone: '' })
   const [children, setChildren] = useState<Child[]>([{ name: '', group: 'Aspirant' }])
+  const [existingChildren, setExistingChildren] = useState<Child[]>([])
   const [musicianGroup, setMusicianGroup] = useState<ChildGroup>('Aspirant')
   const [avatarId, setAvatarId] = useState(() => getRandomAvatarId())
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
@@ -39,7 +40,10 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
           full_name: data.full_name || '',
           phone: data.phone || '',
         })
-        if (data.children?.length) setChildren(data.children)
+        if (data.children?.length) {
+          setChildren(data.children)
+          setExistingChildren(data.children)
+        }
         if (data.avatar_url) setAvatarId(data.avatar_url)
         if (data.is_musician) {
           setUserType('musician')
@@ -65,13 +69,19 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
 
     const isMusician = userType === 'musician'
 
+    // Behold eksisterende children-array hvis musikant — bytt-til-musikant
+    // skal ikke slette barn-data hvis brukeren tidligere var forelder
+    const childrenToSave = isMusician
+      ? existingChildren
+      : children.filter(c => c.name.trim())
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase.from('profiles') as any).upsert({
       id: user.id,
       email: user.email!,
       full_name: form.full_name || null,
       phone: form.phone || null,
-      children: isMusician ? [] : children.filter(c => c.name.trim()),
+      children: childrenToSave,
       avatar_url: avatarId,
       is_musician: isMusician,
       musician_group: isMusician ? musicianGroup : null,

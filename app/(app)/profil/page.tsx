@@ -8,6 +8,7 @@ import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Trash2, Sun, Moon
 import KorpsLogo from '@/components/ui/KorpsLogo'
 import type { Child, ChildGroup } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
+import { evaluateBadges } from '@/lib/badges/evaluator'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
 import { isMockMode } from '@/lib/mock/useMock'
@@ -183,6 +184,12 @@ export default function ProfilePage() {
     const { data: { user } } = await supabaseRef.current.auth.getUser()
     if (!user) { setSaving(false); return }
 
+    // Behold children-array selv ved musikant — admin kan trykke feil, og data
+    // skal ikke gå tapt hvis bruker bytter type
+    const childrenToSave = isMusician
+      ? (profile?.children || [])
+      : children.filter(c => c.name.trim())
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabaseRef.current.from('profiles') as any)
       .upsert({
@@ -190,12 +197,14 @@ export default function ProfilePage() {
         email: user.email!,
         full_name: form.full_name || null,
         phone: form.phone || null,
-        children: isMusician ? [] : children.filter(c => c.name.trim()),
+        children: childrenToSave,
         is_musician: isMusician,
         musician_group: isMusician ? musicianGroup : null,
       })
 
     if (!error) {
+      // Re-evaluer badges (tildeler Profil-proffen hvis kriteriene er møtt)
+      await evaluateBadges(user.id)
       setEditing(false)
       // Reload profil
       const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
@@ -598,7 +607,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 7.3
+              Tillerbyen Skolekorps Dugnadshub v 7.4
             </p>
 
             {/* Logg ut */}

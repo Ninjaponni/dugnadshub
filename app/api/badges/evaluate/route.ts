@@ -74,19 +74,20 @@ async function evaluateBadgesServer(supabase: any, userId: string) {
   const completedEvents = (events || []).filter((e: { status: string }) => e.status === 'completed')
 
   // Badge 16: Profil-proffen — fylte ut profilen
-  // Forelder: navn + telefon + minst ett barn
-  // Musikant: navn + gruppe (telefon valgfritt)
+  // Forelder: navn + minst ett barn
+  // Musikant: navn + gruppe
+  // Telefon er valgfritt for begge (matcher UI-en)
   if (!earned.has(16)) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name, phone, children, is_musician, musician_group')
+      .select('full_name, children, is_musician, musician_group')
       .eq('id', userId)
       .single()
-    const p = profile as { full_name: string | null; phone: string | null; children: Array<{ name: string }> | null; is_musician: boolean | null; musician_group: string | null } | null
+    const p = profile as { full_name: string | null; children: Array<{ name: string }> | null; is_musician: boolean | null; musician_group: string | null } | null
     if (p?.full_name) {
       if (p.is_musician && p.musician_group) {
         toAward.push(16)
-      } else if (!p.is_musician && p.phone && p.children?.some(c => c.name?.trim())) {
+      } else if (!p.is_musician && p.children?.some(c => c.name?.trim())) {
         toAward.push(16)
       }
     }
