@@ -370,6 +370,15 @@ export default function EventsAdminPage() {
       setResetting(false)
       return
     }
+    // Recompute Førstemann (sletter merket siden alle claims er borte)
+    const { data: { session } } = await supabaseRef.current.auth.getSession()
+    if (session) {
+      fetch('/api/events/recompute-first-user', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId }),
+      }).catch(() => {})
+    }
     setResetConfirmId(null)
     setResetting(false)
     await loadEvents()

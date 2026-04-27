@@ -36,4 +36,8 @@ export const badgeDefinitions = [
   { id: 22, name: 'Kaffansen', icon: '/badges/kaffansen.png', category: 'aktivitet' as const, description: 'Kokte kaffe til dugnad', auto_criteria: null },
   { id: 23, name: 'Premieskaffer', icon: '/badges/premieskaffer.png', category: 'aktivitet' as const, description: 'Skaffet premier til lotteri', auto_criteria: null },
   { id: 24, name: 'Flaskesekk-oppbevarer', icon: '/badges/flaskesekkoppbevarer.png', category: 'aktivitet' as const, description: 'Oppbevarte flaskesekker hjemme', auto_criteria: null },
+  { id: 25, name: 'Stormpanter', icon: '/badges/stormpanter.png', category: 'aktivitet' as const, description: 'Stilte opp i storm og kuling', auto_criteria: null },
+  { id: 26, name: 'Solpanter', icon: '/badges/solpanter.png', category: 'aktivitet' as const, description: 'Samlet flasker i strålende solskinn', auto_criteria: null },
+  { id: 27, name: 'Snøpanter', icon: '/badges/snopanter.png', category: 'aktivitet' as const, description: 'Trasket gjennom snøen for korpset', auto_criteria: null },
+  { id: 28, name: 'Førstemann', icon: '/badges/forstemann.png', category: 'aktivitet' as const, description: 'Først ute med å ta en sone', auto_criteria: 'first_zone_in_event' },
 ]

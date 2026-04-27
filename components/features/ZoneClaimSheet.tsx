@@ -62,6 +62,17 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const displayStatus = getDisplayStatus(zone)
   const dropPoint = findDropPoint(zone.name, zone.area)
 
+  async function recomputeFirstUser() {
+    if (!eventId) return
+    const { data: { session } } = await supabaseRef.current.auth.getSession()
+    if (!session) return
+    fetch('/api/events/recompute-first-user', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId }),
+    }).catch(() => {})
+  }
+
   async function handleClaim() {
     if (!eventId) return
     setLoading(true)
@@ -74,6 +85,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     if (userId) evaluateBadges(userId).catch(() => {})
+    recomputeFirstUser()
     onAction()
     setLoading(false)
   }
@@ -90,6 +102,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     setShowUnclaimConfirm(false)
+    recomputeFirstUser()
     onAction()
     setLoading(false)
   }
@@ -205,6 +218,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     }
     setShowMemberPicker(false)
     setAssignLoading(false)
+    recomputeFirstUser()
     onAction()
   }
 
@@ -225,6 +239,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     }
     setAdminUnclaimTarget(null)
     setLoading(false)
+    recomputeFirstUser()
     onAction()
   }
 
