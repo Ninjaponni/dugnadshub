@@ -299,16 +299,18 @@ export default function EventsAdminPage() {
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
     setUpdatingId(eventId)
     setErrorMsg(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
-    if (error) {
-      setErrorMsg('Kunne ikke endre status')
-      setUpdatingId(null)
-      return
-    }
 
-    // Evaluer badges for alle deltagere ved fullføring
+    // Fullfør via RPC — status, sjåfør/stripser-merker, rolle-synk og
+    // Førstemann-recompute skjer atomisk i databasen
     if (newStatus === 'completed') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rpcError } = await (supabaseRef.current.rpc as any)('mark_event_completed', { p_event_id: eventId })
+      if (rpcError) {
+        setErrorMsg('Kunne ikke fullføre hendelsen. Prøv igjen.')
+        setUpdatingId(null)
+        return
+      }
+      // Personlig badge-evaluering for alle deltakere (Frøspire, Tre på rad osv.)
       const { data: claims } = await supabaseRef.current
         .from('zone_claims')
         .select('user_id, zone_assignments!inner(event_id)')
@@ -317,25 +319,13 @@ export default function EventsAdminPage() {
       for (const uid of userIds) {
         evaluateBadges(uid).catch(() => {})
       }
-
-      // Tildel sjåfør/stripser-merker og tilbakestill roller
-      const { data: { session } } = await supabaseRef.current.auth.getSession()
-      if (session) {
-        const headers = {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        }
-        fetch('/api/events/finalize-drivers', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ eventId }),
-        }).catch(() => {})
-        // Sikre at Førstemann er korrekt tildelt — sikkerhetsnett ved completion
-        fetch('/api/events/recompute-first-user', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ eventId }),
-        }).catch(() => {})
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
+      if (error) {
+        setErrorMsg('Kunne ikke endre status')
+        setUpdatingId(null)
+        return
       }
     }
 
