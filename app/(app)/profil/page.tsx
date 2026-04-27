@@ -204,7 +204,7 @@ export default function ProfilePage() {
 
     if (!error) {
       // Re-evaluer badges (tildeler Profil-proffen hvis kriteriene er møtt)
-      await evaluateBadges(user.id)
+      try { await evaluateBadges(user.id) } catch { /* noop — admin kan tildele manuelt */ }
       setEditing(false)
       // Reload profil
       const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
@@ -607,7 +607,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 7.9
+              Tillerbyen Skolekorps Dugnadshub v 8.0
             </p>
 
             {/* Logg ut */}

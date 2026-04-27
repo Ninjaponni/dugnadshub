@@ -100,6 +100,7 @@ async function evaluateBadgesServer(supabase: any, userId: string) {
   if (!earned.has(1) && completedEvents.length > 0) toAward.push(1)
 
   // Badge 3: Lagspiller — fullførte sone med partner
+  // Godta både 'completed' (sone ferdigplukket) og 'picked_up' (sjåfør har hentet)
   if (!earned.has(3)) {
     const assignmentIds = userClaims.map(c => c.assignment_id)
     if (assignmentIds.length > 0) {
@@ -109,7 +110,8 @@ async function evaluateBadgesServer(supabase: any, userId: string) {
         .in('assignment_id', assignmentIds)
         .neq('user_id', userId)
       const partnerAssignments = new Set((partnerClaims || []).map((c: { assignment_id: string }) => c.assignment_id))
-      if (userClaims.some(c => c.zone_assignments?.status === 'completed' && partnerAssignments.has(c.assignment_id))) {
+      const finishedStatuses = new Set(['completed', 'picked_up'])
+      if (userClaims.some(c => finishedStatuses.has(c.zone_assignments?.status) && partnerAssignments.has(c.assignment_id))) {
         toAward.push(3)
       }
     }
@@ -142,12 +144,17 @@ async function evaluateBadgesServer(supabase: any, userId: string) {
   // Badge 12: Ustoppelig — 20+ dugnader
   if (!earned.has(12) && completedEvents.length >= 20) toAward.push(12)
 
-  // Tildel badges (upsert håndterer duplikater)
-  for (const badgeId of toAward) {
-    await supabase.from('user_badges').upsert(
-      { user_id: userId, badge_id: badgeId },
-      { onConflict: 'user_id,badge_id', ignoreDuplicates: true }
-    )
+  // Tildel badges. Vi sjekker allerede mot `earned` over, så duplikater
+  // er unngått. Plain insert — upsert med onConflict feiler her fordi
+  // user_badges har ingen unique constraint på (user_id, badge_id);
+  // partial index på (user_id, badge_id, event_id) WHERE event_id IS NOT NULL
+  // dekker bare event-koblede merker.
+  if (toAward.length > 0) {
+    const rows = toAward.map(badgeId => ({ user_id: userId, badge_id: badgeId, event_id: null }))
+    const { error: insertError } = await supabase.from('user_badges').insert(rows)
+    if (insertError) {
+      throw new Error(`Kunne ikke tildele badges: ${insertError.message}`)
+    }
   }
 
   return toAward

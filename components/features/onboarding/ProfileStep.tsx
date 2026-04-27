@@ -88,7 +88,8 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
     })
 
     if (!error) {
-      await evaluateBadges(user.id)
+      // Hvis badge-evaluator feiler, gå videre — admin kan tildele manuelt
+      try { await evaluateBadges(user.id) } catch { /* noop */ }
       setSaved(true)
       onProfileSaved()
     }

@@ -84,7 +84,11 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       setLoading(false)
       return
     }
-    if (userId) evaluateBadges(userId).catch(() => {})
+    if (userId) {
+      try { await evaluateBadges(userId) } catch (e) {
+        setError(`Sone tatt, men merker ble ikke oppdatert: ${(e as Error).message}`)
+      }
+    }
     recomputeFirstUser()
     onAction()
     setLoading(false)
@@ -118,7 +122,11 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       setLoading(false)
       return
     }
-    if (userId) evaluateBadges(userId).catch(() => {})
+    if (userId) {
+      try { await evaluateBadges(userId) } catch (e) {
+        setError(`Markert ferdig, men merker ble ikke oppdatert: ${(e as Error).message}`)
+      }
+    }
     // Auto-push: sjåfører for flaskeinnsamling, admin for andre typer
     if (zone.zone_type === 'bottle') {
       notifyDrivers(zone.name)

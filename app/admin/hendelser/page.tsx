@@ -316,8 +316,12 @@ export default function EventsAdminPage() {
         .select('user_id, zone_assignments!inner(event_id)')
         .eq('zone_assignments.event_id', eventId) as unknown as { data: Array<{ user_id: string }> | null }
       const userIds = [...new Set((claims || []).map(c => c.user_id))]
-      for (const uid of userIds) {
-        evaluateBadges(uid).catch(() => {})
+      const failed: string[] = []
+      await Promise.all(userIds.map(async uid => {
+        try { await evaluateBadges(uid) } catch { failed.push(uid) }
+      }))
+      if (failed.length > 0) {
+        setErrorMsg(`Hendelsen er fullført, men ${failed.length} bruker(e) fikk ikke evaluert merkene sine. Sjekk admin/medlemmer.`)
       }
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
