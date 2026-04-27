@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import type { Child } from '@/lib/supabase/types'
-import type { Profile, Role, UserBadge, ZoneClaim } from '@/lib/supabase/types'
+import type { Profile, Role, UserBadge, ZoneClaim, ChildGroup } from '@/lib/supabase/types'
 
 type SortMode = 'alpha' | 'badges' | 'least_active'
 
@@ -40,6 +40,7 @@ export default function MembersAdminPage() {
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
+  const [updatingType, setUpdatingType] = useState<string | null>(null)
   const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -103,6 +104,17 @@ export default function MembersAdminPage() {
     await (supabaseRef.current.from('profiles') as any).update({ role: newRole }).eq('id', userId)
     setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p))
     setUpdatingRole(null)
+  }
+
+  // Bytt mellom forelder og musikant, eller endre musikant-gruppe
+  async function handleTypeChange(userId: string, isMusician: boolean, group: ChildGroup | null) {
+    setUpdatingType(userId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseRef.current.from('profiles') as any)
+      .update({ is_musician: isMusician, musician_group: isMusician ? group : null })
+      .eq('id', userId)
+    setProfiles(prev => prev.map(p => p.id === userId ? { ...p, is_musician: isMusician, musician_group: isMusician ? group : null } : p))
+    setUpdatingType(null)
   }
 
   // Tildel merke — aktivitetsmerker kan gis flere ganger
@@ -386,6 +398,55 @@ export default function MembersAdminPage() {
                                 </button>
                               ))}
                             </div>
+                          </div>
+
+                          {/* Type-velger: forelder eller musikant */}
+                          <div>
+                            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Type</label>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                onClick={() => handleTypeChange(profile.id, false, null)}
+                                disabled={updatingType === profile.id}
+                                className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                  !profile.is_musician
+                                    ? 'bg-accent text-white'
+                                    : 'bg-surface-low text-text-secondary hover:bg-surface-low'
+                                } ${updatingType === profile.id ? 'opacity-50' : ''}`}
+                              >
+                                Forelder
+                              </button>
+                              <button
+                                onClick={() => handleTypeChange(profile.id, true, profile.musician_group || 'Aspirant')}
+                                disabled={updatingType === profile.id}
+                                className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                  profile.is_musician
+                                    ? 'bg-accent text-white'
+                                    : 'bg-surface-low text-text-secondary hover:bg-surface-low'
+                                } ${updatingType === profile.id ? 'opacity-50' : ''}`}
+                              >
+                                Musikant
+                              </button>
+                            </div>
+
+                            {/* Gruppe-velger for musikanter */}
+                            {profile.is_musician && (
+                              <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+                                {(['Aspirant', 'Junior', 'Hovedkorps'] as ChildGroup[]).map(g => (
+                                  <button
+                                    key={g}
+                                    onClick={() => handleTypeChange(profile.id, true, g)}
+                                    disabled={updatingType === profile.id}
+                                    className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                      profile.musician_group === g
+                                        ? 'bg-accent/15 text-accent ring-1 ring-accent/30'
+                                        : 'bg-surface-low text-text-secondary hover:bg-surface-low'
+                                    } ${updatingType === profile.id ? 'opacity-50' : ''}`}
+                                  >
+                                    {g}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
 
                           {/* Merker */}
