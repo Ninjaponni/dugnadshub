@@ -3,13 +3,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Button from '@/components/ui/Button'
-import { Truck, MapPin, Check, Package, Info, Phone, StickyNote } from 'lucide-react'
+import { Truck, MapPin, Check, Package, Info, Phone, StickyNote, Navigation } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import KorpsLogo from '@/components/ui/KorpsLogo'
 import type { DugnadEvent } from '@/lib/supabase/types'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockEvents, mockDriverZones, mockTrailerGroups } from '@/lib/mock/data'
+import { useShareLocation } from '@/lib/hooks/useShareLocation'
 
 interface DriverZone {
   assignmentId: string
@@ -31,17 +32,98 @@ interface TrailerGroup {
   zones: DriverZone[]
 }
 
+// Toggle for å dele live-posisjon med teamet
+function DelPosisjon({
+  share,
+  eventTitle,
+}: {
+  share: ReturnType<typeof useShareLocation>
+  eventTitle: string
+}) {
+  const { active, error, lastUpdate, start, stop } = share
+  const [busy, setBusy] = useState(false)
+
+  async function toggle() {
+    setBusy(true)
+    try {
+      if (active) await stop()
+      else await start()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sinceText = lastUpdate
+    ? (() => {
+        const sec = Math.round((Date.now() - lastUpdate.getTime()) / 1000)
+        if (sec < 10) return 'akkurat nå'
+        if (sec < 60) return `${sec} sek siden`
+        return `${Math.round(sec / 60)} min siden`
+      })()
+    : null
+
+  return (
+    <div className={`card rounded-2xl p-4 transition-colors ${active ? 'bg-success/10' : ''}`}>
+      <div className="flex items-start gap-3">
+        <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${active ? 'bg-success/20' : 'bg-accent/10'}`}>
+          <Navigation size={16} className={active ? 'text-success' : 'text-accent'} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-text-primary">
+            {active ? 'Posisjon deles' : 'Del posisjon med team'}
+          </p>
+          <p className="text-xs text-text-secondary mt-0.5">
+            {active
+              ? `${eventTitle} · sist oppdatert ${sinceText || 'venter på GPS'}`
+              : 'Andre på dugnaden ser hengeren din på kartet'}
+          </p>
+          {active && (
+            <p className="text-[11px] text-text-tertiary mt-1.5">
+              Skjermen holdes på. Husk å slå av når du er ferdig.
+            </p>
+          )}
+          {error && (
+            <p className="text-xs text-danger mt-1.5">{error}</p>
+          )}
+        </div>
+        <button
+          onClick={toggle}
+          disabled={busy}
+          className={`shrink-0 px-3.5 py-2 text-xs font-bold rounded-full transition-all active:scale-[0.98] disabled:opacity-50 ${
+            active
+              ? 'bg-card text-danger border border-danger/30'
+              : 'bg-accent text-white'
+          }`}
+        >
+          {busy ? '...' : active ? 'Stopp' : 'Slå på'}
+        </button>
+      </div>
+      {active && (
+        <div className="mt-3 flex items-center gap-2 pl-12">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+          </span>
+          <span className="text-[11px] text-success font-medium">Live</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Sjåførvisning — viser soner klare for henting, gruppert per henger
 export default function DriverPage() {
   const [zones, setZones] = useState<DriverZone[]>([])
   const [events, setEvents] = useState<DugnadEvent[]>([])
   const [trailerGroups, setTrailerGroups] = useState<TrailerGroup[]>([])
   const [myTrailer, setMyTrailer] = useState<{ area: string; trailerGroup: number } | null>(null)
+  const [myDriverEvent, setMyDriverEvent] = useState<{ id: string; title: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [pickingUp, setPickingUp] = useState<string | null>(null)
   const [confirmPickUp, setConfirmPickUp] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
+  const share = useShareLocation(myDriverEvent?.id ?? null)
 
   useEffect(() => {
     if (isMockMode()) {
@@ -83,11 +165,12 @@ export default function DriverPage() {
     // Hent sjåførtildelinger med profilnavn
     const { data: driverAssignments } = await sb
       .from('driver_assignments')
-      .select('user_id, trailer_group, area, profiles(full_name)')
+      .select('user_id, event_id, trailer_group, area, profiles(full_name)')
       .in('event_id', eventIds)
       .eq('role', 'driver') as unknown as {
         data: Array<{
           user_id: string
+          event_id: string
           trailer_group: number
           area: string
           profiles: { full_name: string | null } | null
@@ -107,6 +190,8 @@ export default function DriverPage() {
       // Sjekk om dette er innlogget brukers henger
       if (user && da.user_id === user.id) {
         setMyTrailer({ area: da.area, trailerGroup: da.trailer_group })
+        const ev = activeEvents.find(e => e.id === da.event_id)
+        if (ev) setMyDriverEvent({ id: ev.id, title: ev.title })
       }
     }
 
@@ -377,6 +462,11 @@ export default function DriverPage() {
             {events.length > 0 ? events.map(e => e.title).join(' · ') : 'Ingen aktive hendelser'}
           </p>
         </section>
+
+        {/* Del posisjon — kun synlig hvis bruker er sjåfør på aktiv hendelse */}
+        {myDriverEvent && (
+          <DelPosisjon share={share} eventTitle={myDriverEvent.title} />
+        )}
 
         {/* Sjåførnotater fra aktive hendelser */}
         {!loading && events.filter(e => e.driver_notes).map(e => (

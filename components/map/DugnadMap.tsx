@@ -8,9 +8,11 @@ import ZoneMarkers from './ZoneMarkers'
 import DropPointMarkers from './DropPointMarkers'
 import PosterMarkers from './PosterMarkers'
 import BaseMarker from './BaseMarker'
+import DriverMarker from './DriverMarker'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import type { EventType } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
+import { useDriverLocations } from '@/lib/hooks/useDriverLocations'
 
 interface DugnadMapProps {
   zones: ZoneWithStatus[]
@@ -19,6 +21,7 @@ interface DugnadMapProps {
   userId?: string | null
   activeArea?: 'NORD' | 'SOR' | null
   eventType?: EventType | null
+  eventId?: string | null
   initialCenter?: [number, number] | null
   initialZoom?: number | null
   initialBounds?: [[number, number], [number, number]] | null
@@ -29,7 +32,11 @@ interface DugnadMapProps {
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, initialCenter, initialZoom, initialBounds, flyTarget, onFlyComplete, mapStyle, onBaseClick }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, eventId, initialCenter, initialZoom, initialBounds, flyTarget, onFlyComplete, mapStyle, onBaseClick }: DugnadMapProps) {
+  // Live-posisjon for sjåfører — kun for flaskeinnsamling med valgt event
+  const { drivers } = useDriverLocations(
+    eventType === 'bottle_collection' ? (eventId ?? null) : null
+  )
   const mapRef = useRef<MapRef>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [hasFlown, setHasFlown] = useState(false)
@@ -109,6 +116,9 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
           {eventType === 'bottle_collection' && <BaseMarker activeArea={activeArea} onBaseClick={onBaseClick} />}
           {eventType === 'lapper' && <PosterMarkers activeArea={activeArea} />}
           <ZoneMarkers zones={zones} userId={userId || null} />
+          {eventType === 'bottle_collection' && drivers.length > 0 && (
+            <DriverMarker drivers={drivers} />
+          )}
         </>
       )}
     </Map>

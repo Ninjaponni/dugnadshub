@@ -210,6 +210,7 @@ function MapPageContent() {
         userId={userId}
         activeArea={activeArea}
         eventType={hasActiveEvent ? (event?.type || null) : null}
+        eventId={hasActiveEvent ? (event?.id || null) : null}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
         initialBounds={initialBounds}
