@@ -323,7 +323,7 @@ export interface DittBidragData {
 }
 
 export const mockDittBidrag: DittBidragData = {
-  sekkerPant: 123,
+  sekkerPant: 126,
   lapperDeltUt: 3400,
   kakerBakt: 9,
   premierSkaffet: 42,
