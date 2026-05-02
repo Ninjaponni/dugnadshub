@@ -23,6 +23,9 @@ const sortLabels: Record<SortMode, string> = {
 // Merker som kan tildeles manuelt av admin
 const manualBadges = badgeDefinitions.filter(b => b.auto_criteria === null)
 
+// Kategorier som kan stables ×N (samme merke flere ganger)
+const STACKABLE_CATEGORIES = new Set(['aktivitet', '17mai', 'styret', 'komite', 'vakt'])
+
 const roleLabels: Record<Role, string> = {
   collector: 'Samler',
   driver: 'Sjåfør',
@@ -117,13 +120,13 @@ export default function MembersAdminPage() {
     setUpdatingType(null)
   }
 
-  // Tildel merke — aktivitetsmerker kan gis flere ganger
+  // Tildel merke — stable-bare kategorier kan gis flere ganger
   async function handleAwardBadge(userId: string, badgeId: number) {
     const badge = badgeDefinitions.find(b => b.id === badgeId)
-    const isActivity = badge?.category === 'aktivitet'
+    const canStack = badge ? STACKABLE_CATEGORIES.has(badge.category) : false
 
-    // Vanlige merker: blokker om allerede har
-    if (!isActivity) {
+    // Engangs-merker: blokker om allerede har
+    if (!canStack) {
       const alreadyHas = userBadges.some(ub => ub.user_id === userId && ub.badge_id === badgeId)
       if (alreadyHas) return
     }
@@ -458,7 +461,7 @@ export default function MembersAdminPage() {
                             <div className="flex flex-wrap gap-2">
                               {manualBadges.map(badge => {
                                 const hasBadge = userBadgeList.some(b => b.id === badge.id)
-                                const isActivity = badge.category === 'aktivitet'
+                                const isActivity = STACKABLE_CATEGORIES.has(badge.category)
                                 const count = getBadgeCount(profile.id, badge.id)
                                 const isAwarding = awardingBadge === `${profile.id}-${badge.id}`
 

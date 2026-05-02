@@ -2,10 +2,11 @@
 -- Foreign key fra user_badges.badge_id krever at radene finnes i badges-tabellen
 -- Idempotent: ON CONFLICT DO NOTHING
 
--- Utvid category-CHECK med ny verdi '17mai'
+-- Utvid category-CHECK med ny verdi '17mai' (inkluderer også senere kategorier
+-- så filen er trygg å re-kjøre etter migrate-styret-komite-vakt-badges.sql)
 ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_category_check;
 ALTER TABLE badges ADD CONSTRAINT badges_category_check
-  CHECK (category IN ('starter', 'vanlig', 'veteran', 'elite', 'aktivitet', '17mai'));
+  CHECK (category IN ('starter', 'vanlig', 'veteran', 'elite', 'aktivitet', '17mai', 'styret', 'komite', 'vakt'));
 
 INSERT INTO badges (id, name, description, icon, category, auto_criteria) VALUES
   (29, 'Hurra-helten',     'Bidro på korpsets 17. mai-dugnad',                        '/badges/hurra-helten.png',    '17mai', NULL),

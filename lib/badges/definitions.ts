@@ -71,6 +71,7 @@ export const badgeDefinitions = [
   { id: 51, name: 'Materialforvalter', icon: '/badges/materialforvalter.png', category: 'styret' as const, description: 'Tar vare på uniformer, noter og annet utstyr', auto_criteria: null },
   { id: 52, name: 'Instrumentansvarlig', icon: '/badges/instrumentansvarlig.png', category: 'styret' as const, description: 'Holder orden på instrumentparken', auto_criteria: null },
   { id: 53, name: 'Dugnadsansvarlig', icon: '/badges/dugnadsansvarlig.png', category: 'styret' as const, description: 'Koordinerer korpsets dugnader', auto_criteria: null },
+  { id: 62, name: 'Innkjøpsansvarlig', icon: '/badges/innkjopsansvarlig.png', category: 'styret' as const, description: 'Sørger for at korpset har alt det trenger — kaffe, is, saft, servietter', auto_criteria: null },
 
   // Komitéer (manuelt tildelt, kan stables ×N år)
   { id: 54, name: 'Uniformskomiteen', icon: '/badges/uniformskomiteen.png', category: 'komite' as const, description: 'Sittet i uniformskomiteen', auto_criteria: null },

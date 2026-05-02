@@ -28,7 +28,7 @@ export default function BadgesStep() {
         animate={{ opacity: 1, y: 0 }}
         className="text-2xl font-bold mb-2 font-[var(--font-display)]"
       >
-        61 merker å jakte på
+        62 merker å jakte på
       </motion.h2>
       <motion.p
         initial={{ opacity: 0 }}
