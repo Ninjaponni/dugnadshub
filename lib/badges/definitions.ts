@@ -40,4 +40,24 @@ export const badgeDefinitions = [
   { id: 26, name: 'Solpanter', icon: '/badges/solpanter.png', category: 'aktivitet' as const, description: 'Samlet flasker i strålende solskinn', auto_criteria: null },
   { id: 27, name: 'Snøpanter', icon: '/badges/snopanter.png', category: 'aktivitet' as const, description: 'Trasket gjennom snøen for korpset', auto_criteria: null },
   { id: 28, name: 'Førstemann', icon: '/badges/forstemann.png', category: 'aktivitet' as const, description: 'Først ute med å ta en sone', auto_criteria: 'first_zone_in_event' },
+
+  // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
+  { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },
+  { id: 30, name: 'Festkakebaker', icon: '/badges/festkakebaker.png', category: '17mai' as const, description: 'Bakte og leverte kake til 17. mai', auto_criteria: null },
+  { id: 31, name: 'Kioskløve', icon: '/badges/kiosklove.png', category: '17mai' as const, description: 'Bemannet kiosk på 17. mai', auto_criteria: null },
+  { id: 32, name: 'Kjøkkengeneral', icon: '/badges/kjokkengeneral.png', category: '17mai' as const, description: 'Sto i kjøkkenet og holdt hjulene i gang', auto_criteria: null },
+  { id: 33, name: 'Riggemester', icon: '/badges/riggemester.png', category: '17mai' as const, description: 'Rigget skolen kvelden før 17. mai', auto_criteria: null },
+  { id: 34, name: 'Ryddesjef', icon: '/badges/ryddesjef.png', category: '17mai' as const, description: 'Ryddet og vasket etter endt dugnad', auto_criteria: null },
+  { id: 35, name: 'Springer', icon: '/badges/springer.png', category: '17mai' as const, description: 'Sprang mellom kiosk og kjøkken med påfyll', auto_criteria: null },
+  { id: 36, name: 'Skolesjefen', icon: '/badges/skolesjefen.png', category: '17mai' as const, description: 'Var skoleansvarlig på sin skole', auto_criteria: null },
+  { id: 37, name: 'Vareherre', icon: '/badges/vareherre.png', category: '17mai' as const, description: 'Sørget for innkjøp og distribusjon', auto_criteria: null },
+  { id: 38, name: 'Tilhengerhelten', icon: '/badges/tilhengerhelten.png', category: '17mai' as const, description: 'Kjørte henger fullastet med varer', auto_criteria: null },
+  { id: 39, name: 'Togsjef', icon: '/badges/togsjef.png', category: '17mai' as const, description: 'Ledet barnetoget på 17. mai', auto_criteria: null },
+  { id: 40, name: 'Fanebærer', icon: '/badges/fanebaerer.png', category: '17mai' as const, description: 'Bar fanen i 17. mai-toget', auto_criteria: null },
+  { id: 41, name: 'Pakkemester', icon: '/badges/pakkemester.png', category: '17mai' as const, description: 'Pakket varer på pakkedugnaden', auto_criteria: null },
+  { id: 42, name: 'Portøren', icon: '/badges/portor.png', category: '17mai' as const, description: 'Sørget for trygg frakt av brus uten å bryte plasten', auto_criteria: null },
+
+  // Konfirmasjonsspilling og innhopp (kan stables ×N)
+  { id: 43, name: 'Konfirmasjonsfaneren', icon: '/badges/konfirmasjonsfaneren.png', category: 'aktivitet' as const, description: 'Bar fanen på konfirmasjonsspilling', auto_criteria: null },
+  { id: 44, name: 'Stortrommeren', icon: '/badges/stortrommeren.png', category: 'aktivitet' as const, description: 'Steppet inn og spilte stortromma', auto_criteria: null },
 ]

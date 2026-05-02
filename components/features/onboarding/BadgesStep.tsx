@@ -14,6 +14,7 @@ const categoryLabels: Record<string, string> = {
   veteran: 'Veteran',
   elite: 'Elite',
   aktivitet: 'Aktivitet',
+  '17mai': '17. mai',
 }
 
 export default function BadgesStep() {
@@ -24,7 +25,7 @@ export default function BadgesStep() {
         animate={{ opacity: 1, y: 0 }}
         className="text-2xl font-bold mb-2 font-[var(--font-display)]"
       >
-        23 merker å jakte på
+        44 merker å jakte på
       </motion.h2>
       <motion.p
         initial={{ opacity: 0 }}
