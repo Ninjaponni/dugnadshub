@@ -60,4 +60,27 @@ export const badgeDefinitions = [
   // Konfirmasjonsspilling og innhopp (kan stables ×N)
   { id: 43, name: 'Konfirmasjonsfaneren', icon: '/badges/konfirmasjonsfaneren.png', category: 'aktivitet' as const, description: 'Bar fanen på konfirmasjonsspilling', auto_criteria: null },
   { id: 44, name: 'Stortrommeren', icon: '/badges/stortrommeren.png', category: 'aktivitet' as const, description: 'Steppet inn og spilte stortromma', auto_criteria: null },
+
+  // Styret (manuelt tildelt, kan stables ×N år)
+  { id: 45, name: 'Leder', icon: '/badges/leder.png', category: 'styret' as const, description: 'Korpsleder', auto_criteria: null },
+  { id: 46, name: 'Nestleder', icon: '/badges/nestleder.png', category: 'styret' as const, description: 'Nestleder i styret', auto_criteria: null },
+  { id: 47, name: 'Sekretær', icon: '/badges/sekretaer.png', category: 'styret' as const, description: 'Skriver møtereferater og holder orden', auto_criteria: null },
+  { id: 48, name: 'Kasserer', icon: '/badges/kasserer.png', category: 'styret' as const, description: 'Holder orden på korpsets økonomi', auto_criteria: null },
+  { id: 49, name: 'Styremedlem', icon: '/badges/styremedlem.png', category: 'styret' as const, description: 'Sitter i korpsstyret', auto_criteria: null },
+  { id: 50, name: 'Varamedlem', icon: '/badges/varamedlem.png', category: 'styret' as const, description: 'Vara i korpsstyret', auto_criteria: null },
+  { id: 51, name: 'Materialforvalter', icon: '/badges/materialforvalter.png', category: 'styret' as const, description: 'Tar vare på uniformer, noter og annet utstyr', auto_criteria: null },
+  { id: 52, name: 'Instrumentansvarlig', icon: '/badges/instrumentansvarlig.png', category: 'styret' as const, description: 'Holder orden på instrumentparken', auto_criteria: null },
+  { id: 53, name: 'Dugnadsansvarlig', icon: '/badges/dugnadsansvarlig.png', category: 'styret' as const, description: 'Koordinerer korpsets dugnader', auto_criteria: null },
+
+  // Komitéer (manuelt tildelt, kan stables ×N år)
+  { id: 54, name: 'Uniformskomiteen', icon: '/badges/uniformskomiteen.png', category: 'komite' as const, description: 'Sittet i uniformskomiteen', auto_criteria: null },
+  { id: 55, name: 'Valgkomiteen', icon: '/badges/valgkomiteen.png', category: 'komite' as const, description: 'Sittet i valgkomiteen', auto_criteria: null },
+  { id: 56, name: 'Turkomiteen', icon: '/badges/turkomiteen.png', category: 'komite' as const, description: 'Sittet i turkomiteen', auto_criteria: null },
+  { id: 57, name: 'Steinkjerspællkomiteen', icon: '/badges/steinkjerspaellkomiteen.png', category: 'komite' as const, description: 'Sittet i steinkjerspællkomiteen', auto_criteria: null },
+  { id: 58, name: '17. mai-komiteen', icon: '/badges/17mai-komiteen.png', category: 'komite' as const, description: 'Sittet i 17. mai-komiteen', auto_criteria: null },
+
+  // Vakter (manuelt tildelt, kan stables ×N)
+  { id: 59, name: 'Styrevakta', icon: '/badges/styrevakta.png', category: 'vakt' as const, description: 'Hadde styrevakt på øvelseskvelder', auto_criteria: null },
+  { id: 60, name: 'Korpsvakten', icon: '/badges/korpsvakten.png', category: 'vakt' as const, description: 'Hadde foreldrevakt under øvelse (AK/JK/HK)', auto_criteria: null },
+  { id: 61, name: 'Vaffelvakta', icon: '/badges/vaffelvakta.png', category: 'vakt' as const, description: 'Stekte vafler på vaffeltorsdag', auto_criteria: null },
 ]

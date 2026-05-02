@@ -16,6 +16,9 @@ const categoryLabels: Record<string, string> = {
   elite: 'Elitemerker',
   aktivitet: 'Aktivitetsmerker',
   '17mai': '17. mai-merker',
+  styret: 'Styret',
+  komite: 'Komitémerker',
+  vakt: 'Vaktmerker',
 }
 
 const categoryDescriptions: Record<string, string> = {
@@ -25,6 +28,9 @@ const categoryDescriptions: Record<string, string> = {
   elite: 'De aller gjeveste',
   aktivitet: 'For alt det andre du gjør',
   '17mai': 'For innsats rundt nasjonaldagen',
+  styret: 'For verv i korpsstyret',
+  komite: 'For komitéarbeid',
+  vakt: 'For vakter på øvelseskvelder',
 }
 
 // Nivåsystem — 25 nivåer fra fersking til legende
@@ -248,7 +254,7 @@ export default function BadgesPage() {
         )}
 
         {/* Kategorier — clay-kort per kategori */}
-        {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet', '17mai'] as const).map((category) => {
+        {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet', '17mai', 'styret', 'komite', 'vakt'] as const).map((category) => {
           const badges = badgeDefinitions.filter((b) => b.category === category)
           const earnedInCategory = badges.filter(b => earnedBadgeIds.has(b.id)).length
           const hasAnyEarned = earnedInCategory > 0
