@@ -40,6 +40,8 @@ export const badgeDefinitions = [
   { id: 26, name: 'Solpanter', icon: '/badges/solpanter.png', category: 'aktivitet' as const, description: 'Samlet flasker i strålende solskinn', auto_criteria: null },
   { id: 27, name: 'Snøpanter', icon: '/badges/snopanter.png', category: 'aktivitet' as const, description: 'Trasket gjennom snøen for korpset', auto_criteria: null },
   { id: 28, name: 'Førstemann', icon: '/badges/forstemann.png', category: 'aktivitet' as const, description: 'Først ute med å ta en sone', auto_criteria: 'first_zone_in_event' },
+  { id: 63, name: 'Israider', icon: '/badges/israider.png', category: 'aktivitet' as const, description: 'Tømme butikkene for is', auto_criteria: null },
+  { id: 64, name: 'Isflytter', icon: '/badges/isflytter.png', category: 'aktivitet' as const, description: 'Flytte is fra A til B', auto_criteria: null },
 
   // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
   { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },
@@ -72,6 +74,7 @@ export const badgeDefinitions = [
   { id: 52, name: 'Instrumentansvarlig', icon: '/badges/instrumentansvarlig.png', category: 'styret' as const, description: 'Holder orden på instrumentparken', auto_criteria: null },
   { id: 53, name: 'Dugnadsansvarlig', icon: '/badges/dugnadsansvarlig.png', category: 'styret' as const, description: 'Koordinerer korpsets dugnader', auto_criteria: null },
   { id: 62, name: 'Innkjøpsansvarlig', icon: '/badges/innkjopsansvarlig.png', category: 'styret' as const, description: 'Sørger for at korpset har alt det trenger — kaffe, is, saft, servietter', auto_criteria: null },
+  { id: 65, name: 'Lagersjef', icon: '/badges/lagersjef.png', category: 'styret' as const, description: 'Holder orden på Rosten-lageret — kasser, isoporbokser og at alt kommer på plass igjen', auto_criteria: null },
 
   // Komitéer (manuelt tildelt, kan stables ×N år)
   { id: 54, name: 'Uniformskomiteen', icon: '/badges/uniformskomiteen.png', category: 'komite' as const, description: 'Sittet i uniformskomiteen', auto_criteria: null },
