@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { ShoppingBag, FileText, Cake, Gift, Calendar, Coins } from 'lucide-react'
+import { ShoppingBag, FileText, Cake, Gift, Calendar, Coins, Ticket } from 'lucide-react'
 import { Heart } from 'lucide-react'
 import type { DittBidragData } from '@/lib/mock/data'
 
@@ -17,6 +17,7 @@ const stats = [
   { key: 'lapperDeltUt' as const, label: 'LAPPER DELT UT', icon: FileText },
   { key: 'kakerBakt' as const, label: 'KAKER BAKT', icon: Cake },
   { key: 'premierSkaffet' as const, label: 'PREMIER SKAFFET', icon: Gift },
+  { key: 'loddbokerSolgt' as const, label: 'SOLGTE LODDBØKER', icon: Ticket },
   { key: 'dugnader' as const, label: 'DUGNADER', icon: Calendar },
   { key: 'kronerOpptjent' as const, label: 'KRONER OPPTJENT', icon: Coins },
 ]

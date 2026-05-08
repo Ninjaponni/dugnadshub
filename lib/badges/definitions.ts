@@ -30,7 +30,7 @@ export const badgeDefinitions = [
   // Aktivitetsmerker (kan gis flere ganger — vises som ×N)
   { id: 17, name: 'Kakeboss', icon: '/badges/kakeboss.png', category: 'aktivitet' as const, description: 'Bakte kake til dugnad', auto_criteria: null },
   { id: 18, name: 'Lappemester Nord', icon: '/badges/lappemester-nord.png', category: 'aktivitet' as const, description: 'Delte ut lapper i Nord', auto_criteria: null },
-  { id: 19, name: 'Lykkehjulet', icon: '/badges/lykkehjulet.png', category: 'aktivitet' as const, description: 'Solgte lotteri', auto_criteria: null },
+  { id: 19, name: 'Lykkehjulet', icon: '/badges/lykkehjulet.png', category: 'aktivitet' as const, description: 'Solgte loddbøker', auto_criteria: null },
   { id: 20, name: 'Lappemester Sør', icon: '/badges/lappemester-sor.png', category: 'aktivitet' as const, description: 'Delte ut lapper i Sør', auto_criteria: null },
   { id: 21, name: 'Saftansen', icon: '/badges/saftansen.png', category: 'aktivitet' as const, description: 'Laget saft til dugnad', auto_criteria: null },
   { id: 22, name: 'Kaffansen', icon: '/badges/kaffansen.png', category: 'aktivitet' as const, description: 'Kokte kaffe til dugnad', auto_criteria: null },
