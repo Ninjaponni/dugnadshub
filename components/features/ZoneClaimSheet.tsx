@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
-import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus, Phone } from 'lucide-react'
+import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus, Phone, Music } from 'lucide-react'
 import MemberPicker from '@/components/features/MemberPicker'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
+import type { EventMusician } from '@/lib/supabase/types'
 import dropPointsData from '@/lib/map/drop-points-data'
 import { evaluateBadges } from '@/lib/badges/evaluator'
 
@@ -30,9 +31,10 @@ function findDropPoint(zoneName: string, area: string) {
 // Visuell status basert på claims og sonetype
 function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string } {
   const isLapper = zone.zone_type === 'lapper'
+  const isPlast = zone.zone_type === 'plast'
   if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple' }
-  if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : 'Ferdigplukket', color: 'bg-success' }
-  if (zone.claims.length >= zone.collectors_needed) return { label: 'Fullt bemannet', color: 'bg-accent' }
+  if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : isPlast ? 'Ferdig ryddet' : 'Ferdigplukket', color: 'bg-success' }
+  if (zone.claims.length >= zone.collectors_needed) return { label: isPlast ? 'To voksne meldt' : 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
   return { label: 'Ledig', color: 'bg-zone-available' }
 }
@@ -48,7 +50,26 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const [showMemberPicker, setShowMemberPicker] = useState(false)
   const [assignLoading, setAssignLoading] = useState(false)
   const [adminUnclaimTarget, setAdminUnclaimTarget] = useState<string | null>(null)
+  const [musicians, setMusicians] = useState<EventMusician[]>([])
   const supabaseRef = useRef(createClient())
+
+  // Hent musikanter for plast-soner
+  const isPlastZone = zone?.zone_type === 'plast'
+  useEffect(() => {
+    if (!isPlastZone || !eventId || !zone?.id) {
+      setMusicians([])
+      return
+    }
+    supabaseRef.current
+      .from('event_musicians')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('zone_id', zone.id)
+      .order('name')
+      .then(({ data }) => {
+        setMusicians((data || []) as unknown as EventMusician[])
+      })
+  }, [isPlastZone, eventId, zone?.id])
 
   if (!zone) return null
 
@@ -127,10 +148,11 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         setError(`Markert ferdig, men merker ble ikke oppdatert: ${(e as Error).message}`)
       }
     }
-    // Auto-push: sjåfører for flaskeinnsamling, admin for andre typer
+    // Auto-push: sjåfører for flaskeinnsamling, admin for lapper
+    // Plast: ingen push — voksne tar søppelet med seg til møteplassen
     if (zone.zone_type === 'bottle') {
       notifyDrivers(zone.name)
-    } else {
+    } else if (zone.zone_type === 'lapper') {
       notifyAdmin(zone.name)
     }
     setShowCompleteConfirm(false)
@@ -259,11 +281,15 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           <span className={`w-2 h-2 rounded-full ${displayStatus.color}`} />
           <span className="text-sm text-text-secondary">{displayStatus.label}</span>
         </span>
-        <span className="text-xs text-text-tertiary">·</span>
-        <span className="text-sm text-text-secondary">{zone.area === 'NORD' ? 'Nord' : 'Sør'} {zone.id}</span>
+        {zone.zone_type !== 'plast' && (
+          <>
+            <span className="text-xs text-text-tertiary">·</span>
+            <span className="text-sm text-text-secondary">{zone.area === 'NORD' ? 'Nord' : 'Sør'} {zone.id}</span>
+          </>
+        )}
         <span className="text-xs text-text-tertiary">·</span>
         <span className="text-sm text-text-secondary">
-          {zone.claims.length}/{zone.collectors_needed} {zone.zone_type === 'lapper' ? 'frivillige' : 'samlere'}
+          {zone.claims.length}/{zone.collectors_needed} {zone.zone_type === 'lapper' ? 'frivillige' : zone.zone_type === 'plast' ? 'voksne ansvarlige' : 'samlere'}
         </span>
         {zone.zone_type === 'lapper' && zone.flyers != null && (
           <>
@@ -289,8 +315,26 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         </div>
       )}
 
+      {/* Plast: musikanter knyttet til denne sona */}
+      {isPlastZone && musicians.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide flex items-center gap-1.5">
+            <Music size={12} className="text-accent" />
+            {musicians.length} musikanter rydder her
+          </p>
+          <div className="p-3 rounded-2xl bg-accent/5 text-sm leading-relaxed">
+            {musicians.map(m => m.name).join(' · ')}
+          </div>
+        </div>
+      )}
+      {isPlastZone && musicians.length === 0 && (
+        <div className="mb-4 p-3 rounded-2xl bg-warning/10 text-sm text-text-secondary">
+          Ingen musikanter er tildelt sona enda. Admin må fordele musikanter.
+        </div>
+      )}
+
       {/* Oppsamlingspunkt — klikkbart (kun for flaskeinnsamling) */}
-      {zone.zone_type !== 'lapper' && dropPoint && (
+      {zone.zone_type === 'bottle' && dropPoint && (
         <button
           onClick={handleDropPointClick}
           className="flex items-center gap-3 p-3 bg-surface-low/60 rounded-xl mb-3 active:scale-[0.98] transition-all w-full text-left"
@@ -306,11 +350,11 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         </button>
       )}
 
-      {/* Samlere */}
+      {/* Samlere / Voksne ansvarlige */}
       {zone.claims.length > 0 && (
         <div className="mb-4">
           <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide">
-            {zone.zone_type === 'lapper' ? 'Utdelere' : 'Samlere'}
+            {zone.zone_type === 'lapper' ? 'Utdelere' : zone.zone_type === 'plast' ? 'Voksne ansvarlige' : 'Samlere'}
           </p>
           <div className="space-y-2">
             {zone.claims.map((claim) => (
@@ -475,6 +519,8 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                 <p className="text-sm text-text-secondary">
                   {zone.zone_type === 'lapper'
                     ? 'Alle lapper og plakater er levert i sonen.'
+                    : zone.zone_type === 'plast'
+                    ? 'Ta med oppsamlet søppel til møteplassen.'
                     : 'Sjåførene får varsel om at panten er klar for henting.'}
                 </p>
               </div>

@@ -9,8 +9,9 @@ import DropPointMarkers from './DropPointMarkers'
 import PosterMarkers from './PosterMarkers'
 import BaseMarker from './BaseMarker'
 import DriverMarker from './DriverMarker'
+import MeetingPointMarker from './MeetingPointMarker'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
-import type { EventType } from '@/lib/supabase/types'
+import type { EventType, MeetingPoint } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import { useDriverLocations } from '@/lib/hooks/useDriverLocations'
 
@@ -29,10 +30,12 @@ interface DugnadMapProps {
   onFlyComplete?: () => void
   mapStyle?: string
   onBaseClick?: (base: { id: string; name: string; area: 'NORD' | 'SOR'; coordinates: [number, number] }) => void
+  meetingPoint?: MeetingPoint | null
+  onMeetingPointClick?: (point: MeetingPoint) => void
 }
 
 // Fullskjermskart med sonepolygoner og oppsamlingspunkter
-export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, eventId, initialCenter, initialZoom, initialBounds, flyTarget, onFlyComplete, mapStyle, onBaseClick }: DugnadMapProps) {
+export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, activeArea, eventType, eventId, initialCenter, initialZoom, initialBounds, flyTarget, onFlyComplete, mapStyle, onBaseClick, meetingPoint, onMeetingPointClick }: DugnadMapProps) {
   // Live-posisjon for sjåfører — kun for flaskeinnsamling med valgt event
   const { drivers } = useDriverLocations(
     eventType === 'bottle_collection' ? (eventId ?? null) : null
@@ -112,9 +115,12 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
       {mapLoaded && (
         <>
           <ZoneLayer zones={zones} selectedZoneId={selectedZoneId} userId={userId} />
-          {eventType && eventType !== 'lapper' && <DropPointMarkers activeArea={activeArea} />}
+          {eventType === 'bottle_collection' && <DropPointMarkers activeArea={activeArea} />}
           {eventType === 'bottle_collection' && <BaseMarker activeArea={activeArea} onBaseClick={onBaseClick} />}
           {eventType === 'lapper' && <PosterMarkers activeArea={activeArea} />}
+          {eventType === 'plast' && meetingPoint && (
+            <MeetingPointMarker point={meetingPoint} onClick={onMeetingPointClick} />
+          )}
           <ZoneMarkers zones={zones} userId={userId || null} />
           {eventType === 'bottle_collection' && drivers.length > 0 && (
             <DriverMarker drivers={drivers} />

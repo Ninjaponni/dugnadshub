@@ -37,10 +37,15 @@ export function useRealtimeZones(eventId: string | null) {
 
     const supabase = supabaseRef.current
 
-    const { data: allZones } = await supabase
-      .from('zones')
-      .select('*')
-      .order('id')
+    // Permanente soner (event_id IS NULL) + ad-hoc plast-soner for dette eventet
+    let zoneQuery = supabase.from('zones').select('*').order('id')
+    if (eventId === 'all') {
+      // Vis kun permanente soner i 'all'-modus
+      zoneQuery = zoneQuery.is('event_id', null)
+    } else {
+      zoneQuery = zoneQuery.or(`event_id.is.null,event_id.eq.${eventId}`)
+    }
+    const { data: allZones } = await zoneQuery
 
     if (!allZones) return
 

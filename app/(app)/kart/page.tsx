@@ -9,8 +9,9 @@ import { useActiveEvent, useActiveEvents } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
 import BaseSheet from '@/components/features/BaseSheet'
 import type { Base } from '@/components/features/BaseSheet'
+import MeetingPointSheet from '@/components/features/MeetingPointSheet'
 import { bases } from '@/components/map/BaseMarker'
-import type { ZoneArea, DugnadEvent } from '@/lib/supabase/types'
+import type { ZoneArea, DugnadEvent, MeetingPoint } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
 import MapInfoSheet from '@/components/features/MapInfoSheet'
@@ -103,6 +104,7 @@ function MapPageContent() {
   const zones = hasActiveEvent ? rawZones : []
   const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
   const [selectedBase, setSelectedBase] = useState<Base | null>(null)
+  const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null)
   const [isSatellite, setIsSatellite] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const { isDark } = useTheme()
@@ -156,7 +158,7 @@ function MapPageContent() {
     return null // 'begge' → vis alt
   }, [event, showAll])
 
-  // Beregn bounding box fra tildelte soner (+ base for flaskeinnsamling)
+  // Beregn bounding box fra tildelte soner (+ base for flaskeinnsamling, eller møteplass for plast)
   const initialBounds = useMemo<[[number, number], [number, number]] | null>(() => {
     if (focusZoneId || showAll) return null
     const assigned = zones.filter((z) => z.assignment_id)
@@ -165,11 +167,20 @@ function MapPageContent() {
     let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity
 
     for (const zone of assigned) {
-      const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
-      if (!feature) continue
-      const coords = feature.geometry.type === 'MultiPolygon'
-        ? (feature.geometry.coordinates as number[][][][]).flatMap(p => p[0])
-        : (feature.geometry.coordinates as number[][][])[0]
+      // Plast-soner har geometri direkte i zone (fra DB), andre i static fil
+      let coords: number[][] = []
+      if (zone.zone_type === 'plast' && zone.geometry) {
+        const g = zone.geometry as { type: string; coordinates: number[][][] | number[][][][] }
+        coords = g.type === 'MultiPolygon'
+          ? (g.coordinates as number[][][][]).flatMap(p => p[0])
+          : (g.coordinates as number[][][])[0]
+      } else {
+        const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
+        if (!feature) continue
+        coords = feature.geometry.type === 'MultiPolygon'
+          ? (feature.geometry.coordinates as number[][][][]).flatMap(p => p[0])
+          : (feature.geometry.coordinates as number[][][])[0]
+      }
       for (const [lng, lat] of coords) {
         if (lng < minLng) minLng = lng
         if (lng > maxLng) maxLng = lng
@@ -190,9 +201,18 @@ function MapPageContent() {
       }
     }
 
+    // Inkluder møteplass for plastdugnad
+    if (event?.type === 'plast' && event.meeting_point) {
+      const { lng, lat } = event.meeting_point
+      if (lng < minLng) minLng = lng
+      if (lng > maxLng) maxLng = lng
+      if (lat < minLat) minLat = lat
+      if (lat > maxLat) maxLat = lat
+    }
+
     if (!isFinite(minLng)) return null
     return [[minLng, minLat], [maxLng, maxLat]]
-  }, [zones, zonesLoading, event?.type, activeArea, focusZoneId, showAll])
+  }, [zones, zonesLoading, event?.type, event?.meeting_point, activeArea, focusZoneId, showAll])
 
   const assignedZones = zones.filter((z) => z.assignment_id)
   const availableCount = assignedZones.filter((z) => z.claims.length === 0).length
@@ -205,7 +225,7 @@ function MapPageContent() {
     <div className="fixed inset-0 z-0">
       <DugnadMap
         zones={zones}
-        onZoneClick={(zone) => { setSelectedZone(zone); setSelectedBase(null) }}
+        onZoneClick={(zone) => { setSelectedZone(zone); setSelectedBase(null); setSelectedMeetingPoint(null) }}
         selectedZoneId={selectedZone?.id}
         userId={userId}
         activeArea={activeArea}
@@ -217,7 +237,9 @@ function MapPageContent() {
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
         mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : (isDark ? MAP_CONFIG.darkStyle : MAP_CONFIG.style)}
-        onBaseClick={(base) => { setSelectedBase(base); setSelectedZone(null) }}
+        onBaseClick={(base) => { setSelectedBase(base); setSelectedZone(null); setSelectedMeetingPoint(null) }}
+        meetingPoint={hasActiveEvent && event?.type === 'plast' ? event.meeting_point : null}
+        onMeetingPointClick={(p) => { setSelectedMeetingPoint(p); setSelectedZone(null); setSelectedBase(null) }}
       />
 
       {/* Satellitt/kart-toggle */}
@@ -253,6 +275,15 @@ function MapPageContent() {
         onClose={() => setShowInfo(false)}
         eventType={event?.type || null}
         contactPhone={event?.contact_phone || null}
+      />
+
+      <MeetingPointSheet
+        point={selectedMeetingPoint}
+        eventId={event?.id || null}
+        eventTitle={event?.title || null}
+        userId={userId}
+        isAdmin={userRole === 'admin'}
+        onClose={() => setSelectedMeetingPoint(null)}
       />
 
       {!eventLoading && !eventsLoading && (

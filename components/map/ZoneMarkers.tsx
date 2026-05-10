@@ -41,10 +41,16 @@ export default function ZoneMarkers({ zones, userId }: ZoneMarkersProps) {
 
         if (!isMine && !isCompleted && !isPickedUp) return null
 
-        // Finn polygon-senteret fra GeoJSON
-        const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
-        if (!feature) return null
-        const [lng, lat] = getGeometryCenter(feature.geometry)
+        // Plast-soner har geometri i DB (zone.geometry), permanente soner i static fil
+        let geometry: { type: string; coordinates: number[][][] | number[][][][] } | null = null
+        if (zone.zone_type === 'plast' && zone.geometry) {
+          geometry = zone.geometry as unknown as { type: string; coordinates: number[][][] | number[][][][] }
+        } else {
+          const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
+          if (feature) geometry = feature.geometry
+        }
+        if (!geometry) return null
+        const [lng, lat] = getGeometryCenter(geometry)
 
         return (
           <Marker key={zone.id} longitude={lng} latitude={lat} anchor="center">

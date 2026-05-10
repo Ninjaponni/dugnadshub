@@ -20,6 +20,13 @@ const flyerColors = [
   { color: '#6B8F71', label: 'Ferdig levert' },
 ]
 
+const plastColors = [
+  { color: '#E57373', label: 'Ledig — meld deg som voksen ansvarlig' },
+  { color: '#FFD54F', label: 'Én voksen — trenger én til' },
+  { color: '#5C9CE6', label: 'To voksne meldt' },
+  { color: '#6B8F71', label: 'Ferdig ryddet' },
+]
+
 interface MapInfoSheetProps {
   open: boolean
   onClose: () => void
@@ -30,7 +37,8 @@ interface MapInfoSheetProps {
 // Informasjonsark for dugnadsdeltagere — Stitch-design
 export default function MapInfoSheet({ open, onClose, eventType, contactPhone }: MapInfoSheetProps) {
   const isBottleCollection = eventType === 'bottle_collection'
-  const colorItems = isBottleCollection ? bottleColors : flyerColors
+  const isPlast = eventType === 'plast'
+  const colorItems = isBottleCollection ? bottleColors : isPlast ? plastColors : flyerColors
 
   return (
     <BottomSheet open={open} onClose={onClose}>
@@ -60,11 +68,29 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
         <div>
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-3">Hva gjør jeg?</p>
           <div className="space-y-4">
-            <Step n={1}>
-              Velg en ledig sone (rød) og trykk <span className="font-bold text-accent">Ta denne sonen</span>
-            </Step>
-            {isBottleCollection ? (
+            {isPlast ? (
               <>
+                <Step n={1}>
+                  Møt opp på <span className="font-bold text-accent">Møteplassen</span> for å hente sekker og hansker.
+                </Step>
+                <Step n={2}>
+                  Velg en sone som passer din barnegruppe (AK, JK1, JK2 eller HK 1-3). To voksne er ansvarlige per sone.
+                </Step>
+                <Step n={3}>
+                  Rydd plast sammen med musikantene i sona deres i 3 timer.
+                </Step>
+                <Step n={4}>
+                  Ta med oppsamlet søppel tilbake til møteplassen, og trykk <span className="font-bold text-accent">Marker som ferdig</span>.
+                </Step>
+                <Step n={5}>
+                  Spis og drikk sammen på møteplassen etter dugnaden.
+                </Step>
+              </>
+            ) : isBottleCollection ? (
+              <>
+                <Step n={1}>
+                  Velg en ledig sone (rød) og trykk <span className="font-bold text-accent">Ta denne sonen</span>
+                </Step>
                 <Step n={2}>
                   Når du er ferdig, trykk <span className="font-bold text-accent">Marker som ferdig</span>
                 </Step>
@@ -73,12 +99,26 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
                 </Step>
               </>
             ) : (
-              <Step n={2}>
-                Når alle lapper og plakater er levert, trykk <span className="font-bold text-accent">Marker som ferdig</span>
-              </Step>
+              <>
+                <Step n={1}>
+                  Velg en ledig sone (rød) og trykk <span className="font-bold text-accent">Ta denne sonen</span>
+                </Step>
+                <Step n={2}>
+                  Når alle lapper og plakater er levert, trykk <span className="font-bold text-accent">Marker som ferdig</span>
+                </Step>
+              </>
             )}
           </div>
         </div>
+
+        {/* Plast-spesifikk info: vertskap og søppelhenger */}
+        {isPlast && (
+          <div className="bg-surface-low p-4 rounded-xl">
+            <p className="text-[13px] text-text-primary leading-relaxed font-medium">
+              Vil du være vert eller kjøre søppelhenger? Trykk på <strong>Møteplass</strong>-markøren i kartet for å melde deg.
+            </p>
+          </div>
+        )}
 
         {/* Sjåfør/stripser-info (kun flaskeinnsamling) */}
         {isBottleCollection && (

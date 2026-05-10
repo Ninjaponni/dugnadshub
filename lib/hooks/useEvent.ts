@@ -56,7 +56,7 @@ export function useActiveEvents() {
         .from('events')
         .select('*')
         .in('status', ['active', 'upcoming'])
-        .in('type', ['bottle_collection', 'lapper'])
+        .in('type', ['bottle_collection', 'lapper', 'plast'])
         .order('date', { ascending: true })
 
       const all = (data || []) as unknown as DugnadEvent[]

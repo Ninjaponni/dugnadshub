@@ -6,8 +6,8 @@ export interface Child {
   group: ChildGroup
 }
 export type ZoneArea = 'NORD' | 'SOR'
-export type EventType = 'bottle_collection' | 'lapper' | 'lottery' | 'baking' | 'other'
-export type ZoneType = 'bottle' | 'lapper'
+export type EventType = 'bottle_collection' | 'lapper' | 'lottery' | 'baking' | 'plast' | 'other'
+export type ZoneType = 'bottle' | 'lapper' | 'plast'
 export type EventStatus = 'upcoming' | 'active' | 'completed'
 export type ZoneStatus = 'available' | 'claimed' | 'in_progress' | 'completed' | 'picked_up'
 
@@ -36,6 +36,16 @@ export interface Zone {
   notes: string | null
   flyers: number | null
   posters: number | null
+  event_id: string | null
+  target_group: string | null
+}
+
+// Møteplass for plastdugnad (lagret i events.meeting_point JSONB)
+export interface MeetingPoint {
+  lng: number
+  lat: number
+  name: string
+  description?: string
 }
 
 export interface DropPoint {
@@ -63,6 +73,21 @@ export interface DugnadEvent {
   contact_phone: string | null
   bags_collected: number | null
   completion_notes: string | null
+  meeting_point: MeetingPoint | null
+  send_push_on_activate: boolean
+}
+
+// Musikant tildelt en sone på en plastdugnad
+export interface EventMusician {
+  id: string
+  event_id: string
+  name: string
+  group_name: string | null
+  instrument: string | null
+  zone_id: string | null
+  profile_id: string | null
+  attendance: 'expected' | 'attended' | 'absent'
+  created_at: string
 }
 
 export interface ZoneAssignment {
@@ -147,6 +172,7 @@ export interface Database {
       participation_log: { Row: ParticipationLog; Insert: Omit<ParticipationLog, 'id'>; Update: Partial<ParticipationLog> }
       badges: { Row: Badge; Insert: Omit<Badge, 'id'>; Update: Partial<Badge> }
       user_badges: { Row: UserBadge; Insert: Omit<UserBadge, 'id'>; Update: Partial<UserBadge> }
+      event_musicians: { Row: EventMusician; Insert: Omit<EventMusician, 'id' | 'created_at'>; Update: Partial<EventMusician> }
     }
   }
 }

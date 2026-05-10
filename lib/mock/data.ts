@@ -36,6 +36,8 @@ export const mockEvents: DugnadEvent[] = [
     contact_phone: '912 34 567',
     bags_collected: null,
     completion_notes: null,
+    meeting_point: null,
+    send_push_on_activate: true,
   },
 ]
 
@@ -120,6 +122,8 @@ function makeZone(
     notes: null,
     flyers: null,
     posters: null,
+    event_id: null,
+    target_group: null,
     assignment_id: opts.assignmentId ?? `assign-${id}`,
     status: opts.status ?? 'available',
     claims: opts.claims ?? [],

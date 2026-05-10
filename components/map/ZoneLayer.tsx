@@ -5,6 +5,13 @@ import { Source, Layer } from 'react-map-gl/mapbox'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
 
+// GeoJSON-feature struktur for soner — beholder samme form som combined-zones-data
+type ZoneFeature = {
+  type: 'Feature'
+  properties: Record<string, string | number | boolean | null | undefined>
+  geometry: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
+}
+
 // Fargekoder for sonestatus — speiler tokens i app/globals.css
 // Rød=ledig, Gul=delvis tatt, Blå=fullt bemannet, Grønn=ferdigplukket, Lilla=hentet
 // Mapbox krever rene hex-verdier, derfor hardkodet her
@@ -36,10 +43,23 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
       return { type: 'FeatureCollection' as const, features: [] }
     }
 
-    const features = zonesGeoJson.features
+    // Plast-soner har ad-hoc geometri lagret i zones.geometry — bygg features fra DB
+    // Permanente soner (bottle/lapper) bruker static GeoJSON-fil
+    const plastFeatures: ZoneFeature[] = zones
+      .filter((z) => z.zone_type === 'plast' && z.geometry)
+      .map((z) => ({
+        type: 'Feature' as const,
+        properties: { id: z.id, name: z.name },
+        geometry: z.geometry as ZoneFeature['geometry'],
+      }))
+
+    const staticFeatures = zonesGeoJson.features
       .filter((feature) => !hasActiveEvent || activeZoneIds.has(feature.properties?.id as string))
-      .map((feature) => {
-      const zoneId = feature.properties?.id
+
+    const allFeatures = [...staticFeatures, ...plastFeatures] as ZoneFeature[]
+
+    const features = allFeatures.map((feature) => {
+      const zoneId = feature.properties?.id as string | undefined
       const zone = zones.find((z) => z.id === zoneId)
       const claimCount = zone?.claims?.length || 0
       const collectorsNeeded = zone?.collectors_needed || 2

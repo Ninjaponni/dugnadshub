@@ -5,11 +5,15 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import KorpsLogo from '@/components/ui/KorpsLogo'
-import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Users, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone } from '@/lib/supabase/types'
+import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone, MeetingPoint } from '@/lib/supabase/types'
 import { evaluateBadges } from '@/lib/badges/evaluator'
+import { parseKmz } from '@/lib/plast/kmz-parser'
+import { importPlastZones, importMusicians, type TuttiCsvRow } from '@/lib/plast/admin-actions'
+import Papa from 'papaparse'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 // Sonestatus-teller per hendelse
 interface ZoneStats {
@@ -37,6 +41,7 @@ interface EventFormData {
   contactPhone: string
   bagsCollected: string
   completionNotes: string
+  sendPushOnActivate: boolean
 }
 
 const emptyForm: EventFormData = {
@@ -51,6 +56,7 @@ const emptyForm: EventFormData = {
   contactPhone: '',
   bagsCollected: '',
   completionNotes: '',
+  sendPushOnActivate: true,
 }
 
 const statusLabels: Record<EventStatus, string> = {
@@ -70,6 +76,7 @@ const typeLabels: Record<EventType, string> = {
   lapper: 'Lappeutdeling',
   lottery: 'Lotteri',
   baking: 'Bakesalg',
+  plast: 'Plastdugnad',
   other: 'Annet',
 }
 
@@ -125,6 +132,13 @@ export default function EventsAdminPage() {
   const [exporting, setExporting] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  // Plastdugnad-import (per event)
+  const [plastImporting, setPlastImporting] = useState<string | null>(null)
+  const [plastImportResult, setPlastImportResult] = useState<{ eventId: string; message: string; isError: boolean } | null>(null)
+  // Pending KMZ/CSV-fil som venter på bekreftelse fra ConfirmDialog
+  const [pendingKmz, setPendingKmz] = useState<{ eventId: string; file: File; title: string; message: string } | null>(null)
+  const [pendingCsv, setPendingCsv] = useState<{ eventId: string; file: File; title: string; message: string } | null>(null)
+
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
@@ -165,6 +179,9 @@ export default function EventsAdminPage() {
 
   // Hjelpefunksjon — tildel soner basert pa omrade og hendelsestype
   async function assignZonesForEvent(eventId: string, area: EventArea, eventType: EventType) {
+    // Plastdugnad har ad-hoc soner som lages via KMZ-import — ingen auto-tildeling
+    if (eventType === 'plast') return
+
     // Velg riktig sonetype basert pa hendelsestype
     const zoneType = eventType === 'lapper' ? 'lapper' : 'bottle'
     const { data: zones } = await supabaseRef.current.from('zones').select('id, area, zone_type').eq('zone_type', zoneType) as unknown as { data: Array<Pick<Zone, 'id' | 'area' | 'zone_type'>> | null }
@@ -211,6 +228,7 @@ export default function EventsAdminPage() {
       contact_phone: form.contactPhone || null,
       status: 'upcoming',
       created_by: user.id,
+      send_push_on_activate: form.sendPushOnActivate,
     }).select().single() as { data: DugnadEvent | null; error: unknown }
 
     if (error || !newEvent) {
@@ -246,6 +264,7 @@ export default function EventsAdminPage() {
       contact_phone: editForm.contactPhone || null,
       bags_collected: editForm.bagsCollected ? parseInt(editForm.bagsCollected, 10) : null,
       completion_notes: editForm.completionNotes || null,
+      send_push_on_activate: editForm.sendPushOnActivate,
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
@@ -273,6 +292,7 @@ export default function EventsAdminPage() {
       contactPhone: event.contact_phone || '',
       bagsCollected: event.bags_collected ? String(event.bags_collected) : '',
       completionNotes: event.completion_notes || '',
+      sendPushOnActivate: event.send_push_on_activate ?? true,
     })
   }
 
@@ -333,10 +353,10 @@ export default function EventsAdminPage() {
       }
     }
 
-    // Send push ved aktivering
+    // Send push ved aktivering — respekter send_push_on_activate-toggle
     if (newStatus === 'active') {
       const event = events.find(e => e.id === eventId)
-      if (event) {
+      if (event && event.send_push_on_activate !== false) {
         const { data: { user } } = await supabaseRef.current.auth.getUser()
         if (user) {
           const { data: { session } } = await supabaseRef.current.auth.getSession()
@@ -413,6 +433,93 @@ export default function EventsAdminPage() {
         filter: { all: true },
       }),
     }).catch(() => {})
+  }
+
+  // Plastdugnad: last opp KMZ med soner + møteplass — viser confirm hvis re-import
+  function requestKmzUpload(eventId: string, file: File) {
+    const event = events.find(e => e.id === eventId)
+    if (event && event.zoneStats.total > 0) {
+      const claimsCount = event.zoneStats.claimed + event.zoneStats.completed
+      const message = claimsCount > 0
+        ? `Dette sletter alle ${event.zoneStats.total} eksisterende soner og ${claimsCount} claims fra foreldre.\n\nClaims kan ikke gjenopprettes etter sletting.`
+        : `Dette sletter ${event.zoneStats.total} eksisterende soner og oppretter nye fra KMZ-filen.`
+      setPendingKmz({ eventId, file, title: 'Erstatte eksisterende soner?', message })
+      return
+    }
+    handleKmzUpload(eventId, file)
+  }
+
+  async function handleKmzUpload(eventId: string, file: File) {
+    setPlastImporting(eventId)
+    setPlastImportResult(null)
+    try {
+      const parsed = await parseKmz(file)
+      if (parsed.zones.length === 0) {
+        setPlastImportResult({ eventId, message: 'Fant ingen soner i KMZ-en', isError: true })
+        setPlastImporting(null)
+        return
+      }
+      const result = await importPlastZones(supabaseRef.current, eventId, parsed)
+      const errorSuffix = result.errors.length > 0 ? ` Feil: ${result.errors.join('; ')}` : ''
+      setPlastImportResult({
+        eventId,
+        message: `Opprettet ${result.zonesCreated} soner${result.meetingPointSet ? ' + møteplass' : ''}.${errorSuffix}`,
+        isError: result.errors.length > 0,
+      })
+      await loadEvents()
+    } catch (err) {
+      setPlastImportResult({
+        eventId,
+        message: `Feil ved KMZ-parsing: ${(err as Error).message}`,
+        isError: true,
+      })
+    }
+    setPlastImporting(null)
+  }
+
+  // Plastdugnad: last opp Tutti-CSV — viser confirm hvis re-import
+  async function requestCsvUpload(eventId: string, file: File) {
+    const { count: existingCount } = await supabaseRef.current
+      .from('event_musicians')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId) as unknown as { count: number | null }
+
+    if (existingCount && existingCount > 0) {
+      const message = `Re-import oppdaterer listen med ${existingCount} eksisterende musikanter.\n\n• Musikanter som ikke er i ny CSV slettes\n• Manuell HK-fordeling bevares for navn som finnes i begge listene\n• Nye musikanter auto-fordeles`
+      setPendingCsv({ eventId, file, title: 'Oppdater musikantlisten?', message })
+      return
+    }
+    handleCsvUpload(eventId, file)
+  }
+
+  async function handleCsvUpload(eventId: string, file: File) {
+    setPlastImporting(eventId)
+    setPlastImportResult(null)
+    try {
+      const text = await file.text()
+      const parseResult = Papa.parse<TuttiCsvRow>(text, { header: true, skipEmptyLines: true })
+      const rows = parseResult.data
+      const result = await importMusicians(supabaseRef.current, eventId, rows)
+
+      const parts: string[] = []
+      parts.push(`Importerte ${result.inserted} musikanter`)
+      if (result.hkUnassigned.length > 0) parts.push(`${result.hkUnassigned.length} HK-musikanter venter på manuell sone-tildeling`)
+      if (result.others.length > 0) parts.push(`${result.others.length} voksne (uten avdeling): ${result.others.join(', ')}`)
+      if (result.errors.length > 0) parts.push(`Feil: ${result.errors.join('; ')}`)
+
+      setPlastImportResult({
+        eventId,
+        message: parts.join('. '),
+        isError: result.errors.length > 0,
+      })
+    } catch (err) {
+      setPlastImportResult({
+        eventId,
+        message: `Feil ved CSV-parsing: ${(err as Error).message}`,
+        isError: true,
+      })
+    }
+    setPlastImporting(null)
   }
 
   // Eksporter hendelse som CSV
@@ -565,6 +672,21 @@ export default function EventsAdminPage() {
             placeholder="F.eks. 99988877"
             className={inputClass}
           />
+        </div>
+
+        {/* Push-toggle — kontrollerer om varsel sendes ved aktivering */}
+        <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-low">
+          <input
+            type="checkbox"
+            id="sendPushOnActivate"
+            checked={data.sendPushOnActivate}
+            onChange={e => setData(prev => ({ ...prev, sendPushOnActivate: e.target.checked }))}
+            className="mt-0.5 w-4 h-4 accent-accent"
+          />
+          <label htmlFor="sendPushOnActivate" className="text-sm text-text-secondary cursor-pointer leading-snug">
+            <span className="font-medium text-text-primary block">Send push-varsel når dugnaden aktiveres</span>
+            <span className="text-xs">Skru av ved testing for å unngå at alle 130 foreldre får beskjed.</span>
+          </label>
         </div>
 
         {/* Sekker og fullføringsnotat — kun i redigering */}
@@ -820,6 +942,88 @@ export default function EventsAdminPage() {
                               )}
                               {event.completion_notes && (
                                 <p><span className="font-medium">Notat:</span> {event.completion_notes}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Plastdugnad-import: KMZ-soner + Tutti-musikanter */}
+                          {event.type === 'plast' && !isEditing && (
+                            <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
+                              <div className="flex items-center gap-2">
+                                <Sparkles size={16} className="text-accent" />
+                                <p className="text-sm font-semibold font-[var(--font-display)]">Plastdugnad-import</p>
+                              </div>
+
+                              {/* Status */}
+                              {event.zoneStats.total === 0 && (
+                                <p className="text-xs text-text-secondary">
+                                  Ingen soner opprettet enda. Last opp KMZ fra Google Maps for å lage 6 ryddesoner og møteplass.
+                                </p>
+                              )}
+                              {event.zoneStats.total > 0 && (
+                                <p className="text-xs text-text-secondary">
+                                  {event.zoneStats.total} soner opprettet. Last opp Tutti-CSV for å fordele musikanter.
+                                </p>
+                              )}
+
+                              {/* KMZ-upload */}
+                              <label className="block">
+                                <input
+                                  type="file"
+                                  accept=".kmz,application/vnd.google-earth.kmz"
+                                  className="hidden"
+                                  disabled={plastImporting === event.id}
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0]
+                                    if (f) requestKmzUpload(event.id, f)
+                                    e.target.value = ''
+                                  }}
+                                />
+                                <span className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium cursor-pointer active:bg-accent/20 transition-colors">
+                                  <Upload size={14} />
+                                  {plastImporting === event.id ? 'Importerer…' : (event.zoneStats.total > 0 ? 'Last opp KMZ på nytt' : 'Last opp KMZ med soner')}
+                                </span>
+                              </label>
+
+                              {/* CSV-upload (kun når soner finnes) */}
+                              {event.zoneStats.total > 0 && (
+                                <label className="block">
+                                  <input
+                                    type="file"
+                                    accept=".csv,text/csv"
+                                    className="hidden"
+                                    disabled={plastImporting === event.id}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0]
+                                      if (f) requestCsvUpload(event.id, f)
+                                      e.target.value = ''
+                                    }}
+                                  />
+                                  <span className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-success/10 text-success text-sm font-medium cursor-pointer active:bg-success/20 transition-colors">
+                                    <Users size={14} />
+                                    {plastImporting === event.id ? 'Importerer…' : 'Last opp Tutti-CSV med musikanter'}
+                                  </span>
+                                </label>
+                              )}
+
+                              {/* Resultat-melding */}
+                              {plastImportResult?.eventId === event.id && (
+                                <div className={`p-2 rounded-2xl text-xs ${plastImportResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                                  {plastImportResult.message}
+                                </div>
+                              )}
+
+                              {/* Møteplass-info */}
+                              {event.meeting_point && (
+                                <div className="p-2 rounded-2xl bg-card text-xs">
+                                  <div className="flex items-center gap-1.5 font-medium text-text-primary">
+                                    <MapPin size={12} className="text-accent" />
+                                    {event.meeting_point.name}
+                                  </div>
+                                  <div className="text-text-tertiary mt-0.5">
+                                    {event.meeting_point.lat.toFixed(5)}, {event.meeting_point.lng.toFixed(5)}
+                                  </div>
+                                </div>
                               )}
                             </div>
                           )}
@@ -1173,6 +1377,38 @@ export default function EventsAdminPage() {
         )
       })()}
     </div>
+
+    <ConfirmDialog
+      open={!!pendingKmz}
+      title={pendingKmz?.title || ''}
+      message={pendingKmz?.message || ''}
+      confirmLabel="Erstatt"
+      variant="danger"
+      loading={plastImporting === pendingKmz?.eventId}
+      onCancel={() => setPendingKmz(null)}
+      onConfirm={() => {
+        if (pendingKmz) {
+          handleKmzUpload(pendingKmz.eventId, pendingKmz.file)
+          setPendingKmz(null)
+        }
+      }}
+    />
+
+    <ConfirmDialog
+      open={!!pendingCsv}
+      title={pendingCsv?.title || ''}
+      message={pendingCsv?.message || ''}
+      confirmLabel="Oppdater"
+      variant="warning"
+      loading={plastImporting === pendingCsv?.eventId}
+      onCancel={() => setPendingCsv(null)}
+      onConfirm={() => {
+        if (pendingCsv) {
+          handleCsvUpload(pendingCsv.eventId, pendingCsv.file)
+          setPendingCsv(null)
+        }
+      }}
+    />
     </>
   )
 }
