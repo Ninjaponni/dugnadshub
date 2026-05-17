@@ -21,7 +21,7 @@ const stats = [
   { key: 'dugnader' as const, label: 'DUGNADER', icon: Calendar },
   { key: 'polserSolgt' as const, label: 'PØLSER SOLGT', icon: Beef },
   { key: 'isSolgt' as const, label: 'IS SOLGT', icon: IceCream2 },
-  { key: 'kakestykkerSolgt' as const, label: 'KAKESTYKKER', icon: CakeSlice },
+  { key: 'kakestykkerSolgt' as const, label: 'KAKESTYKKER SOLGT', icon: CakeSlice },
   { key: 'brusSolgt' as const, label: 'BRUS SOLGT', icon: CupSoda },
   { key: 'kronerOpptjent' as const, label: 'KRONER OPPTJENT', icon: Coins },
 ]
