@@ -324,6 +324,10 @@ export interface DittBidragData {
   premierSkaffet: number
   loddbokerSolgt: number
   dugnader: number
+  polserSolgt: number
+  isSolgt: number
+  kakestykkerSolgt: number
+  brusSolgt: number
   kronerOpptjent: number
 }
 
@@ -333,6 +337,10 @@ export const mockDittBidrag: DittBidragData = {
   kakerBakt: 9,
   premierSkaffet: 42,
   loddbokerSolgt: 58,
-  dugnader: 4,
-  kronerOpptjent: 83000,
+  dugnader: 5,
+  polserSolgt: 668,
+  isSolgt: 755,
+  kakestykkerSolgt: 1255,
+  brusSolgt: 938,
+  kronerOpptjent: 217385,
 }
