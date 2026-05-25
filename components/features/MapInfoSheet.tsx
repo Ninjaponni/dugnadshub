@@ -22,8 +22,8 @@ const flyerColors = [
 
 const plastColors = [
   { color: '#E57373', label: 'Ledig — meld deg som voksen ansvarlig' },
-  { color: '#FFD54F', label: 'Én voksen — trenger én til' },
-  { color: '#5C9CE6', label: 'To voksne meldt' },
+  { color: '#FFD54F', label: 'Delvis bemannet — trenger flere' },
+  { color: '#5C9CE6', label: 'Voksne meldt' },
   { color: '#6B8F71', label: 'Ferdig ryddet' },
 ]
 
@@ -74,7 +74,7 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
                   Møt opp på <span className="font-bold text-accent">Møteplassen</span> for å hente sekker og hansker.
                 </Step>
                 <Step n={2}>
-                  Velg en sone som passer din barnegruppe (AK, JK1, JK2 eller HK 1-3). To voksne er ansvarlige per sone.
+                  Velg en sone som passer din barnegruppe (AK, JK1, JK2 eller HK 1-3). AK og JK trenger to voksne, HK trenger én.
                 </Step>
                 <Step n={3}>
                   Rydd plast sammen med musikantene i sona deres i 3 timer.

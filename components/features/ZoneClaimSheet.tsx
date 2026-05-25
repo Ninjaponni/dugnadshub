@@ -34,7 +34,7 @@ function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string 
   const isPlast = zone.zone_type === 'plast'
   if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple' }
   if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : isPlast ? 'Ferdig ryddet' : 'Ferdigplukket', color: 'bg-success' }
-  if (zone.claims.length >= zone.collectors_needed) return { label: isPlast ? 'To voksne meldt' : 'Fullt bemannet', color: 'bg-accent' }
+  if (zone.claims.length >= zone.collectors_needed) return { label: isPlast ? 'Voksne meldt' : 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
   return { label: 'Ledig', color: 'bg-zone-available' }
 }
