@@ -149,6 +149,7 @@ export default function ArrangementPage() {
         signupDeadline={event?.signup_deadline ?? null}
         adminPhone={event?.contact_phone ?? null}
         roleInfo={event?.role_info ?? null}
+        matches={event?.matches ?? null}
       />
     </>
   )

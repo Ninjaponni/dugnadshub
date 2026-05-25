@@ -1,4 +1,4 @@
-import type { EventShift, ShiftWithClaims } from '@/lib/types/shifts'
+import type { EventShift, ShiftWithClaims, Match } from '@/lib/types/shifts'
 
 // Norske ukedager
 const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag']
@@ -57,6 +57,16 @@ export function sortShifts<T extends EventShift>(shifts: T[]): T[] {
 export function isDeadlinePassed(deadline: string | null): boolean {
   if (!deadline) return false
   return new Date(deadline) < new Date()
+}
+
+// Returnerer kampene som starter innenfor en vakts tidsrom
+export function matchesDuringShift(matches: Match[] | null | undefined, shift: EventShift): Match[] {
+  if (!matches || matches.length === 0) return []
+  const start = shift.start_time.slice(0, 5)
+  const end = shift.end_time.slice(0, 5)
+  return matches
+    .filter(m => m.date === shift.shift_date && m.time >= start && m.time <= end)
+    .sort((a, b) => a.time.localeCompare(b.time))
 }
 
 // Rolle-ikon mapping (utvides ved behov)

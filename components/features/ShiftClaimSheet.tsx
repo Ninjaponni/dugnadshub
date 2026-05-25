@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, Users, Phone } from 'lucide-react'
+import { Clock, Users, Phone, Trophy } from 'lucide-react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
-import type { ShiftWithClaims, RoleInfo } from '@/lib/types/shifts'
-import { formatShiftDate, formatShiftTime, roleIcon, isDeadlinePassed } from '@/lib/shifts/utils'
+import type { ShiftWithClaims, RoleInfo, Match } from '@/lib/types/shifts'
+import { formatShiftDate, formatShiftTime, roleIcon, isDeadlinePassed, matchesDuringShift } from '@/lib/shifts/utils'
 
 interface Props {
   shift: ShiftWithClaims | null
@@ -15,10 +15,11 @@ interface Props {
   signupDeadline: string | null
   adminPhone: string | null
   roleInfo: RoleInfo[] | null
+  matches?: Match[] | null
 }
 
 export function ShiftClaimSheet({
-  shift, onClose, onChange, currentUserId, signupDeadline, adminPhone, roleInfo,
+  shift, onClose, onChange, currentUserId, signupDeadline, adminPhone, roleInfo, matches,
 }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,6 +29,7 @@ export function ShiftClaimSheet({
   const isFull = shift ? claimed >= shift.capacity : false
   const deadlinePassed = isDeadlinePassed(signupDeadline)
   const taskList = (shift && roleInfo?.find(r => r.role === shift.role)?.tasks) ?? []
+  const shiftMatches = shift ? matchesDuringShift(matches, shift) : []
 
   async function handleClaim() {
     if (!shift) return
@@ -154,6 +156,24 @@ export function ShiftClaimSheet({
 
           {error && (
             <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl p-3">{error}</div>
+          )}
+
+          {/* Kamper under vakta */}
+          {shiftMatches.length > 0 && (
+            <div>
+              <h3 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold mb-2 flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5" />
+                Kamper under vakta
+              </h3>
+              <ul className="space-y-1.5">
+                {shiftMatches.map((m, i) => (
+                  <li key={i} className="text-sm text-text-primary flex gap-3 items-baseline">
+                    <span className="font-mono text-text-secondary shrink-0 w-12">{m.time}</span>
+                    <span>{m.home} <span className="text-text-tertiary">vs</span> {m.away}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {/* Oppgaver */}

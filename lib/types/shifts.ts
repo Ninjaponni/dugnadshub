@@ -37,6 +37,13 @@ export interface GeneralInfoEntry {
   value: string
 }
 
+export interface Match {
+  date: string  // ISO date 'YYYY-MM-DD'
+  time: string  // 'HH:MM' (lokal tid)
+  home: string
+  away: string
+}
+
 export interface ArrangementEvent {
   id: string
   title: string
@@ -50,6 +57,7 @@ export interface ArrangementEvent {
   signup_deadline: string | null
   role_info: RoleInfo[] | null
   general_info: GeneralInfoEntry[] | null
+  matches: Match[] | null
   driver_notes: string | null
   meeting_point: { lat: number; lng: number; name: string; description: string } | null
   send_push_on_activate: boolean | null
