@@ -2,7 +2,7 @@
 
 import { ChevronRight } from 'lucide-react'
 import type { ShiftWithClaims } from '@/lib/types/shifts'
-import { formatShiftRange, formatCapacity, shiftFillStatus, roleIcon } from '@/lib/shifts/utils'
+import { formatShiftRange, formatCapacity, shiftFillStatus, roleIcon, formatClaimedByList } from '@/lib/shifts/utils'
 
 interface Props {
   shift: ShiftWithClaims
@@ -14,6 +14,7 @@ export function ShiftListItem({ shift, onClick, currentUserId }: Props) {
   const claimed = shift.claims?.length ?? 0
   const status = shiftFillStatus(claimed, shift.capacity)
   const meClaimed = currentUserId && shift.claims?.some(c => c.user_id === currentUserId)
+  const claimedByText = formatClaimedByList(shift.claims, currentUserId)
 
   const ringClass =
     meClaimed ? 'ring-2 ring-accent' :
@@ -37,15 +38,17 @@ export function ShiftListItem({ shift, onClick, currentUserId }: Props) {
         <div className="text-sm text-text-secondary">
           {formatShiftRange(shift.start_time, shift.end_time)}
         </div>
+        {claimedByText && (
+          <div className="text-xs text-amber-700 mt-1 truncate">
+            {claimedByText}
+          </div>
+        )}
       </div>
 
       <div className="shrink-0 text-right">
         <div className={`text-sm font-medium ${capacityClass}`}>
           {formatCapacity(claimed, shift.capacity)}
         </div>
-        {meClaimed && (
-          <div className="text-xs text-accent font-medium mt-0.5">✓ Du er på</div>
-        )}
       </div>
 
       <ChevronRight className="w-5 h-5 text-text-tertiary shrink-0" />

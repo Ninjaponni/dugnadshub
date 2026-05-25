@@ -114,6 +114,34 @@ export function matchesDuringShift(matches: Match[] | null | undefined, shift: E
   )
 }
 
+// Formatér påmeldte som lesbar liste — "Du, Anna og Per er påmeldt"
+// "Du" sorteres alltid først. Bruker fornavn for kompakthet.
+// Mer enn 3 navn: "Du, Anna og 2 andre er påmeldt"
+export function formatClaimedByList(
+  claims: Array<{ user_id: string; profile: { full_name: string | null } | null }> | null | undefined,
+  currentUserId?: string,
+): string | null {
+  if (!claims || claims.length === 0) return null
+
+  const sorted = [...claims].sort((a, b) => {
+    if (a.user_id === currentUserId) return -1
+    if (b.user_id === currentUserId) return 1
+    return (a.profile?.full_name ?? '').localeCompare(b.profile?.full_name ?? '')
+  })
+
+  const labels = sorted.map(c =>
+    c.user_id === currentUserId
+      ? 'Du'
+      : (c.profile?.full_name?.split(' ')[0] ?? 'Anonym')
+  )
+
+  if (labels.length === 1) return `${labels[0]} er påmeldt`
+  if (labels.length === 2) return `${labels[0]} og ${labels[1]} er påmeldt`
+  if (labels.length === 3) return `${labels[0]}, ${labels[1]} og ${labels[2]} er påmeldt`
+  const others = labels.length - 2
+  return `${labels[0]}, ${labels[1]} og ${others} andre er påmeldt`
+}
+
 // Rolle-ikon mapping (utvides ved behov)
 export function roleIcon(role: string): string {
   const r = role.toLowerCase()
