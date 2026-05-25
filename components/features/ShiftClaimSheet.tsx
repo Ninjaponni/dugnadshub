@@ -118,11 +118,11 @@ export function ShiftClaimSheet({
                 Påmeldte
               </h3>
               <div className="bg-surface-low/60 rounded-2xl p-3 text-sm text-text-primary leading-relaxed">
-                {shift.claims!.map((c, i) => (
+                {(shift.claims ?? []).map((c, i, arr) => (
                   <span key={c.user_id}>
                     {c.profile?.full_name ?? 'Anonym'}
                     {c.user_id === currentUserId && <span className="text-accent"> (deg)</span>}
-                    {i < shift.claims!.length - 1 && <span className="text-text-tertiary"> · </span>}
+                    {i < arr.length - 1 && <span className="text-text-tertiary"> · </span>}
                   </span>
                 ))}
               </div>

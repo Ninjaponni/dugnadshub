@@ -10,6 +10,9 @@ export function useRealtimeShifts(eventId: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Holder vakt-IDene tilgjengelig for realtime-callback uten å trigge re-subscription
+  const shiftIdsRef = useRef<Set<string>>(new Set())
+
   const fetchShifts = useCallback(async () => {
     const { data, error: fetchError } = await supabaseRef.current
       .from('event_shifts')
@@ -29,7 +32,9 @@ export function useRealtimeShifts(eventId: string) {
       setLoading(false)
       return
     }
-    setShifts((data as unknown as ShiftWithClaims[]) ?? [])
+    const rows = (data as unknown as ShiftWithClaims[]) ?? []
+    shiftIdsRef.current = new Set(rows.map(s => s.id))
+    setShifts(rows)
     setLoading(false)
   }, [eventId])
 
@@ -44,7 +49,15 @@ export function useRealtimeShifts(eventId: string) {
       )
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'shift_claims' },
-        () => fetchShifts()
+        (payload) => {
+          // Filtrer i klient: bare refetch hvis endringen gjelder en vakt i dette arrangementet
+          const newRow = payload.new as { shift_id?: string } | null
+          const oldRow = payload.old as { shift_id?: string } | null
+          const affected = newRow?.shift_id ?? oldRow?.shift_id
+          if (affected && shiftIdsRef.current.has(affected)) {
+            fetchShifts()
+          }
+        }
       )
       .subscribe()
 

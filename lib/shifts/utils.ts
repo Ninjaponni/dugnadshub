@@ -37,9 +37,11 @@ export function formatShiftRange(start: string, end: string): string {
 export function shiftDurationHours(start: string, end: string): number {
   const [sh, sm] = start.slice(0, 5).split(':').map(Number)
   const [eh, em] = end.slice(0, 5).split(':').map(Number)
-  let startMin = sh * 60 + sm
+  const startMin = sh * 60 + sm
   let endMin = eh * 60 + em
-  if (endMin <= startMin) endMin += 24 * 60
+  // Krysser midnatt kun hvis end er STRICTLY mindre enn start.
+  // Hvis end === start, returner 0 (samme tid = ingen varighet, ikke 24 t).
+  if (endMin < startMin) endMin += 24 * 60
   return (endMin - startMin) / 60
 }
 

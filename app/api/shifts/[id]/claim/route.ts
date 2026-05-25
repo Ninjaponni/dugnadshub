@@ -25,40 +25,27 @@ export async function POST(
 
   const service = getServiceClient()
 
-  const { data: shift, error: shiftErr } = await service
-    .from('event_shifts')
-    .select('id, capacity, event_id, events(signup_deadline)')
-    .eq('id', shiftId)
-    .single()
+  // Atomisk: validerer deadline, kapasitet OG insert i samme transaksjon (med FOR UPDATE-lås).
+  // Hindrer race condition der to brukere kan ta siste plass samtidig.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error: rpcErr } = await (service.rpc as any)('claim_shift_atomic', {
+    p_shift_id: shiftId,
+    p_user_id: user.id,
+  })
 
-  if (shiftErr || !shift) {
-    return NextResponse.json({ error: 'Vakt finnes ikke' }, { status: 404 })
+  if (rpcErr) {
+    return NextResponse.json({ error: rpcErr.message }, { status: 500 })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const deadline = (shift.events as any)?.signup_deadline as string | null
-  if (deadline && new Date(deadline) < new Date()) {
-    return NextResponse.json({ error: 'Påmeldingsfrist passert' }, { status: 403 })
-  }
-
-  const { count } = await service
-    .from('shift_claims')
-    .select('id', { count: 'exact', head: true })
-    .eq('shift_id', shiftId)
-
-  if ((count ?? 0) >= shift.capacity) {
-    return NextResponse.json({ error: 'Vakt er fullt' }, { status: 409 })
-  }
-
-  const { error: insertErr } = await service
-    .from('shift_claims')
-    .insert({ shift_id: shiftId, user_id: user.id })
-
-  if (insertErr) {
-    if (insertErr.code === '23505') {
-      return NextResponse.json({ error: 'Du er allerede påmeldt' }, { status: 409 })
-    }
-    return NextResponse.json({ error: insertErr.message }, { status: 500 })
+  const result = data as { ok: boolean; error?: string; code?: string } | null
+  if (!result?.ok) {
+    const status =
+      result?.code === 'not_found' ? 404 :
+      result?.code === 'deadline_passed' ? 403 :
+      result?.code === 'full' || result?.code === 'duplicate' ? 409 :
+      500
+    return NextResponse.json({ error: result?.error ?? 'Ukjent feil' }, { status })
   }
 
   return NextResponse.json({ ok: true })
