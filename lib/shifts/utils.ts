@@ -28,12 +28,9 @@ export function isOvernightShift(start: string, end: string): boolean {
   return e === '00:00' || e < s
 }
 
-// Formaterer tidsrom, med "(neste dag)" hvis overnight
+// Formaterer tidsrom som 'HH:MM–HH:MM'
 export function formatShiftRange(start: string, end: string): string {
-  const s = start.slice(0, 5)
-  const e = end.slice(0, 5)
-  const overnight = isOvernightShift(s, e)
-  return overnight ? `${s}–${e} (neste dag)` : `${s}–${e}`
+  return `${start.slice(0, 5)}–${end.slice(0, 5)}`
 }
 
 // Beregner vakt-varighet i timer (håndterer overnight)
@@ -53,10 +50,11 @@ function addDays(isoDate: string, days: number): string {
   return d.toISOString().split('T')[0]
 }
 
-// Returnerer "X/Y ledig" eller "Fullt"
+// Returnerer "Fullt" eller "X ledig" / "X ledige"
 export function formatCapacity(claimed: number, capacity: number): string {
   if (claimed >= capacity) return 'Fullt'
-  return `${capacity - claimed}/${capacity} ledig`
+  const free = capacity - claimed
+  return free === 1 ? '1 ledig' : `${free} ledige`
 }
 
 // Status: 'empty' (0 påmeldte), 'partial' (mellom 0 og full), 'full'
