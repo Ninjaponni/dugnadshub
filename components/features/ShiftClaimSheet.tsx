@@ -101,7 +101,12 @@ export function ShiftClaimSheet({
               <span className={`w-2 h-2 rounded-full ${
                 isFull ? 'bg-success' : claimed > 0 ? 'bg-warning' : 'bg-danger'
               }`} />
-              {isFull ? 'Fullt' : `${shift.capacity - claimed} av ${shift.capacity} ledig`}
+              {isFull
+                ? 'Fullt'
+                : claimed === 0
+                  ? (shift.capacity === 1 ? '1 plass ledig' : `${shift.capacity} plasser ledige`)
+                  : (shift.capacity - claimed === 1 ? '1 plass ledig' : `${shift.capacity - claimed} plasser ledige`)
+              }
             </span>
             {meClaimed && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent font-medium">
