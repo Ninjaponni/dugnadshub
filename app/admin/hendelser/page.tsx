@@ -154,6 +154,10 @@ export default function EventsAdminPage() {
   const [savingShifts, setSavingShifts] = useState<Set<string>>(new Set())
   const [deleteShiftConfirm, setDeleteShiftConfirm] = useState<{ eventId: string; shiftId: string } | null>(null)
 
+  // Trigger shift-reminders
+  const [triggerReminders, setTriggerReminders] = useState<string | null>(null)
+  const [triggerReminderResult, setTriggerReminderResult] = useState<{ eventId: string; message: string; isError: boolean } | null>(null)
+
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
@@ -645,6 +649,25 @@ export default function EventsAdminPage() {
       URL.revokeObjectURL(url)
     }
     setExporting(null)
+  }
+
+  // Trigger shift-reminders for arrangement
+  async function triggerShiftReminders(eventId: string) {
+    setTriggerReminders(eventId)
+    setTriggerReminderResult(null)
+    try {
+      const res = await fetch('/api/admin/trigger-shift-reminders', { method: 'POST' })
+      const j = await res.json().catch(() => ({}))
+      if (res.ok && j.ok) {
+        setTriggerReminderResult({ eventId, message: `Sendt: ${j.sent} (${j.failed} feilet)`, isError: false })
+      } else {
+        setTriggerReminderResult({ eventId, message: j.error ?? `Feil (${res.status})`, isError: true })
+      }
+    } catch (e) {
+      setTriggerReminderResult({ eventId, message: (e as Error).message, isError: true })
+    } finally {
+      setTriggerReminders(null)
+    }
   }
 
   // Formater dato
@@ -1465,6 +1488,20 @@ export default function EventsAdminPage() {
                                   <Download size={14} />
                                   Last ned vaktliste (.csv)
                                 </a>
+
+                                <button
+                                  onClick={() => triggerShiftReminders(event.id)}
+                                  disabled={triggerReminders === event.id}
+                                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors disabled:opacity-50"
+                                >
+                                  <Bell size={14} />
+                                  {triggerReminders === event.id ? 'Sender…' : 'Send 24t-påminnelser nå'}
+                                </button>
+                                {triggerReminderResult?.eventId === event.id && (
+                                  <div className={`p-2 rounded-2xl text-xs text-center ${triggerReminderResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                                    {triggerReminderResult.message}
+                                  </div>
+                                )}
                               </div>
                             )
                           })()}
