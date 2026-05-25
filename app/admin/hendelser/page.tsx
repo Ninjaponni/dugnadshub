@@ -42,6 +42,10 @@ interface EventFormData {
   bagsCollected: string
   completionNotes: string
   sendPushOnActivate: boolean
+  signupDeadline: string          // ISO datetime-local
+  arrangerName: string
+  roleInfo: Array<{ role: string; tasks: string; contact: string }>  // tasks som tekst med én linje per punkt
+  generalInfo: Array<{ label: string; value: string }>
 }
 
 const emptyForm: EventFormData = {
@@ -57,6 +61,10 @@ const emptyForm: EventFormData = {
   bagsCollected: '',
   completionNotes: '',
   sendPushOnActivate: true,
+  signupDeadline: '',
+  arrangerName: '',
+  roleInfo: [],
+  generalInfo: [],
 }
 
 const statusLabels: Record<EventStatus, string> = {
@@ -77,6 +85,7 @@ const typeLabels: Record<EventType, string> = {
   lottery: 'Lotteri',
   baking: 'Bakesalg',
   plast: 'Plastdugnad',
+  arrangement: 'Arrangement (vakter)',
   other: 'Annet',
 }
 
@@ -229,6 +238,20 @@ export default function EventsAdminPage() {
       status: 'upcoming',
       created_by: user.id,
       send_push_on_activate: form.sendPushOnActivate,
+      ...(form.type === 'arrangement' && {
+        signup_deadline: form.signupDeadline || null,
+        arranger_name: form.arrangerName || null,
+        role_info: form.roleInfo
+          .filter(r => r.role.trim())
+          .map(r => ({
+            role: r.role.trim(),
+            contact: r.contact.trim() || undefined,
+            tasks: r.tasks.split('\n').map(t => t.trim()).filter(Boolean),
+          })),
+        general_info: form.generalInfo
+          .filter(g => g.label.trim())
+          .map(g => ({ label: g.label.trim(), value: g.value.trim() })),
+      }),
     }).select().single() as { data: DugnadEvent | null; error: unknown }
 
     if (error || !newEvent) {
@@ -265,6 +288,20 @@ export default function EventsAdminPage() {
       bags_collected: editForm.bagsCollected ? parseInt(editForm.bagsCollected, 10) : null,
       completion_notes: editForm.completionNotes || null,
       send_push_on_activate: editForm.sendPushOnActivate,
+      ...(editForm.type === 'arrangement' && {
+        signup_deadline: editForm.signupDeadline || null,
+        arranger_name: editForm.arrangerName || null,
+        role_info: editForm.roleInfo
+          .filter(r => r.role.trim())
+          .map(r => ({
+            role: r.role.trim(),
+            contact: r.contact.trim() || undefined,
+            tasks: r.tasks.split('\n').map(t => t.trim()).filter(Boolean),
+          })),
+        general_info: editForm.generalInfo
+          .filter(g => g.label.trim())
+          .map(g => ({ label: g.label.trim(), value: g.value.trim() })),
+      }),
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
@@ -280,6 +317,8 @@ export default function EventsAdminPage() {
   function startEditing(event: EventWithZones) {
     setEditingId(event.id)
     setDeleteConfirmId(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyEvent = event as any
     setEditForm({
       title: event.title,
       type: event.type,
@@ -293,6 +332,14 @@ export default function EventsAdminPage() {
       bagsCollected: event.bags_collected ? String(event.bags_collected) : '',
       completionNotes: event.completion_notes || '',
       sendPushOnActivate: event.send_push_on_activate ?? true,
+      signupDeadline: anyEvent.signup_deadline ?? '',
+      arrangerName: anyEvent.arranger_name ?? '',
+      roleInfo: (anyEvent.role_info ?? []).map((r: { role: string; contact?: string; tasks?: string[] }) => ({
+        role: r.role,
+        contact: r.contact ?? '',
+        tasks: (r.tasks ?? []).join('\n'),
+      })),
+      generalInfo: anyEvent.general_info ?? [],
     })
   }
 
@@ -561,6 +608,27 @@ export default function EventsAdminPage() {
     submitLabel: string,
     isLoading: boolean,
   ) {
+    // Hjelpere for arrangement-felter — rolle-repeater
+    function addRole() {
+      setData(prev => ({ ...prev, roleInfo: [...prev.roleInfo, { role: '', tasks: '', contact: '' }] }))
+    }
+    function updateRole(i: number, patch: Partial<{ role: string; tasks: string; contact: string }>) {
+      setData(prev => ({ ...prev, roleInfo: prev.roleInfo.map((r, idx) => idx === i ? { ...r, ...patch } : r) }))
+    }
+    function removeRole(i: number) {
+      setData(prev => ({ ...prev, roleInfo: prev.roleInfo.filter((_, idx) => idx !== i) }))
+    }
+    // Hjelpere for generell informasjon-repeater
+    function addInfo() {
+      setData(prev => ({ ...prev, generalInfo: [...prev.generalInfo, { label: '', value: '' }] }))
+    }
+    function updateInfo(i: number, patch: Partial<{ label: string; value: string }>) {
+      setData(prev => ({ ...prev, generalInfo: prev.generalInfo.map((g, idx) => idx === i ? { ...g, ...patch } : g) }))
+    }
+    function removeInfo(i: number) {
+      setData(prev => ({ ...prev, generalInfo: prev.generalInfo.filter((_, idx) => idx !== i) }))
+    }
+
     return (
       <form onSubmit={onSubmit} className="space-y-4">
         {/* Tittel */}
@@ -637,6 +705,123 @@ export default function EventsAdminPage() {
             />
           </div>
         </div>
+
+        {/* Arrangement-felter — kun synlig ved type=arrangement */}
+        {data.type === 'arrangement' && (
+          <div className="space-y-4 p-4 rounded-2xl bg-surface-low">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Arrangement-innstillinger</p>
+
+            {/* Påmeldingsfrist */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Påmeldingsfrist (valgfritt)</label>
+              <input
+                type="datetime-local"
+                value={data.signupDeadline}
+                onChange={e => setData(prev => ({ ...prev, signupDeadline: e.target.value }))}
+                className={dateTimeClass}
+              />
+            </div>
+
+            {/* Arrangørnavn */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Arrangør (valgfritt)</label>
+              <input
+                type="text"
+                value={data.arrangerName}
+                onChange={e => setData(prev => ({ ...prev, arrangerName: e.target.value }))}
+                placeholder="f.eks. Clarion, Neon, Olavsfest"
+                className={inputClass}
+              />
+            </div>
+
+            {/* Roller og oppgaver-repeater */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-2">Roller og oppgaver</label>
+              <div className="space-y-3">
+                {data.roleInfo.map((r, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-card space-y-2 relative">
+                    <button
+                      type="button"
+                      onClick={() => removeRole(i)}
+                      className="absolute top-2 right-2 text-text-tertiary hover:text-error transition-colors"
+                      aria-label="Slett rolle"
+                    >
+                      <X size={14} />
+                    </button>
+                    <input
+                      type="text"
+                      value={r.role}
+                      onChange={e => updateRole(i, { role: e.target.value })}
+                      placeholder="Renhold"
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      value={r.contact}
+                      onChange={e => updateRole(i, { contact: e.target.value })}
+                      placeholder="Inger/Gita"
+                      className={inputClass}
+                    />
+                    <textarea
+                      value={r.tasks}
+                      onChange={e => updateRole(i, { tasks: e.target.value })}
+                      placeholder="Én oppgave per linje"
+                      rows={4}
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addRole}
+                className="mt-2 text-[13px] font-medium text-accent hover:underline"
+              >
+                + Legg til rolle
+              </button>
+            </div>
+
+            {/* Generell informasjon-repeater */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-2">Generell informasjon</label>
+              <div className="space-y-2">
+                {data.generalInfo.map((g, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={g.label}
+                      onChange={e => updateInfo(i, { label: e.target.value })}
+                      placeholder="Kleskode"
+                      className={`${inputClass} w-1/3 shrink-0`}
+                    />
+                    <input
+                      type="text"
+                      value={g.value}
+                      onChange={e => updateInfo(i, { value: e.target.value })}
+                      placeholder="Helsvart klær"
+                      className={inputClass}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeInfo(i)}
+                      className="shrink-0 text-text-tertiary hover:text-error transition-colors"
+                      aria-label="Slett info-punkt"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addInfo}
+                className="mt-2 text-[13px] font-medium text-accent hover:underline"
+              >
+                + Legg til info-punkt
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Beskrivelse */}
         <div>
