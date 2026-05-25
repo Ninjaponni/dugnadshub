@@ -130,7 +130,7 @@ export default function ArrangementPage() {
             )}
           </section>
 
-          {event.role_info && event.role_info.length > 0 && <RoleInfoCard roleInfo={event.role_info} />}
+          {event.role_info && event.role_info.length > 0 && <RoleInfoCard roleInfo={event.role_info} arrangerName={event.arranger_name} />}
           {event.general_info && event.general_info.length > 0 && <GeneralInfoCard entries={event.general_info} />}
 
           {event.contact_phone && (
@@ -150,6 +150,7 @@ export default function ArrangementPage() {
         adminPhone={event?.contact_phone ?? null}
         roleInfo={event?.role_info ?? null}
         matches={event?.matches ?? null}
+        arrangerName={event?.arranger_name ?? null}
       />
     </>
   )

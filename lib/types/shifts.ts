@@ -55,6 +55,7 @@ export interface ArrangementEvent {
   end_time: string | null
   status: 'upcoming' | 'active' | 'completed'
   contact_phone: string | null
+  arranger_name: string | null
   signup_deadline: string | null
   role_info: RoleInfo[] | null
   general_info: GeneralInfoEntry[] | null

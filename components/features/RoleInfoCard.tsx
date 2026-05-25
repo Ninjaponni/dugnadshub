@@ -6,10 +6,12 @@ import { roleIcon } from '@/lib/shifts/utils'
 
 interface Props {
   roleInfo: RoleInfo[]
+  arrangerName?: string | null
 }
 
-export function RoleInfoCard({ roleInfo }: Props) {
+export function RoleInfoCard({ roleInfo, arrangerName }: Props) {
   if (!roleInfo || roleInfo.length === 0) return null
+  const contactLabel = arrangerName ? `Ansvarlig hos ${arrangerName}` : 'Ansvarlig'
 
   return (
     <section className="rounded-3xl bg-card shadow-sm p-5">
@@ -26,7 +28,7 @@ export function RoleInfoCard({ roleInfo }: Props) {
               {r.role}
             </h3>
             {r.contact && (
-              <p className="text-xs text-text-tertiary mb-2 ml-7">Ansvarlig: {r.contact}</p>
+              <p className="text-xs text-text-tertiary mb-2 ml-7">{contactLabel}: {r.contact}</p>
             )}
             <ul className="space-y-1.5 ml-2 mt-2">
               {r.tasks.map((t, i) => (

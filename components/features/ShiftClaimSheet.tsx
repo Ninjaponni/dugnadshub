@@ -16,10 +16,11 @@ interface Props {
   adminPhone: string | null
   roleInfo: RoleInfo[] | null
   matches?: Match[] | null
+  arrangerName?: string | null
 }
 
 export function ShiftClaimSheet({
-  shift, onClose, onChange, currentUserId, signupDeadline, adminPhone, roleInfo, matches,
+  shift, onClose, onChange, currentUserId, signupDeadline, adminPhone, roleInfo, matches, arrangerName,
 }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -224,7 +225,7 @@ export function ShiftClaimSheet({
               <div className="flex items-baseline justify-between mb-2">
                 <h3 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Oppgaver</h3>
                 {roleContact && (
-                  <span className="text-xs text-text-tertiary">Ansvarlig: <span className="text-text-secondary font-medium">{roleContact}</span></span>
+                  <span className="text-xs text-text-tertiary">{arrangerName ? `Ansvarlig hos ${arrangerName}` : 'Ansvarlig'}: <span className="text-text-secondary font-medium">{roleContact}</span></span>
                 )}
               </div>
               <ul className="space-y-1.5">
