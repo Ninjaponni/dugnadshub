@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Clock, Users, Phone } from 'lucide-react'
+import { Clock, Users, Phone } from 'lucide-react'
+import BottomSheet from '@/components/ui/BottomSheet'
+import Button from '@/components/ui/Button'
 import type { ShiftWithClaims, RoleInfo } from '@/lib/types/shifts'
 import { formatShiftDate, formatShiftTime, roleIcon, isDeadlinePassed } from '@/lib/shifts/utils'
 
@@ -22,18 +23,17 @@ export function ShiftClaimSheet({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (!shift) return null
-
-  const meClaimed = currentUserId && shift.claims?.some(c => c.user_id === currentUserId)
-  const claimed = shift.claims?.length ?? 0
-  const isFull = claimed >= shift.capacity
+  const meClaimed = !!(shift && currentUserId && shift.claims?.some(c => c.user_id === currentUserId))
+  const claimed = shift?.claims?.length ?? 0
+  const isFull = shift ? claimed >= shift.capacity : false
   const deadlinePassed = isDeadlinePassed(signupDeadline)
-  const taskList = roleInfo?.find(r => r.role === shift.role)?.tasks ?? []
+  const taskList = (shift && roleInfo?.find(r => r.role === shift.role)?.tasks) ?? []
 
   async function handleClaim() {
+    if (!shift) return
     setSubmitting(true)
     setError(null)
-    const res = await fetch(`/api/shifts/${shift!.id}/claim`, { method: 'POST' })
+    const res = await fetch(`/api/shifts/${shift.id}/claim`, { method: 'POST' })
     if (!res.ok) {
       const j = await res.json().catch(() => ({ error: 'Ukjent feil' }))
       setError(j.error)
@@ -46,9 +46,10 @@ export function ShiftClaimSheet({
   }
 
   async function handleUnclaim() {
+    if (!shift) return
     setSubmitting(true)
     setError(null)
-    const res = await fetch(`/api/shifts/${shift!.id}/claim`, { method: 'DELETE' })
+    const res = await fetch(`/api/shifts/${shift.id}/claim`, { method: 'DELETE' })
     if (!res.ok) {
       const j = await res.json().catch(() => ({ error: 'Ukjent feil' }))
       setError(j.error)
@@ -61,117 +62,122 @@ export function ShiftClaimSheet({
   }
 
   return (
-    <AnimatePresence>
+    <BottomSheet open={!!shift} onClose={onClose}>
       {shift && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 z-40"
-          />
-          <motion.div
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 bg-card rounded-t-3xl shadow-2xl max-h-[85vh] overflow-y-auto pb-20"
-          >
-            <header className="sticky top-0 bg-card px-5 pt-5 pb-3 flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{roleIcon(shift.role)}</span>
-                  <h2 className="text-xl font-display font-semibold tracking-tight uppercase">{shift.role}</h2>
-                </div>
-                <div className="mt-1 text-text-secondary text-sm flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  {formatShiftDate(shift.shift_date)} · {formatShiftTime(shift.start_time)}–{formatShiftTime(shift.end_time)}
-                </div>
-              </div>
-              <button onClick={onClose} className="p-2 rounded-full hover:bg-card-low/60">
-                <X className="w-5 h-5" />
-              </button>
-            </header>
-
-            <div className="px-5 space-y-5">
-              <div>
-                <h3 className="text-xs uppercase tracking-wide text-text-tertiary mb-2 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
-                  Påmeldte ({claimed}/{shift.capacity})
-                </h3>
-                {claimed === 0 ? (
-                  <p className="text-sm text-text-tertiary italic">Ingen påmeldt enda</p>
-                ) : (
-                  <ul className="space-y-1 text-sm">
-                    {shift.claims!.map((c) => (
-                      <li key={c.user_id} className="flex items-center gap-2">
-                        <span className="text-accent">•</span>
-                        <span>{c.profile?.full_name ?? 'Anonym'}</span>
-                        {c.user_id === currentUserId && (
-                          <span className="text-xs text-accent">(deg)</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {deadlinePassed ? (
-                <div className="rounded-2xl bg-amber-100/60 border border-amber-300/60 p-4 text-sm">
-                  <div className="font-medium text-amber-900 mb-1">Påmelding stengt</div>
-                  <p className="text-amber-900/80">
-                    Hvis du må bytte vakt, kontakt admin
-                    {adminPhone && (
-                      <> på <a href={`tel:${adminPhone}`} className="underline inline-flex items-center gap-1"><Phone className="w-3 h-3" />{adminPhone}</a></>
-                    )}.
-                  </p>
-                </div>
-              ) : meClaimed ? (
-                <button
-                  onClick={handleUnclaim}
-                  disabled={submitting}
-                  className="w-full py-3 rounded-2xl bg-card-low/60 hover:bg-card-low font-medium disabled:opacity-50"
-                >
-                  {submitting ? 'Melder av…' : 'Meld meg av'}
-                </button>
-              ) : isFull ? (
-                <button disabled className="w-full py-3 rounded-2xl bg-emerald-100 text-emerald-900 font-medium">
-                  Fullt
-                </button>
-              ) : (
-                <button
-                  onClick={handleClaim}
-                  disabled={submitting}
-                  className="w-full py-3 rounded-2xl bg-accent text-white font-medium hover:opacity-90 disabled:opacity-50"
-                >
-                  {submitting ? 'Melder på…' : 'Meld meg på'}
-                </button>
-              )}
-
-              {error && (
-                <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">{error}</div>
-              )}
-
-              {taskList.length > 0 && (
-                <div>
-                  <h3 className="text-xs uppercase tracking-wide text-text-tertiary mb-2">Oppgaver</h3>
-                  <ul className="space-y-1.5">
-                    {taskList.map((t, i) => (
-                      <li key={i} className="text-sm text-text-secondary flex gap-2">
-                        <span className="text-accent">•</span><span>{t}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {shift.notes && (
-                <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-sm">
-                  <div className="font-medium text-amber-900 mb-1">Merknad</div>
-                  <div className="text-amber-900/80">{shift.notes}</div>
-                </div>
-              )}
+        <div className="space-y-5">
+          {/* Tittel + tid */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">{roleIcon(shift.role)}</span>
+              <h2 className="text-2xl font-bold font-[var(--font-display)] tracking-tight">{shift.role}</h2>
             </div>
-          </motion.div>
-        </>
+            <div className="flex items-center gap-1.5 text-sm text-text-secondary">
+              <Clock className="w-4 h-4" />
+              {formatShiftDate(shift.shift_date)} · {formatShiftTime(shift.start_time)}–{formatShiftTime(shift.end_time)}
+            </div>
+          </div>
+
+          {/* Status-rad: kapasitet + meClaimed-badge */}
+          <div className="flex items-center gap-2 flex-wrap text-sm">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
+              isFull ? 'bg-success/15 text-success' :
+              claimed > 0 ? 'bg-warning/20 text-text-primary' :
+              'bg-danger/10 text-danger'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${
+                isFull ? 'bg-success' : claimed > 0 ? 'bg-warning' : 'bg-danger'
+              }`} />
+              {isFull ? 'Fullt' : `${shift.capacity - claimed} av ${shift.capacity} ledig`}
+            </span>
+            {meClaimed && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent font-medium">
+                ✓ Du er påmeldt
+              </span>
+            )}
+          </div>
+
+          {/* Påmeldte */}
+          {claimed > 0 && (
+            <div>
+              <h3 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold mb-2 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                Påmeldte
+              </h3>
+              <div className="bg-surface-low/60 rounded-2xl p-3 text-sm text-text-primary leading-relaxed">
+                {shift.claims!.map((c, i) => (
+                  <span key={c.user_id}>
+                    {c.profile?.full_name ?? 'Anonym'}
+                    {c.user_id === currentUserId && <span className="text-accent"> (deg)</span>}
+                    {i < shift.claims!.length - 1 && <span className="text-text-tertiary"> · </span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Aksjon */}
+          {deadlinePassed ? (
+            <div className="rounded-2xl bg-warning/10 border border-warning/30 p-4 text-sm">
+              <div className="font-semibold text-text-primary mb-1">Påmelding stengt</div>
+              <p className="text-text-secondary">
+                Hvis du må bytte vakt, kontakt admin
+                {adminPhone && (
+                  <> på <a href={`tel:${adminPhone}`} className="underline inline-flex items-center gap-1 text-accent font-medium"><Phone className="w-3 h-3" />{adminPhone}</a></>
+                )}.
+              </p>
+            </div>
+          ) : meClaimed ? (
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={handleUnclaim}
+              loading={submitting}
+              className="w-full"
+            >
+              Meld meg av
+            </Button>
+          ) : isFull ? (
+            <Button variant="confirm" size="lg" disabled className="w-full">
+              Fullt
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleClaim}
+              loading={submitting}
+              className="w-full"
+            >
+              Meld meg på
+            </Button>
+          )}
+
+          {error && (
+            <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl p-3">{error}</div>
+          )}
+
+          {/* Oppgaver */}
+          {taskList.length > 0 && (
+            <div>
+              <h3 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold mb-2">Oppgaver</h3>
+              <ul className="space-y-1.5">
+                {taskList.map((t, i) => (
+                  <li key={i} className="text-sm text-text-secondary flex gap-2">
+                    <span className="text-accent shrink-0">•</span><span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {shift.notes && (
+            <div className="rounded-2xl bg-warning/10 border border-warning/30 p-3 text-sm">
+              <div className="font-semibold text-text-primary mb-1">Merknad</div>
+              <div className="text-text-secondary">{shift.notes}</div>
+            </div>
+          )}
+        </div>
       )}
-    </AnimatePresence>
+    </BottomSheet>
   )
 }
