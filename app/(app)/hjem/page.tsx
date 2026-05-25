@@ -12,6 +12,8 @@ import OnboardingWizard from '@/components/features/OnboardingWizard'
 import { formatDate, daysUntilLabel } from '@/lib/utils/date'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockProfile, mockEventsWithProgress, mockMyZones } from '@/lib/mock/data'
+import { ArrangementCard } from '@/components/features/ArrangementCard'
+import type { ArrangementEvent } from '@/lib/types/shifts'
 
 interface EventWithProgress extends DugnadEvent {
   totalZones: number
@@ -37,6 +39,8 @@ export default function HomePage() {
   const [myZones, setMyZones] = useState<MyZone[]>([])
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  // Aggregerte vakt-data per arrangement-event: totalt antall vakter og ledige plasser
+  const [shiftAggregates, setShiftAggregates] = useState<Map<string, { total: number; free: number; totalCapacity: number }>>(new Map())
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
@@ -122,6 +126,32 @@ export default function HomePage() {
 
       setEvents(eventsWithProgress)
       setMyZones(allMyZones)
+
+      // Hent vakt-aggregater for aktive arrangement-events
+      // Cast nødvendig fordi EventType ikke inkluderer 'arrangement' i den genererte Supabase-typen
+      const arrangementIds = allEvents
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter(e => (e as any).type === 'arrangement' && e.status === 'active')
+        .map(e => e.id)
+
+      if (arrangementIds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: shiftsData } = await (supabaseRef.current as any)
+          .from('event_shifts')
+          .select('event_id, capacity, claims:shift_claims(id)')
+          .in('event_id', arrangementIds) as { data: Array<{ event_id: string; capacity: number; claims: Array<{ id: string }> }> | null }
+
+        const agg = new Map<string, { total: number; free: number; totalCapacity: number }>()
+        for (const s of shiftsData ?? []) {
+          const a = agg.get(s.event_id) ?? { total: 0, free: 0, totalCapacity: 0 }
+          a.total += 1
+          a.totalCapacity += s.capacity
+          a.free += Math.max(0, s.capacity - s.claims.length)
+          agg.set(s.event_id, a)
+        }
+        setShiftAggregates(agg)
+      }
+
       setLoading(false)
     }
     load()
@@ -138,8 +168,10 @@ export default function HomePage() {
   }
 
   const fullName = profile?.full_name || ''
-  const activeEvents = events.filter(e => e.status === 'active')
-  const futureEvents = events.filter(e => e.status === 'upcoming')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeEvents = events.filter(e => e.status === 'active' && (e as any).type !== 'arrangement')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const futureEvents = events.filter(e => e.status === 'upcoming' && (e as any).type !== 'arrangement')
 
   function completeOnboarding() {
     localStorage.setItem('onboarding_complete', '1')
@@ -273,8 +305,31 @@ export default function HomePage() {
               )
             })}
 
+            {/* Arrangement-events med vakter */}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(events as any[])
+              .filter((e: any) => e.type === 'arrangement' && e.status === 'active')
+              .map((e: any) => {
+                const agg = shiftAggregates.get(e.id as string) ?? { total: 0, free: 0, totalCapacity: 0 }
+                return (
+                  <motion.section
+                    key={e.id as string}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <ArrangementCard
+                      event={e as unknown as ArrangementEvent}
+                      totalShifts={agg.total}
+                      freePlaces={agg.free}
+                      totalCapacity={agg.totalCapacity}
+                    />
+                  </motion.section>
+                )
+              })}
+
             {/* Ingen aktive — vis info */}
-            {activeEvents.length === 0 && (
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {activeEvents.length === 0 && (events as any[]).filter((e: any) => e.type === 'arrangement' && e.status === 'active').length === 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

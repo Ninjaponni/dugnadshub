@@ -6,7 +6,7 @@ export interface Child {
   group: ChildGroup
 }
 export type ZoneArea = 'NORD' | 'SOR'
-export type EventType = 'bottle_collection' | 'lapper' | 'lottery' | 'baking' | 'plast' | 'other'
+export type EventType = 'bottle_collection' | 'lapper' | 'lottery' | 'baking' | 'plast' | 'arrangement' | 'other'
 export type ZoneType = 'bottle' | 'lapper' | 'plast'
 export type EventStatus = 'upcoming' | 'active' | 'completed'
 export type ZoneStatus = 'available' | 'claimed' | 'in_progress' | 'completed' | 'picked_up'

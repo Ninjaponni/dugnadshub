@@ -42,6 +42,10 @@ interface EventFormData {
   bagsCollected: string
   completionNotes: string
   sendPushOnActivate: boolean
+  signupDeadline: string          // ISO datetime-local
+  arrangerName: string
+  roleInfo: Array<{ role: string; tasks: string; contact: string }>  // tasks som tekst med én linje per punkt
+  generalInfo: Array<{ label: string; value: string }>
 }
 
 const emptyForm: EventFormData = {
@@ -57,6 +61,10 @@ const emptyForm: EventFormData = {
   bagsCollected: '',
   completionNotes: '',
   sendPushOnActivate: true,
+  signupDeadline: '',
+  arrangerName: '',
+  roleInfo: [],
+  generalInfo: [],
 }
 
 const statusLabels: Record<EventStatus, string> = {
@@ -77,6 +85,7 @@ const typeLabels: Record<EventType, string> = {
   lottery: 'Lotteri',
   baking: 'Bakesalg',
   plast: 'Plastdugnad',
+  arrangement: 'Arrangement (vakter)',
   other: 'Annet',
 }
 
@@ -139,6 +148,16 @@ export default function EventsAdminPage() {
   const [pendingKmz, setPendingKmz] = useState<{ eventId: string; file: File; title: string; message: string } | null>(null)
   const [pendingCsv, setPendingCsv] = useState<{ eventId: string; file: File; title: string; message: string } | null>(null)
 
+  // Vakt-administrasjon for arrangement-events
+  type ShiftRow = { id?: string; shift_date: string; start_time: string; end_time: string; role: string; capacity: number; notes: string }
+  const [shiftsByEvent, setShiftsByEvent] = useState<Map<string, ShiftRow[]>>(new Map())
+  const [savingShifts, setSavingShifts] = useState<Set<string>>(new Set())
+  const [deleteShiftConfirm, setDeleteShiftConfirm] = useState<{ eventId: string; shiftId: string } | null>(null)
+
+  // Trigger shift-reminders
+  const [triggerReminders, setTriggerReminders] = useState<string | null>(null)
+  const [triggerReminderResult, setTriggerReminderResult] = useState<{ eventId: string; message: string; isError: boolean } | null>(null)
+
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
@@ -176,6 +195,56 @@ export default function EventsAdminPage() {
   }, [])
 
   useEffect(() => { loadEvents() }, [loadEvents])
+
+  // Last vakter når et arrangement-event ekspanderes
+  useEffect(() => {
+    if (!expandedId) return
+    const ev = events.find(e => e.id === expandedId)
+    if (!ev || ev.type !== 'arrangement') return
+    // Ikke re-last om vi allerede har data
+    if (shiftsByEvent.has(expandedId)) return
+
+    ;(async () => {
+      const { data } = await supabaseRef.current
+        .from('event_shifts')
+        .select('*')
+        .eq('event_id', expandedId)
+        .order('shift_date')
+        .order('start_time') as unknown as { data: Array<{ id: string; event_id: string; role: string; shift_date: string; start_time: string; end_time: string; capacity: number; notes: string | null }> | null }
+
+      const rows: ShiftRow[] = (data ?? []).map(s => ({
+        id: s.id,
+        shift_date: s.shift_date,
+        start_time: s.start_time.slice(0, 5),   // 'HH:MM:SS' → 'HH:MM'
+        end_time: s.end_time.slice(0, 5),
+        role: s.role,
+        capacity: s.capacity,
+        notes: s.notes ?? '',
+      }))
+      setShiftsByEvent(prev => new Map(prev).set(expandedId, rows))
+    })()
+  }, [expandedId, events, shiftsByEvent])
+
+  // Hjelpefunksjon — last vakter på nytt for et event
+  async function reloadShifts(eventId: string) {
+    const { data } = await supabaseRef.current
+      .from('event_shifts')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('shift_date')
+      .order('start_time') as unknown as { data: Array<{ id: string; event_id: string; role: string; shift_date: string; start_time: string; end_time: string; capacity: number; notes: string | null }> | null }
+
+    const rows: ShiftRow[] = (data ?? []).map(s => ({
+      id: s.id,
+      shift_date: s.shift_date,
+      start_time: s.start_time.slice(0, 5),
+      end_time: s.end_time.slice(0, 5),
+      role: s.role,
+      capacity: s.capacity,
+      notes: s.notes ?? '',
+    }))
+    setShiftsByEvent(prev => new Map(prev).set(eventId, rows))
+  }
 
   // Hjelpefunksjon — tildel soner basert pa omrade og hendelsestype
   async function assignZonesForEvent(eventId: string, area: EventArea, eventType: EventType) {
@@ -229,6 +298,20 @@ export default function EventsAdminPage() {
       status: 'upcoming',
       created_by: user.id,
       send_push_on_activate: form.sendPushOnActivate,
+      ...(form.type === 'arrangement' && {
+        signup_deadline: form.signupDeadline || null,
+        arranger_name: form.arrangerName || null,
+        role_info: form.roleInfo
+          .filter(r => r.role.trim())
+          .map(r => ({
+            role: r.role.trim(),
+            contact: r.contact.trim() || undefined,
+            tasks: r.tasks.split('\n').map(t => t.trim()).filter(Boolean),
+          })),
+        general_info: form.generalInfo
+          .filter(g => g.label.trim())
+          .map(g => ({ label: g.label.trim(), value: g.value.trim() })),
+      }),
     }).select().single() as { data: DugnadEvent | null; error: unknown }
 
     if (error || !newEvent) {
@@ -265,6 +348,20 @@ export default function EventsAdminPage() {
       bags_collected: editForm.bagsCollected ? parseInt(editForm.bagsCollected, 10) : null,
       completion_notes: editForm.completionNotes || null,
       send_push_on_activate: editForm.sendPushOnActivate,
+      ...(editForm.type === 'arrangement' && {
+        signup_deadline: editForm.signupDeadline || null,
+        arranger_name: editForm.arrangerName || null,
+        role_info: editForm.roleInfo
+          .filter(r => r.role.trim())
+          .map(r => ({
+            role: r.role.trim(),
+            contact: r.contact.trim() || undefined,
+            tasks: r.tasks.split('\n').map(t => t.trim()).filter(Boolean),
+          })),
+        general_info: editForm.generalInfo
+          .filter(g => g.label.trim())
+          .map(g => ({ label: g.label.trim(), value: g.value.trim() })),
+      }),
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
@@ -280,6 +377,8 @@ export default function EventsAdminPage() {
   function startEditing(event: EventWithZones) {
     setEditingId(event.id)
     setDeleteConfirmId(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyEvent = event as any
     setEditForm({
       title: event.title,
       type: event.type,
@@ -293,6 +392,14 @@ export default function EventsAdminPage() {
       bagsCollected: event.bags_collected ? String(event.bags_collected) : '',
       completionNotes: event.completion_notes || '',
       sendPushOnActivate: event.send_push_on_activate ?? true,
+      signupDeadline: anyEvent.signup_deadline ?? '',
+      arrangerName: anyEvent.arranger_name ?? '',
+      roleInfo: (anyEvent.role_info ?? []).map((r: { role: string; contact?: string; tasks?: string[] }) => ({
+        role: r.role,
+        contact: r.contact ?? '',
+        tasks: (r.tasks ?? []).join('\n'),
+      })),
+      generalInfo: anyEvent.general_info ?? [],
     })
   }
 
@@ -544,6 +651,25 @@ export default function EventsAdminPage() {
     setExporting(null)
   }
 
+  // Trigger shift-reminders for arrangement
+  async function triggerShiftReminders(eventId: string) {
+    setTriggerReminders(eventId)
+    setTriggerReminderResult(null)
+    try {
+      const res = await fetch('/api/admin/trigger-shift-reminders', { method: 'POST' })
+      const j = await res.json().catch(() => ({}))
+      if (res.ok && j.ok) {
+        setTriggerReminderResult({ eventId, message: `Sendt: ${j.sent} (${j.failed} feilet)`, isError: false })
+      } else {
+        setTriggerReminderResult({ eventId, message: j.error ?? `Feil (${res.status})`, isError: true })
+      }
+    } catch (e) {
+      setTriggerReminderResult({ eventId, message: (e as Error).message, isError: true })
+    } finally {
+      setTriggerReminders(null)
+    }
+  }
+
   // Formater dato
   function formatDate(dateStr: string, startTime: string | null, endTime: string | null): string {
     const d = new Date(dateStr)
@@ -561,6 +687,27 @@ export default function EventsAdminPage() {
     submitLabel: string,
     isLoading: boolean,
   ) {
+    // Hjelpere for arrangement-felter — rolle-repeater
+    function addRole() {
+      setData(prev => ({ ...prev, roleInfo: [...prev.roleInfo, { role: '', tasks: '', contact: '' }] }))
+    }
+    function updateRole(i: number, patch: Partial<{ role: string; tasks: string; contact: string }>) {
+      setData(prev => ({ ...prev, roleInfo: prev.roleInfo.map((r, idx) => idx === i ? { ...r, ...patch } : r) }))
+    }
+    function removeRole(i: number) {
+      setData(prev => ({ ...prev, roleInfo: prev.roleInfo.filter((_, idx) => idx !== i) }))
+    }
+    // Hjelpere for generell informasjon-repeater
+    function addInfo() {
+      setData(prev => ({ ...prev, generalInfo: [...prev.generalInfo, { label: '', value: '' }] }))
+    }
+    function updateInfo(i: number, patch: Partial<{ label: string; value: string }>) {
+      setData(prev => ({ ...prev, generalInfo: prev.generalInfo.map((g, idx) => idx === i ? { ...g, ...patch } : g) }))
+    }
+    function removeInfo(i: number) {
+      setData(prev => ({ ...prev, generalInfo: prev.generalInfo.filter((_, idx) => idx !== i) }))
+    }
+
     return (
       <form onSubmit={onSubmit} className="space-y-4">
         {/* Tittel */}
@@ -637,6 +784,123 @@ export default function EventsAdminPage() {
             />
           </div>
         </div>
+
+        {/* Arrangement-felter — kun synlig ved type=arrangement */}
+        {data.type === 'arrangement' && (
+          <div className="space-y-4 p-4 rounded-2xl bg-surface-low">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Arrangement-innstillinger</p>
+
+            {/* Påmeldingsfrist */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Påmeldingsfrist (valgfritt)</label>
+              <input
+                type="datetime-local"
+                value={data.signupDeadline}
+                onChange={e => setData(prev => ({ ...prev, signupDeadline: e.target.value }))}
+                className={dateTimeClass}
+              />
+            </div>
+
+            {/* Arrangørnavn */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Arrangør (valgfritt)</label>
+              <input
+                type="text"
+                value={data.arrangerName}
+                onChange={e => setData(prev => ({ ...prev, arrangerName: e.target.value }))}
+                placeholder="f.eks. Clarion, Neon, Olavsfest"
+                className={inputClass}
+              />
+            </div>
+
+            {/* Roller og oppgaver-repeater */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-2">Roller og oppgaver</label>
+              <div className="space-y-3">
+                {data.roleInfo.map((r, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-card space-y-2 relative">
+                    <button
+                      type="button"
+                      onClick={() => removeRole(i)}
+                      className="absolute top-2 right-2 text-text-tertiary hover:text-error transition-colors"
+                      aria-label="Slett rolle"
+                    >
+                      <X size={14} />
+                    </button>
+                    <input
+                      type="text"
+                      value={r.role}
+                      onChange={e => updateRole(i, { role: e.target.value })}
+                      placeholder="Renhold"
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      value={r.contact}
+                      onChange={e => updateRole(i, { contact: e.target.value })}
+                      placeholder="Inger/Gita"
+                      className={inputClass}
+                    />
+                    <textarea
+                      value={r.tasks}
+                      onChange={e => updateRole(i, { tasks: e.target.value })}
+                      placeholder="Én oppgave per linje"
+                      rows={4}
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addRole}
+                className="mt-2 text-[13px] font-medium text-accent hover:underline"
+              >
+                + Legg til rolle
+              </button>
+            </div>
+
+            {/* Generell informasjon-repeater */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-2">Generell informasjon</label>
+              <div className="space-y-2">
+                {data.generalInfo.map((g, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={g.label}
+                      onChange={e => updateInfo(i, { label: e.target.value })}
+                      placeholder="Kleskode"
+                      className={`${inputClass} w-1/3 shrink-0`}
+                    />
+                    <input
+                      type="text"
+                      value={g.value}
+                      onChange={e => updateInfo(i, { value: e.target.value })}
+                      placeholder="Helsvart klær"
+                      className={inputClass}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeInfo(i)}
+                      className="shrink-0 text-text-tertiary hover:text-error transition-colors"
+                      aria-label="Slett info-punkt"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addInfo}
+                className="mt-2 text-[13px] font-medium text-accent hover:underline"
+              >
+                + Legg til info-punkt
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Beskrivelse */}
         <div>
@@ -1027,6 +1291,220 @@ export default function EventsAdminPage() {
                               )}
                             </div>
                           )}
+
+                          {/* Vakt-administrasjon for arrangement-events */}
+                          {event.type === 'arrangement' && !isEditing && (() => {
+                            const shifts = shiftsByEvent.get(event.id) ?? []
+                            const isSaving = savingShifts.has(event.id)
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const roles = ((event as any).role_info as Array<{ role: string }> | null | undefined)?.map(r => r.role) ?? []
+
+                            // Oppdater én rad i state
+                            function updateShift(idx: number, patch: Partial<ShiftRow>) {
+                              setShiftsByEvent(prev => {
+                                const next = new Map(prev)
+                                const rows = [...(next.get(event.id) ?? [])]
+                                rows[idx] = { ...rows[idx], ...patch }
+                                next.set(event.id, rows)
+                                return next
+                              })
+                            }
+
+                            // Fjern én rad fra state — DB-sletting håndteres ved lagring
+                            function removeShift(idx: number) {
+                              setShiftsByEvent(prev => {
+                                const next = new Map(prev)
+                                const rows = [...(next.get(event.id) ?? [])]
+                                rows.splice(idx, 1)
+                                next.set(event.id, rows)
+                                return next
+                              })
+                            }
+
+                            // Legg til tom rad
+                            function addShift() {
+                              setShiftsByEvent(prev => {
+                                const next = new Map(prev)
+                                const rows = [...(next.get(event.id) ?? [])]
+                                rows.push({ shift_date: '', start_time: '', end_time: '', role: roles[0] ?? '', capacity: 1, notes: '' })
+                                next.set(event.id, rows)
+                                return next
+                              })
+                            }
+
+                            // Lagre — diff mot DB: INSERT nye, UPDATE eksisterende, DELETE fjernede
+                            async function saveShifts() {
+                              setSavingShifts(prev => new Set(prev).add(event.id))
+                              try {
+                                // Hent gjeldende DB-IDer for å finne slettede
+                                const { data: dbRows } = await supabaseRef.current
+                                  .from('event_shifts')
+                                  .select('id')
+                                  .eq('event_id', event.id) as unknown as { data: Array<{ id: string }> | null }
+                                const dbIds = new Set((dbRows ?? []).map(r => r.id))
+                                const currentIds = new Set(shifts.filter(s => s.id).map(s => s.id as string))
+
+                                // Slett rader som er fjernet fra state
+                                const toDelete = [...dbIds].filter(id => !currentIds.has(id))
+                                if (toDelete.length > 0) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  await (supabaseRef.current.from('event_shifts') as any).delete().in('id', toDelete)
+                                }
+
+                                // Filtrer ut rader uten påkrevde felt
+                                const valid = shifts.filter(s => s.shift_date && s.role && s.capacity > 0)
+                                const toInsert = valid.filter(s => !s.id)
+                                const toUpdate = valid.filter(s => !!s.id)
+
+                                if (toInsert.length > 0) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  await (supabaseRef.current.from('event_shifts') as any).insert(
+                                    toInsert.map(s => ({
+                                      event_id: event.id,
+                                      role: s.role,
+                                      shift_date: s.shift_date,
+                                      start_time: s.start_time || '00:00',
+                                      end_time: s.end_time || '00:00',
+                                      capacity: s.capacity,
+                                      notes: s.notes || null,
+                                    }))
+                                  )
+                                }
+
+                                for (const s of toUpdate) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  await (supabaseRef.current.from('event_shifts') as any).update({
+                                    role: s.role,
+                                    shift_date: s.shift_date,
+                                    start_time: s.start_time || '00:00',
+                                    end_time: s.end_time || '00:00',
+                                    capacity: s.capacity,
+                                    notes: s.notes || null,
+                                  }).eq('id', s.id)
+                                }
+
+                                await reloadShifts(event.id)
+                              } finally {
+                                setSavingShifts(prev => { const next = new Set(prev); next.delete(event.id); return next })
+                              }
+                            }
+
+                            return (
+                              <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
+                                <div className="flex items-center gap-2">
+                                  <Users size={16} className="text-accent" />
+                                  <p className="text-sm font-semibold font-[var(--font-display)]">Vakter</p>
+                                </div>
+
+                                {shifts.length === 0 && (
+                                  <p className="text-xs text-text-secondary">Ingen vakter lagt til ennå.</p>
+                                )}
+
+                                {/* Vaktliste */}
+                                <div className="space-y-2">
+                                  {shifts.map((s, idx) => (
+                                    <div key={idx} className="space-y-1.5 p-2 bg-card rounded-xl ring-1 ring-text-tertiary/10">
+                                      {/* Rad 1: dato + tid */}
+                                      <div className="grid grid-cols-[1fr_auto_1fr] gap-1.5 items-center">
+                                        <input
+                                          type="date"
+                                          value={s.shift_date}
+                                          onChange={e => updateShift(idx, { shift_date: e.target.value })}
+                                          className={`${inputClass} text-xs px-2 py-1.5`}
+                                        />
+                                        <span className="text-text-tertiary text-xs">–</span>
+                                        <div className="grid grid-cols-2 gap-1">
+                                          <input
+                                            type="time"
+                                            value={s.start_time}
+                                            onChange={e => updateShift(idx, { start_time: e.target.value })}
+                                            className={`${inputClass} text-xs px-2 py-1.5`}
+                                          />
+                                          <input
+                                            type="time"
+                                            value={s.end_time}
+                                            onChange={e => updateShift(idx, { end_time: e.target.value })}
+                                            className={`${inputClass} text-xs px-2 py-1.5`}
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Rad 2: rolle + antall + slett */}
+                                      <div className="grid grid-cols-[1fr_auto_auto] gap-1.5 items-center">
+                                        <select
+                                          value={s.role}
+                                          onChange={e => updateShift(idx, { role: e.target.value })}
+                                          className={`${inputClass} text-xs px-2 py-1.5`}
+                                        >
+                                          <option value="">Velg rolle</option>
+                                          {roles.map(r => (
+                                            <option key={r} value={r}>{r}</option>
+                                          ))}
+                                        </select>
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          value={s.capacity}
+                                          onChange={e => updateShift(idx, { capacity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                                          className={`${inputClass} text-xs px-2 py-1.5 w-14 text-center`}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => removeShift(idx)}
+                                          className="text-danger text-lg px-2 leading-none active:opacity-60"
+                                          aria-label="Fjern vakt"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Legg til + lagre */}
+                                <button
+                                  type="button"
+                                  onClick={addShift}
+                                  className="flex items-center gap-1.5 text-xs text-accent font-medium px-3 py-2 rounded-full bg-accent/10 active:bg-accent/20 transition-colors"
+                                >
+                                  <Plus size={13} />
+                                  Legg til vakt
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={saveShifts}
+                                  disabled={isSaving}
+                                  className="w-full py-2.5 rounded-full bg-accent text-white text-sm font-medium active:bg-accent/80 disabled:opacity-50 transition-colors"
+                                >
+                                  {isSaving ? 'Lagrer…' : 'Lagre vakter'}
+                                </button>
+
+                                <a
+                                  href={`/api/admin/arrangement/${event.id}/export`}
+                                  download
+                                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors"
+                                >
+                                  <Download size={14} />
+                                  Last ned vaktliste (.csv)
+                                </a>
+
+                                <button
+                                  onClick={() => triggerShiftReminders(event.id)}
+                                  disabled={triggerReminders === event.id}
+                                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors disabled:opacity-50"
+                                >
+                                  <Bell size={14} />
+                                  {triggerReminders === event.id ? 'Sender…' : 'Send 24t-påminnelser nå'}
+                                </button>
+                                {triggerReminderResult?.eventId === event.id && (
+                                  <div className={`p-2 rounded-2xl text-xs text-center ${triggerReminderResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                                    {triggerReminderResult.message}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })()}
 
                           {/* Sonestatistikk */}
                           <div className="grid grid-cols-3 gap-2">
