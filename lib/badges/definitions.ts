@@ -58,7 +58,7 @@ export const badgeDefinitions = [
   { id: 42, name: 'Portøren', icon: '/badges/portor.png', category: '17mai' as const, description: 'Sørget for trygg frakt av brus uten å bryte plasten', auto_criteria: null },
   { id: 63, name: 'Israider', icon: '/badges/israider.png', category: '17mai' as const, description: 'Tømme butikkene for is', auto_criteria: null },
   { id: 64, name: 'Isflytter', icon: '/badges/isflytter.png', category: '17mai' as const, description: 'Flytte is fra A til B', auto_criteria: null },
-  { id: 65, name: 'Lagersjef', icon: '/badges/lagersjef.png', category: '17mai' as const, description: 'Holder orden på Rosten-lageret — kasser, isoporbokser og at alt kommer på plass igjen', auto_criteria: null },
+  { id: 65, name: 'Lagersjef', icon: '/badges/lagersjef.png', category: '17mai' as const, description: 'Holder orden på Rosten-lageret — kasser, isoporbokser, varetelling og at alt kommer på plass igjen', auto_criteria: null },
   { id: 66, name: 'Kaffinator', icon: '/badges/kaffinator.png', category: '17mai' as const, description: 'Tok med kaffekanner og termoser til 17. mai-dugnaden', auto_criteria: null },
 
   // Konfirmasjonsspilling og innhopp (kan stables ×N)
