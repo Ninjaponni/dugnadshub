@@ -23,6 +23,7 @@ export function ShiftClaimSheet({
 }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
 
   const meClaimed = !!(shift && currentUserId && shift.claims?.some(c => c.user_id === currentUserId))
   const claimed = shift?.claims?.length ?? 0
@@ -61,12 +62,19 @@ export function ShiftClaimSheet({
       return
     }
     setSubmitting(false)
+    setShowUnclaimConfirm(false)
     onChange()
     onClose()
   }
 
+  function handleSheetClose() {
+    setShowUnclaimConfirm(false)
+    setError(null)
+    onClose()
+  }
+
   return (
-    <BottomSheet open={!!shift} onClose={onClose}>
+    <BottomSheet open={!!shift} onClose={handleSheetClose}>
       {shift && (
         <div className="space-y-5">
           {/* Tittel + tid */}
@@ -132,15 +140,43 @@ export function ShiftClaimSheet({
               </p>
             </div>
           ) : meClaimed ? (
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={handleUnclaim}
-              loading={submitting}
-              className="w-full"
-            >
-              Meld meg av
-            </Button>
+            <>
+              {!showUnclaimConfirm ? (
+                <button
+                  onClick={() => setShowUnclaimConfirm(true)}
+                  disabled={submitting}
+                  className="w-full text-danger text-xs font-semibold py-2 hover:opacity-80 transition-opacity disabled:opacity-40"
+                >
+                  Meld meg av
+                </button>
+              ) : (
+                <div className="rounded-2xl overflow-hidden border border-warning/20">
+                  <div className="bg-warning/5 p-4">
+                    <p className="text-sm text-text-primary font-medium mb-1">
+                      Er du sikker på at du ikke kan ta vakten?
+                    </p>
+                    <p className="text-sm text-text-secondary">
+                      Hvis du er forhindret fra å delta, setter vi stor pris på om du kan finne noen andre til å ta vakten din.
+                    </p>
+                  </div>
+                  <div className="flex border-t border-warning/20">
+                    <button
+                      onClick={() => setShowUnclaimConfirm(false)}
+                      className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-warning/20 active:bg-surface-low"
+                    >
+                      Avbryt
+                    </button>
+                    <button
+                      onClick={handleUnclaim}
+                      disabled={submitting}
+                      className="flex-1 py-3 text-sm font-medium text-danger active:bg-danger/10"
+                    >
+                      {submitting ? 'Melder av…' : 'Meld meg av'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : isFull ? (
             <Button variant="confirm" size="lg" disabled className="w-full">
               Fullt
