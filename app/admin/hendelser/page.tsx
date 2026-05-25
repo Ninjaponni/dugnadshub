@@ -148,6 +148,12 @@ export default function EventsAdminPage() {
   const [pendingKmz, setPendingKmz] = useState<{ eventId: string; file: File; title: string; message: string } | null>(null)
   const [pendingCsv, setPendingCsv] = useState<{ eventId: string; file: File; title: string; message: string } | null>(null)
 
+  // Vakt-administrasjon for arrangement-events
+  type ShiftRow = { id?: string; shift_date: string; start_time: string; end_time: string; role: string; capacity: number; notes: string }
+  const [shiftsByEvent, setShiftsByEvent] = useState<Map<string, ShiftRow[]>>(new Map())
+  const [savingShifts, setSavingShifts] = useState<Set<string>>(new Set())
+  const [deleteShiftConfirm, setDeleteShiftConfirm] = useState<{ eventId: string; shiftId: string } | null>(null)
+
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
@@ -185,6 +191,56 @@ export default function EventsAdminPage() {
   }, [])
 
   useEffect(() => { loadEvents() }, [loadEvents])
+
+  // Last vakter når et arrangement-event ekspanderes
+  useEffect(() => {
+    if (!expandedId) return
+    const ev = events.find(e => e.id === expandedId)
+    if (!ev || ev.type !== 'arrangement') return
+    // Ikke re-last om vi allerede har data
+    if (shiftsByEvent.has(expandedId)) return
+
+    ;(async () => {
+      const { data } = await supabaseRef.current
+        .from('event_shifts')
+        .select('*')
+        .eq('event_id', expandedId)
+        .order('shift_date')
+        .order('start_time') as unknown as { data: Array<{ id: string; event_id: string; role: string; shift_date: string; start_time: string; end_time: string; capacity: number; notes: string | null }> | null }
+
+      const rows: ShiftRow[] = (data ?? []).map(s => ({
+        id: s.id,
+        shift_date: s.shift_date,
+        start_time: s.start_time.slice(0, 5),   // 'HH:MM:SS' → 'HH:MM'
+        end_time: s.end_time.slice(0, 5),
+        role: s.role,
+        capacity: s.capacity,
+        notes: s.notes ?? '',
+      }))
+      setShiftsByEvent(prev => new Map(prev).set(expandedId, rows))
+    })()
+  }, [expandedId, events, shiftsByEvent])
+
+  // Hjelpefunksjon — last vakter på nytt for et event
+  async function reloadShifts(eventId: string) {
+    const { data } = await supabaseRef.current
+      .from('event_shifts')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('shift_date')
+      .order('start_time') as unknown as { data: Array<{ id: string; event_id: string; role: string; shift_date: string; start_time: string; end_time: string; capacity: number; notes: string | null }> | null }
+
+    const rows: ShiftRow[] = (data ?? []).map(s => ({
+      id: s.id,
+      shift_date: s.shift_date,
+      start_time: s.start_time.slice(0, 5),
+      end_time: s.end_time.slice(0, 5),
+      role: s.role,
+      capacity: s.capacity,
+      notes: s.notes ?? '',
+    }))
+    setShiftsByEvent(prev => new Map(prev).set(eventId, rows))
+  }
 
   // Hjelpefunksjon — tildel soner basert pa omrade og hendelsestype
   async function assignZonesForEvent(eventId: string, area: EventArea, eventType: EventType) {
@@ -1212,6 +1268,197 @@ export default function EventsAdminPage() {
                               )}
                             </div>
                           )}
+
+                          {/* Vakt-administrasjon for arrangement-events */}
+                          {event.type === 'arrangement' && !isEditing && (() => {
+                            const shifts = shiftsByEvent.get(event.id) ?? []
+                            const isSaving = savingShifts.has(event.id)
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const roles = ((event as any).role_info as Array<{ role: string }> | null | undefined)?.map(r => r.role) ?? []
+
+                            // Oppdater én rad i state
+                            function updateShift(idx: number, patch: Partial<ShiftRow>) {
+                              setShiftsByEvent(prev => {
+                                const next = new Map(prev)
+                                const rows = [...(next.get(event.id) ?? [])]
+                                rows[idx] = { ...rows[idx], ...patch }
+                                next.set(event.id, rows)
+                                return next
+                              })
+                            }
+
+                            // Fjern én rad fra state — DB-sletting håndteres ved lagring
+                            function removeShift(idx: number) {
+                              setShiftsByEvent(prev => {
+                                const next = new Map(prev)
+                                const rows = [...(next.get(event.id) ?? [])]
+                                rows.splice(idx, 1)
+                                next.set(event.id, rows)
+                                return next
+                              })
+                            }
+
+                            // Legg til tom rad
+                            function addShift() {
+                              setShiftsByEvent(prev => {
+                                const next = new Map(prev)
+                                const rows = [...(next.get(event.id) ?? [])]
+                                rows.push({ shift_date: '', start_time: '', end_time: '', role: roles[0] ?? '', capacity: 1, notes: '' })
+                                next.set(event.id, rows)
+                                return next
+                              })
+                            }
+
+                            // Lagre — diff mot DB: INSERT nye, UPDATE eksisterende, DELETE fjernede
+                            async function saveShifts() {
+                              setSavingShifts(prev => new Set(prev).add(event.id))
+                              try {
+                                // Hent gjeldende DB-IDer for å finne slettede
+                                const { data: dbRows } = await supabaseRef.current
+                                  .from('event_shifts')
+                                  .select('id')
+                                  .eq('event_id', event.id) as unknown as { data: Array<{ id: string }> | null }
+                                const dbIds = new Set((dbRows ?? []).map(r => r.id))
+                                const currentIds = new Set(shifts.filter(s => s.id).map(s => s.id as string))
+
+                                // Slett rader som er fjernet fra state
+                                const toDelete = [...dbIds].filter(id => !currentIds.has(id))
+                                if (toDelete.length > 0) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  await (supabaseRef.current.from('event_shifts') as any).delete().in('id', toDelete)
+                                }
+
+                                // Filtrer ut rader uten påkrevde felt
+                                const valid = shifts.filter(s => s.shift_date && s.role && s.capacity > 0)
+                                const toInsert = valid.filter(s => !s.id)
+                                const toUpdate = valid.filter(s => !!s.id)
+
+                                if (toInsert.length > 0) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  await (supabaseRef.current.from('event_shifts') as any).insert(
+                                    toInsert.map(s => ({
+                                      event_id: event.id,
+                                      role: s.role,
+                                      shift_date: s.shift_date,
+                                      start_time: s.start_time || '00:00',
+                                      end_time: s.end_time || '00:00',
+                                      capacity: s.capacity,
+                                      notes: s.notes || null,
+                                    }))
+                                  )
+                                }
+
+                                for (const s of toUpdate) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  await (supabaseRef.current.from('event_shifts') as any).update({
+                                    role: s.role,
+                                    shift_date: s.shift_date,
+                                    start_time: s.start_time || '00:00',
+                                    end_time: s.end_time || '00:00',
+                                    capacity: s.capacity,
+                                    notes: s.notes || null,
+                                  }).eq('id', s.id)
+                                }
+
+                                await reloadShifts(event.id)
+                              } finally {
+                                setSavingShifts(prev => { const next = new Set(prev); next.delete(event.id); return next })
+                              }
+                            }
+
+                            return (
+                              <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
+                                <div className="flex items-center gap-2">
+                                  <Users size={16} className="text-accent" />
+                                  <p className="text-sm font-semibold font-[var(--font-display)]">Vakter</p>
+                                </div>
+
+                                {shifts.length === 0 && (
+                                  <p className="text-xs text-text-secondary">Ingen vakter lagt til ennå.</p>
+                                )}
+
+                                {/* Vaktliste */}
+                                <div className="space-y-2">
+                                  {shifts.map((s, idx) => (
+                                    <div key={idx} className="space-y-1.5 p-2 bg-card rounded-xl ring-1 ring-text-tertiary/10">
+                                      {/* Rad 1: dato + tid */}
+                                      <div className="grid grid-cols-[1fr_auto_1fr] gap-1.5 items-center">
+                                        <input
+                                          type="date"
+                                          value={s.shift_date}
+                                          onChange={e => updateShift(idx, { shift_date: e.target.value })}
+                                          className={`${inputClass} text-xs px-2 py-1.5`}
+                                        />
+                                        <span className="text-text-tertiary text-xs">–</span>
+                                        <div className="grid grid-cols-2 gap-1">
+                                          <input
+                                            type="time"
+                                            value={s.start_time}
+                                            onChange={e => updateShift(idx, { start_time: e.target.value })}
+                                            className={`${inputClass} text-xs px-2 py-1.5`}
+                                          />
+                                          <input
+                                            type="time"
+                                            value={s.end_time}
+                                            onChange={e => updateShift(idx, { end_time: e.target.value })}
+                                            className={`${inputClass} text-xs px-2 py-1.5`}
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Rad 2: rolle + antall + slett */}
+                                      <div className="grid grid-cols-[1fr_auto_auto] gap-1.5 items-center">
+                                        <select
+                                          value={s.role}
+                                          onChange={e => updateShift(idx, { role: e.target.value })}
+                                          className={`${inputClass} text-xs px-2 py-1.5`}
+                                        >
+                                          <option value="">Velg rolle</option>
+                                          {roles.map(r => (
+                                            <option key={r} value={r}>{r}</option>
+                                          ))}
+                                        </select>
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          value={s.capacity}
+                                          onChange={e => updateShift(idx, { capacity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                                          className={`${inputClass} text-xs px-2 py-1.5 w-14 text-center`}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => removeShift(idx)}
+                                          className="text-danger text-lg px-2 leading-none active:opacity-60"
+                                          aria-label="Fjern vakt"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Legg til + lagre */}
+                                <button
+                                  type="button"
+                                  onClick={addShift}
+                                  className="flex items-center gap-1.5 text-xs text-accent font-medium px-3 py-2 rounded-full bg-accent/10 active:bg-accent/20 transition-colors"
+                                >
+                                  <Plus size={13} />
+                                  Legg til vakt
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={saveShifts}
+                                  disabled={isSaving}
+                                  className="w-full py-2.5 rounded-full bg-accent text-white text-sm font-medium active:bg-accent/80 disabled:opacity-50 transition-colors"
+                                >
+                                  {isSaving ? 'Lagrer…' : 'Lagre vakter'}
+                                </button>
+                              </div>
+                            )
+                          })()}
 
                           {/* Sonestatistikk */}
                           <div className="grid grid-cols-3 gap-2">
