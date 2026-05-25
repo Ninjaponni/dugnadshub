@@ -22,7 +22,7 @@ const flyerColors = [
 
 const plastColors = [
   { color: '#E57373', label: 'Ledig — meld deg som voksen ansvarlig' },
-  { color: '#FFD54F', label: 'Delvis bemannet — trenger flere' },
+  { color: '#FFD54F', label: 'Trenger flere voksne' },
   { color: '#5C9CE6', label: 'Voksne meldt' },
   { color: '#6B8F71', label: 'Ferdig ryddet' },
 ]
