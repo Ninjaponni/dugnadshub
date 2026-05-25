@@ -116,7 +116,9 @@ export default function AdminOverviewPage() {
     }
   }
 
-  const activeEvents = events.filter(e => e.status === 'active')
+  // Arrangement-events administreres via /admin/hendelser (egen vakt-flyt), ikke her
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeEvents = events.filter(e => e.status === 'active' && (e as any).type !== 'arrangement')
   const upcomingEvents = events.filter(e => e.status === 'upcoming')
 
   return (

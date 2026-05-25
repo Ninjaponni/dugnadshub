@@ -40,7 +40,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
   // Aggregerte vakt-data per arrangement-event: totalt antall vakter og ledige plasser
-  const [shiftAggregates, setShiftAggregates] = useState<Map<string, { total: number; free: number }>>(new Map())
+  const [shiftAggregates, setShiftAggregates] = useState<Map<string, { total: number; free: number; totalCapacity: number }>>(new Map())
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
@@ -141,10 +141,11 @@ export default function HomePage() {
           .select('event_id, capacity, claims:shift_claims(id)')
           .in('event_id', arrangementIds) as { data: Array<{ event_id: string; capacity: number; claims: Array<{ id: string }> }> | null }
 
-        const agg = new Map<string, { total: number; free: number }>()
+        const agg = new Map<string, { total: number; free: number; totalCapacity: number }>()
         for (const s of shiftsData ?? []) {
-          const a = agg.get(s.event_id) ?? { total: 0, free: 0 }
+          const a = agg.get(s.event_id) ?? { total: 0, free: 0, totalCapacity: 0 }
           a.total += 1
+          a.totalCapacity += s.capacity
           a.free += Math.max(0, s.capacity - s.claims.length)
           agg.set(s.event_id, a)
         }
@@ -309,7 +310,7 @@ export default function HomePage() {
             {(events as any[])
               .filter((e: any) => e.type === 'arrangement' && e.status === 'active')
               .map((e: any) => {
-                const agg = shiftAggregates.get(e.id as string) ?? { total: 0, free: 0 }
+                const agg = shiftAggregates.get(e.id as string) ?? { total: 0, free: 0, totalCapacity: 0 }
                 return (
                   <motion.section
                     key={e.id as string}
@@ -320,6 +321,7 @@ export default function HomePage() {
                       event={e as unknown as ArrangementEvent}
                       totalShifts={agg.total}
                       freePlaces={agg.free}
+                      totalCapacity={agg.totalCapacity}
                     />
                   </motion.section>
                 )
