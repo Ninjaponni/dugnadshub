@@ -2,7 +2,7 @@
 
 import { ChevronRight } from 'lucide-react'
 import type { ShiftWithClaims } from '@/lib/types/shifts'
-import { formatShiftTime, formatCapacity, shiftFillStatus, roleIcon } from '@/lib/shifts/utils'
+import { formatShiftRange, formatCapacity, shiftFillStatus, roleIcon } from '@/lib/shifts/utils'
 
 interface Props {
   shift: ShiftWithClaims
@@ -35,7 +35,7 @@ export function ShiftListItem({ shift, onClick, currentUserId }: Props) {
       <div className="flex-1 min-w-0">
         <div className="font-medium text-text-primary truncate">{shift.role}</div>
         <div className="text-sm text-text-secondary">
-          {formatShiftTime(shift.start_time)}–{formatShiftTime(shift.end_time)}
+          {formatShiftRange(shift.start_time, shift.end_time)}
         </div>
       </div>
 

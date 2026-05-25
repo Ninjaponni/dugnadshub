@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react'
 import type { ShiftWithClaims } from '@/lib/types/shifts'
-import { formatShiftDate, formatShiftTime, roleIcon } from '@/lib/shifts/utils'
+import { formatShiftDate, formatShiftRange, roleIcon } from '@/lib/shifts/utils'
 
 interface Props {
   shifts: ShiftWithClaims[]
@@ -30,7 +30,7 @@ export function MyShiftsCard({ shifts, currentUserId, onShiftClick }: Props) {
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm truncate">{formatShiftDate(s.shift_date)}</div>
               <div className="text-xs text-text-secondary">
-                {formatShiftTime(s.start_time)}–{formatShiftTime(s.end_time)} · {s.role}
+                {formatShiftRange(s.start_time, s.end_time)} · {s.role}
               </div>
             </div>
           </button>

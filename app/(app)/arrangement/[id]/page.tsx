@@ -118,7 +118,7 @@ export default function ArrangementPage() {
               <div className="space-y-5">
                 {Array.from(grouped.entries()).map(([date, dayShifts]) => (
                   <div key={date}>
-                    <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">{formatShiftDate(date)}</div>
+                    <h3 className="text-lg font-bold font-[var(--font-display)] tracking-tight text-text-primary mb-3 mt-1">{formatShiftDate(date)}</h3>
                     <div className="space-y-2">
                       {dayShifts.map(s => (
                         <ShiftListItem key={s.id} shift={s} onClick={() => setSelectedShift(s)} currentUserId={userId} />

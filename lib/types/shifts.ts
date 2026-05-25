@@ -30,6 +30,7 @@ export interface ShiftWithClaims extends EventShift {
 export interface RoleInfo {
   role: string
   tasks: string[]
+  contact?: string  // navn på ansvarlig hos arrangør, f.eks. "Inger/Gita"
 }
 
 export interface GeneralInfoEntry {

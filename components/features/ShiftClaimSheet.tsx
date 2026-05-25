@@ -5,7 +5,7 @@ import { Clock, Users, Phone, Trophy } from 'lucide-react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import type { ShiftWithClaims, RoleInfo, Match } from '@/lib/types/shifts'
-import { formatShiftDate, formatShiftTime, roleIcon, isDeadlinePassed, matchesDuringShift } from '@/lib/shifts/utils'
+import { formatShiftDate, formatShiftRange, shiftDurationHours, roleIcon, isDeadlinePassed, matchesDuringShift } from '@/lib/shifts/utils'
 
 interface Props {
   shift: ShiftWithClaims | null
@@ -28,7 +28,9 @@ export function ShiftClaimSheet({
   const claimed = shift?.claims?.length ?? 0
   const isFull = shift ? claimed >= shift.capacity : false
   const deadlinePassed = isDeadlinePassed(signupDeadline)
-  const taskList = (shift && roleInfo?.find(r => r.role === shift.role)?.tasks) ?? []
+  const role = shift ? roleInfo?.find(r => r.role === shift.role) : undefined
+  const taskList = role?.tasks ?? []
+  const roleContact = role?.contact
   const shiftMatches = shift ? matchesDuringShift(matches, shift) : []
 
   async function handleClaim() {
@@ -75,7 +77,8 @@ export function ShiftClaimSheet({
             </div>
             <div className="flex items-center gap-1.5 text-sm text-text-secondary">
               <Clock className="w-4 h-4" />
-              {formatShiftDate(shift.shift_date)} · {formatShiftTime(shift.start_time)}–{formatShiftTime(shift.end_time)}
+              {formatShiftDate(shift.shift_date)} · {formatShiftRange(shift.start_time, shift.end_time)}
+              <span className="text-text-tertiary">({shiftDurationHours(shift.start_time, shift.end_time).toFixed(1).replace('.0', '')} t)</span>
             </div>
           </div>
 
@@ -169,7 +172,10 @@ export function ShiftClaimSheet({
                 {shiftMatches.map((m, i) => (
                   <li key={i} className="text-sm text-text-primary flex gap-3 items-baseline">
                     <span className="font-mono text-text-secondary shrink-0 w-12">{m.time}</span>
-                    <span>{m.home} <span className="text-text-tertiary">vs</span> {m.away}</span>
+                    <span>
+                      {m.home}
+                      {m.away && (<><span className="text-text-tertiary"> vs </span>{m.away}</>)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -179,7 +185,12 @@ export function ShiftClaimSheet({
           {/* Oppgaver */}
           {taskList.length > 0 && (
             <div>
-              <h3 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold mb-2">Oppgaver</h3>
+              <div className="flex items-baseline justify-between mb-2">
+                <h3 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Oppgaver</h3>
+                {roleContact && (
+                  <span className="text-xs text-text-tertiary">Ansvarlig: <span className="text-text-secondary font-medium">{roleContact}</span></span>
+                )}
+              </div>
               <ul className="space-y-1.5">
                 {taskList.map((t, i) => (
                   <li key={i} className="text-sm text-text-secondary flex gap-2">
