@@ -1456,6 +1456,15 @@ export default function EventsAdminPage() {
                                 >
                                   {isSaving ? 'Lagrer…' : 'Lagre vakter'}
                                 </button>
+
+                                <a
+                                  href={`/api/admin/arrangement/${event.id}/export`}
+                                  download
+                                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors"
+                                >
+                                  <Download size={14} />
+                                  Last ned vaktliste (.csv)
+                                </a>
                               </div>
                             )
                           })()}
