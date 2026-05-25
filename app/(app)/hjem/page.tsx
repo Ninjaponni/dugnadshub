@@ -167,8 +167,10 @@ export default function HomePage() {
   }
 
   const fullName = profile?.full_name || ''
-  const activeEvents = events.filter(e => e.status === 'active')
-  const futureEvents = events.filter(e => e.status === 'upcoming')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeEvents = events.filter(e => e.status === 'active' && (e as any).type !== 'arrangement')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const futureEvents = events.filter(e => e.status === 'upcoming' && (e as any).type !== 'arrangement')
 
   function completeOnboarding() {
     localStorage.setItem('onboarding_complete', '1')
