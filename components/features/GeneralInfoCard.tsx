@@ -11,7 +11,7 @@ export function GeneralInfoCard({ entries }: Props) {
   if (!entries || entries.length === 0) return null
 
   return (
-    <section className="rounded-3xl bg-surface shadow-soft p-5">
+    <section className="rounded-3xl bg-card shadow-sm p-5">
       <header className="flex items-center gap-2 mb-4">
         <Info className="w-5 h-5 text-accent" />
         <h2 className="text-lg font-display font-semibold tracking-tight">Generell informasjon</h2>
@@ -20,8 +20,8 @@ export function GeneralInfoCard({ entries }: Props) {
       <dl className="space-y-3">
         {entries.map((e, i) => (
           <div key={i}>
-            <dt className="text-xs uppercase tracking-wide text-foreground/50 mb-0.5">{e.label}</dt>
-            <dd className="text-sm text-foreground">{e.value}</dd>
+            <dt className="text-xs uppercase tracking-wide text-text-tertiary mb-0.5">{e.label}</dt>
+            <dd className="text-sm text-text-primary">{e.value}</dd>
           </div>
         ))}
       </dl>

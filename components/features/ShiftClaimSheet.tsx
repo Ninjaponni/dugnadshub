@@ -67,37 +67,37 @@ export function ShiftClaimSheet({
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 z-40"
+            className="fixed inset-0 bg-black/60 z-40"
           />
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-3xl shadow-2xl max-h-[85vh] overflow-y-auto pb-20"
+            className="fixed inset-x-0 bottom-0 z-50 bg-card rounded-t-3xl shadow-2xl max-h-[85vh] overflow-y-auto pb-20"
           >
-            <header className="sticky top-0 bg-surface px-5 pt-5 pb-3 flex items-start justify-between">
+            <header className="sticky top-0 bg-card px-5 pt-5 pb-3 flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{roleIcon(shift.role)}</span>
                   <h2 className="text-xl font-display font-semibold tracking-tight uppercase">{shift.role}</h2>
                 </div>
-                <div className="mt-1 text-foreground/70 text-sm flex items-center gap-1.5">
+                <div className="mt-1 text-text-secondary text-sm flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
                   {formatShiftDate(shift.shift_date)} · {formatShiftTime(shift.start_time)}–{formatShiftTime(shift.end_time)}
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 rounded-full hover:bg-foreground/5">
+              <button onClick={onClose} className="p-2 rounded-full hover:bg-card-low/60">
                 <X className="w-5 h-5" />
               </button>
             </header>
 
             <div className="px-5 space-y-5">
               <div>
-                <h3 className="text-xs uppercase tracking-wide text-foreground/50 mb-2 flex items-center gap-1.5">
+                <h3 className="text-xs uppercase tracking-wide text-text-tertiary mb-2 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" />
                   Påmeldte ({claimed}/{shift.capacity})
                 </h3>
                 {claimed === 0 ? (
-                  <p className="text-sm text-foreground/50 italic">Ingen påmeldt enda</p>
+                  <p className="text-sm text-text-tertiary italic">Ingen påmeldt enda</p>
                 ) : (
                   <ul className="space-y-1 text-sm">
                     {shift.claims!.map((c) => (
@@ -127,7 +127,7 @@ export function ShiftClaimSheet({
                 <button
                   onClick={handleUnclaim}
                   disabled={submitting}
-                  className="w-full py-3 rounded-2xl bg-foreground/5 hover:bg-foreground/10 font-medium disabled:opacity-50"
+                  className="w-full py-3 rounded-2xl bg-card-low/60 hover:bg-card-low font-medium disabled:opacity-50"
                 >
                   {submitting ? 'Melder av…' : 'Meld meg av'}
                 </button>
@@ -151,10 +151,10 @@ export function ShiftClaimSheet({
 
               {taskList.length > 0 && (
                 <div>
-                  <h3 className="text-xs uppercase tracking-wide text-foreground/50 mb-2">Oppgaver</h3>
+                  <h3 className="text-xs uppercase tracking-wide text-text-tertiary mb-2">Oppgaver</h3>
                   <ul className="space-y-1.5">
                     {taskList.map((t, i) => (
-                      <li key={i} className="text-sm text-foreground/70 flex gap-2">
+                      <li key={i} className="text-sm text-text-secondary flex gap-2">
                         <span className="text-accent">•</span><span>{t}</span>
                       </li>
                     ))}

@@ -47,9 +47,9 @@ export default function ArrangementPage() {
   if (!event || loading) {
     return (
       <div className="min-h-screen p-5 space-y-4 pb-20">
-        <div className="h-8 w-24 bg-foreground/10 rounded animate-pulse" />
-        <div className="h-32 bg-foreground/10 rounded-3xl animate-pulse" />
-        <div className="h-64 bg-foreground/10 rounded-3xl animate-pulse" />
+        <div className="h-8 w-24 bg-card-low rounded animate-pulse" />
+        <div className="h-32 bg-card-low rounded-3xl animate-pulse" />
+        <div className="h-64 bg-card-low rounded-3xl animate-pulse" />
       </div>
     )
   }
@@ -64,11 +64,11 @@ export default function ArrangementPage() {
   return (
     <div className="min-h-screen pb-20">
       <header className="px-5 pt-5 pb-3">
-        <button onClick={() => router.push('/hjem')} className="flex items-center gap-1 text-sm text-foreground/60 mb-3 hover:text-foreground">
+        <button onClick={() => router.push('/hjem')} className="flex items-center gap-1 text-sm text-text-secondary mb-3 hover:text-text-primary">
           <ArrowLeft className="w-4 h-4" /> Tilbake
         </button>
         <h1 className="text-3xl font-display font-bold tracking-tight text-balance">{event.title}</h1>
-        <div className="mt-2 space-y-1 text-sm text-foreground/70">
+        <div className="mt-2 space-y-1 text-sm text-text-secondary">
           <div className="flex items-center gap-2"><Calendar className="w-4 h-4 shrink-0" />{dateRange}</div>
           {event.meeting_point?.name && (
             <div className="flex items-center gap-2"><MapPin className="w-4 h-4 shrink-0" />{event.meeting_point.name}</div>
@@ -83,23 +83,23 @@ export default function ArrangementPage() {
       </header>
 
       {event.description && (
-        <p className="px-5 mt-2 text-foreground/80 text-balance">{event.description}</p>
+        <p className="px-5 mt-2 text-text-secondary text-balance">{event.description}</p>
       )}
 
       <main className="px-5 mt-6 space-y-5">
         {userId && <MyShiftsCard shifts={sorted} currentUserId={userId} onShiftClick={setSelectedShift} />}
 
         <section>
-          <h2 className="text-xs uppercase tracking-wide text-foreground/50 font-semibold mb-3">Ledige vakter</h2>
+          <h2 className="text-xs uppercase tracking-wide text-text-tertiary font-semibold mb-3">Ledige vakter</h2>
           {sorted.length === 0 ? (
-            <div className="rounded-3xl bg-surface shadow-soft p-5 text-center text-foreground/60">
+            <div className="rounded-3xl bg-card shadow-sm p-5 text-center text-text-secondary">
               Ingen vakter opprettet enda
             </div>
           ) : (
             <div className="space-y-5">
               {Array.from(grouped.entries()).map(([date, dayShifts]) => (
                 <div key={date}>
-                  <div className="text-xs uppercase tracking-wide text-foreground/40 mb-2">{formatShiftDate(date)}</div>
+                  <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">{formatShiftDate(date)}</div>
                   <div className="space-y-2">
                     {dayShifts.map(s => (
                       <ShiftListItem key={s.id} shift={s} onClick={() => setSelectedShift(s)} currentUserId={userId} />
@@ -115,7 +115,7 @@ export default function ArrangementPage() {
         {event.general_info && event.general_info.length > 0 && <GeneralInfoCard entries={event.general_info} />}
 
         {event.contact_phone && (
-          <div className="text-center text-sm text-foreground/60 pt-2">
+          <div className="text-center text-sm text-text-secondary pt-2">
             Spørsmål? Kontakt admin på <a href={`tel:${event.contact_phone}`} className="text-accent underline">{event.contact_phone}</a>
           </div>
         )}

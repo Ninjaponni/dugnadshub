@@ -18,14 +18,14 @@ export function ArrangementCard({ event, totalShifts, freePlaces }: Props) {
   return (
     <Link
       href={`/arrangement/${event.id}`}
-      className="block rounded-3xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/30 shadow-soft p-5 active:scale-[0.99] transition-transform"
+      className="block rounded-3xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/30 shadow-sm p-5 active:scale-[0.99] transition-transform"
     >
       <div className="flex items-start gap-2 mb-2">
         <Sparkles className="w-5 h-5 text-accent shrink-0 mt-0.5" />
         <h3 className="text-lg font-display font-semibold tracking-tight text-balance uppercase">{event.title}</h3>
       </div>
 
-      <div className="space-y-1.5 text-sm text-foreground/70 mb-4">
+      <div className="space-y-1.5 text-sm text-text-secondary mb-4">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 shrink-0" />
           {event.date && new Date(event.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}
@@ -40,8 +40,8 @@ export function ArrangementCard({ event, totalShifts, freePlaces }: Props) {
 
       <div className="flex items-center justify-between">
         <div className="text-sm">
-          <span className="font-medium text-foreground">{totalShifts}</span>
-          <span className="text-foreground/60"> vakter · </span>
+          <span className="font-medium text-text-primary">{totalShifts}</span>
+          <span className="text-text-secondary"> vakter · </span>
           <span className={`font-medium ${freePlaces > 0 ? 'text-accent' : 'text-emerald-700'}`}>
             {freePlaces > 0 ? `${freePlaces} plasser ledige` : 'Alle plasser fylt'}
           </span>
