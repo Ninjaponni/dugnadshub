@@ -33,8 +33,18 @@ export function useInstallPrompt() {
       setDeferredPrompt(e as BeforeInstallPromptEvent)
     }
 
+    // Lytt på appinstalled — oppdaterer isStandalone uten reload
+    function handleInstalled() {
+      setIsStandalone(true)
+      setDeferredPrompt(null)
+    }
+
     window.addEventListener('beforeinstallprompt', handlePrompt)
-    return () => window.removeEventListener('beforeinstallprompt', handlePrompt)
+    window.addEventListener('appinstalled', handleInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handlePrompt)
+      window.removeEventListener('appinstalled', handleInstalled)
+    }
   }, [])
 
   const promptInstall = useCallback(async () => {

@@ -28,15 +28,23 @@ export default function BadgesStep() {
         animate={{ opacity: 1, y: 0 }}
         className="text-2xl font-bold mb-2 font-[var(--font-display)]"
       >
-        62 merker å jakte på
+        {badgeDefinitions.length} merker å jakte på
       </motion.h2>
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="text-text-secondary text-[15px] mb-8 max-w-[280px]"
+        className="text-text-secondary text-[15px] mb-2 max-w-[280px] text-balance"
       >
-        Du får merker automatisk etterhvert som du deltar. Noen er sjeldne!
+        Du får merker automatisk etterhvert som du deltar. Noen er sjeldne.
+      </motion.p>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="text-accent text-[14px] font-medium mb-8 max-w-[300px] text-balance"
+      >
+        Den med flest merker blir årets dugnadshelt. Det kan lønne seg å være på!
       </motion.p>
 
       <div className="grid grid-cols-2 gap-4 w-full max-w-[260px] mb-8">

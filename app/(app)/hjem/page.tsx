@@ -43,11 +43,14 @@ export default function HomePage() {
   const [shiftAggregates, setShiftAggregates] = useState<Map<string, { total: number; free: number; totalCapacity: number }>>(new Map())
   const supabaseRef = useRef(createClient())
 
+  // Trigger onboarding først når vi vet at brukeren er innlogget — unngår blink under logout/redirect
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('onboarding_complete')) {
-      setShowOnboarding(true)
-    }
-  }, [])
+    if (loading) return
+    if (!profile) return
+    if (typeof window === 'undefined') return
+    if (localStorage.getItem('onboarding_complete')) return
+    setShowOnboarding(true)
+  }, [loading, profile])
 
   // Mock-modus
   useEffect(() => {

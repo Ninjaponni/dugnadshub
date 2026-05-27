@@ -1,28 +1,28 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { MapPin, Package, Truck } from 'lucide-react'
+import { MapPin, Package, Award } from 'lucide-react'
 
 // Steg 4: Dugnadsflyten forklart med 3 minikort
 const steps = [
   {
     icon: MapPin,
-    title: 'Velg sone',
-    description: 'Finn en ledig sone på kartet og ta den',
+    title: 'Velg oppgave',
+    description: 'Ta en sone på kartet eller meld deg på en vakt',
     color: 'text-accent',
     bg: 'bg-accent/10',
   },
   {
     icon: Package,
-    title: 'Samle inn',
-    description: 'Gå runden og samle inn flasker',
+    title: 'Bidra',
+    description: 'Gå runden, ta vakta eller hjelp til der det trengs',
     color: 'text-success',
     bg: 'bg-success/10',
   },
   {
-    icon: Truck,
+    icon: Award,
     title: 'Ferdig!',
-    description: 'Marker sonen som ferdig, så henter sjåføren',
+    description: 'Marker som ferdig. Korpset får penger og du får merker',
     color: 'text-purple',
     bg: 'bg-purple/10',
   },

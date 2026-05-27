@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 import WelcomeStep from './onboarding/WelcomeStep'
 import ProfileStep from './onboarding/ProfileStep'
 import InstallStep from './onboarding/InstallStep'
@@ -69,19 +70,39 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
   }
 
+  // Hopp direkte til et steg via prikk-klikk
+  const goToStep = useCallback((target: number) => {
+    if (target === step) return
+    setDirection(target > step ? 1 : -1)
+    setStep(target)
+  }, [step])
+
   return (
-    <div className="fixed inset-0 z-50 bg-bg safe-top safe-bottom flex flex-col">
-      {/* Hopp over — vises ikke på siste steg */}
-      {step < TOTAL_STEPS - 1 && (
-        <div className="flex justify-end px-4 pt-4">
+    <div className="fixed inset-0 z-[70] bg-bg safe-top safe-bottom flex flex-col">
+      {/* Topp-bar: tilbake (fra step 1+) + Hopp over (ikke på siste) */}
+      <div className="flex items-center justify-between px-2 pt-4 min-h-[40px]">
+        {step > 0 ? (
+          <button
+            onClick={goPrev}
+            className="text-text-secondary p-2 active:opacity-60"
+            aria-label="Tilbake"
+          >
+            <ArrowLeft size={22} />
+          </button>
+        ) : (
+          <div className="w-10" />
+        )}
+        {step < TOTAL_STEPS - 1 ? (
           <button
             onClick={handleSkip}
             className="text-text-tertiary text-[15px] py-1 px-3"
           >
             Hopp over
           </button>
-        </div>
-      )}
+        ) : (
+          <div className="w-10" />
+        )}
+      </div>
 
       {/* Steg-innhold med swipe */}
       <div className="flex-1 relative overflow-hidden">
@@ -107,29 +128,38 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
       {/* Navigasjon: prikker + neste-knapp */}
       <div className="pb-8 px-6 safe-bottom">
-        {/* Prikk-indikator */}
+        {/* Prikk-indikator — klikkbar for direkte navigasjon */}
         <div className="flex justify-center gap-2 mb-5">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-            <motion.div
+            <motion.button
               key={i}
+              type="button"
+              onClick={() => goToStep(i)}
               animate={{
                 width: i === step ? 24 : 8,
                 backgroundColor: i === step ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
               }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="h-2 rounded-full"
+              className="h-2 rounded-full p-0"
+              aria-label={`Gå til steg ${i + 1} av ${TOTAL_STEPS}`}
+              aria-current={i === step ? 'step' : undefined}
             />
           ))}
         </div>
 
-        {/* Neste-knapp (vises ikke på profil-steg med ulagret profil, eller siste steg) */}
+        {/* Neste-knapp (vises ikke på siste steg).
+            På ProfileStep med ulagret profil: tydelig "Fyll inn senere" så det ikke forveksles med "Hopp over" (som lukker hele wizarden). */}
         {step < TOTAL_STEPS - 1 && (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={goNext}
-            className="w-full py-3.5 rounded-xl bg-accent text-white font-semibold text-[17px]"
+            className={`w-full py-3.5 rounded-xl font-semibold text-[17px] ${
+              step === 1 && !profileSaved
+                ? 'bg-surface-low text-text-secondary ring-1 ring-text-tertiary/20'
+                : 'bg-accent text-white'
+            }`}
           >
-            {step === 1 && !profileSaved ? 'Hopp over' : 'Neste'}
+            {step === 1 && !profileSaved ? 'Fyll inn senere' : 'Neste'}
           </motion.button>
         )}
       </div>

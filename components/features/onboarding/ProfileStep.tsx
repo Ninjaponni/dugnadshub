@@ -109,6 +109,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
         </motion.div>
         <h2 className="text-2xl font-bold mb-2 font-[var(--font-display)]">Profil lagret!</h2>
         <p className="text-text-secondary">Du fikk merket «Profil-proffen»</p>
+        <p className="text-text-tertiary text-sm mt-6">Trykk Neste for å fortsette ↓</p>
       </div>
     )
   }

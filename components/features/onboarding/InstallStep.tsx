@@ -89,15 +89,23 @@ export default function InstallStep() {
         </motion.div>
       )}
 
-      {platform === 'desktop' && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+      {platform === 'desktop' && !canInstall && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-text-tertiary text-sm"
+          className="w-full max-w-[300px] space-y-4 text-left"
         >
-          Åpne på mobilen for beste opplevelse.
-        </motion.p>
+          <p className="text-text-secondary text-[15px] text-center mb-2">
+            Du er på desktop nå. Du kan bruke Dugnadshub her i nettleseren, men det er enklest å åpne den fra mobilen når du er ute på dugnad.
+          </p>
+          <InstructionRow step={1} icon={<Smartphone size={20} className="text-accent" />}>
+            Åpne <span className="font-semibold">dugnadshub.no</span> i Safari eller Chrome på mobilen
+          </InstructionRow>
+          <InstructionRow step={2} icon={<Plus size={20} className="text-accent" />}>
+            Følg installasjons-instruksene som dukker opp der
+          </InstructionRow>
+        </motion.div>
       )}
     </div>
   )
