@@ -77,6 +77,30 @@ export interface DugnadEvent {
   send_push_on_activate: boolean
 }
 
+// Lettvekts-event som get_home_data returnerer (kun feltene hjem-siden + ArrangementCard bruker).
+// Tunge JSONB-kolonner (matches/role_info/general_info/description/meeting_point) utelates bevisst.
+export interface HomeEvent {
+  id: string
+  title: string
+  type: EventType
+  date: string
+  start_time: string | null
+  area: EventArea
+  status: EventStatus
+  signup_deadline: string | null
+}
+
+// Svaret fra get_home_data-RPC-en.
+export interface HomeData {
+  current_user_id: string | null
+  profile: Profile | null
+  events: HomeEvent[]
+  zone_assignments: Array<{ id: string; event_id: string; zone_id: string; status: ZoneStatus }>
+  zones: Array<{ id: string; name: string; area: ZoneArea; collectors_needed: number }>
+  zone_claims: Array<{ id: string; assignment_id: string; user_id: string; full_name: string | null }>
+  shift_data: Array<{ event_id: string; capacity: number; claim_count: number }>
+}
+
 // Musikant tildelt en sone på en plastdugnad
 export interface EventMusician {
   id: string

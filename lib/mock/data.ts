@@ -1,5 +1,5 @@
 // Mock-data for designmodus — Flaskeinnsamling Nord aktiv
-import type { Profile, DugnadEvent } from '@/lib/supabase/types'
+import type { Profile, DugnadEvent, HomeEvent } from '@/lib/supabase/types'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import { MOCK_USER_ID } from './useMock'
 
@@ -42,7 +42,7 @@ export const mockEvents: DugnadEvent[] = [
 ]
 
 // Hendelser med progress for hjemmesiden
-export interface MockEventWithProgress extends DugnadEvent {
+export interface MockEventWithProgress extends HomeEvent {
   totalZones: number
   claimedZones: number
   completedZones: number
@@ -53,6 +53,7 @@ export interface MockEventWithProgress extends DugnadEvent {
 export const mockEventsWithProgress: MockEventWithProgress[] = [
   {
     ...mockEvents[0],
+    signup_deadline: null,
     totalZones: 12,
     claimedZones: 8,
     completedZones: 3,

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { MapPin, Check, ChevronRight, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import KorpsLogo from '@/components/ui/KorpsLogo'
-import type { Profile, DugnadEvent } from '@/lib/supabase/types'
+import type { Profile, HomeEvent, HomeData } from '@/lib/supabase/types'
 import PushPrompt from '@/components/features/PushPrompt'
 import OnboardingWizard from '@/components/features/OnboardingWizard'
 import { formatDate, daysUntilLabel } from '@/lib/utils/date'
@@ -15,7 +15,7 @@ import { mockProfile, mockEventsWithProgress, mockMyZones } from '@/lib/mock/dat
 import { ArrangementCard } from '@/components/features/ArrangementCard'
 import type { ArrangementEvent } from '@/lib/types/shifts'
 
-interface EventWithProgress extends DugnadEvent {
+interface EventWithProgress extends HomeEvent {
   totalZones: number
   claimedZones: number
   completedZones: number
@@ -64,34 +64,23 @@ export default function HomePage() {
   useEffect(() => {
     if (isMockMode()) return
     async function load() {
-      const { data: { user } } = await supabaseRef.current.auth.getUser()
-      if (!user) { setLoading(false); return }
+      // Ett RPC-kall henter alt (erstatter 5 sekvensielle spørringer + getUser).
+      // JWT-en sendes automatisk av supabase-js; RPC-en leser auth.uid() selv.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabaseRef.current.rpc as any)('get_home_data')
+      if (error || !data) { setLoading(false); return }
+      const home = data as HomeData
 
-      const [profileRes, eventsRes] = await Promise.all([
-        supabaseRef.current.from('profiles').select('*').eq('id', user.id).single() as unknown as Promise<{ data: unknown }>,
-        supabaseRef.current.from('events').select('*').in('status', ['upcoming', 'active']).order('date', { ascending: true }) as unknown as Promise<{ data: unknown[] | null }>,
-      ])
+      const userId = home.current_user_id
+      if (!userId) { setLoading(false); return }
+      if (home.profile) setProfile(home.profile)
 
-      if (profileRes.data) setProfile(profileRes.data as Profile)
-      const allEvents = (eventsRes.data || []) as unknown as DugnadEvent[]
+      const allEvents = home.events || []
       if (allEvents.length === 0) { setLoading(false); return }
 
-      const eventIds = allEvents.map(e => e.id)
-
-      const [assignRes, zonesRes] = await Promise.all([
-        supabaseRef.current.from('zone_assignments').select('*').in('event_id', eventIds),
-        supabaseRef.current.from('zones').select('id, name, area, collectors_needed'),
-      ])
-
-      const assignments = (assignRes.data || []) as unknown as Array<{ id: string; event_id: string; zone_id: string; status: string }>
-
-      const assignmentIds = assignments.map(a => a.id)
-      const { data: claimData } = assignmentIds.length > 0
-        ? await supabaseRef.current.from('zone_claims').select('*, profiles(full_name)').in('assignment_id', assignmentIds)
-        : { data: [] }
-
-      const claims = (claimData || []) as unknown as Array<{ id: string; assignment_id: string; user_id: string; profiles: { full_name: string } | null }>
-      const zoneMap = new Map((zonesRes.data || []).map((z: { id: string; name: string; area: string; collectors_needed: number }) => [z.id, z]))
+      const assignments = home.zone_assignments || []
+      const claims = home.zone_claims || []
+      const zoneMap = new Map((home.zones || []).map(z => [z.id, z]))
 
       const eventsWithProgress: EventWithProgress[] = allEvents.map(event => {
         const eventAssignments = assignments.filter(a => a.event_id === event.id)
@@ -111,45 +100,34 @@ export default function HomePage() {
       })
 
       const activeEventIds = new Set(allEvents.filter(e => e.status === 'active').map(e => e.id))
-      const myClaims = claims.filter(c => c.user_id === user.id)
+      const myClaims = claims.filter(c => c.user_id === userId)
       const allMyZones: MyZone[] = myClaims.map(claim => {
         const assignment = assignments.find(a => a.id === claim.assignment_id)
         if (!assignment) return null
         if (!activeEventIds.has(assignment.event_id)) return null
-        const zone = zoneMap.get(assignment.zone_id) as { id: string; name: string; area: string } | undefined
+        const zone = zoneMap.get(assignment.zone_id)
         const event = allEvents.find(e => e.id === assignment.event_id)
-        const partner = claims.find(c => c.assignment_id === claim.assignment_id && c.user_id !== user.id)
+        const partner = claims.find(c => c.assignment_id === claim.assignment_id && c.user_id !== userId)
         return {
           zoneId: assignment.zone_id, eventId: assignment.event_id,
           zoneName: zone?.name || assignment.zone_id, area: zone?.area || '',
           status: assignment.status, eventTitle: event?.title || '',
-          partnerName: partner?.profiles?.full_name || null,
+          partnerName: partner?.full_name || null,
         }
       }).filter(Boolean) as MyZone[]
 
       setEvents(eventsWithProgress)
       setMyZones(allMyZones)
 
-      // Hent vakt-aggregater for aktive arrangement-events
-      // Cast nødvendig fordi EventType ikke inkluderer 'arrangement' i den genererte Supabase-typen
-      const arrangementIds = allEvents
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter(e => (e as any).type === 'arrangement' && e.status === 'active')
-        .map(e => e.id)
-
-      if (arrangementIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: shiftsData } = await (supabaseRef.current as any)
-          .from('event_shifts')
-          .select('event_id, capacity, claims:shift_claims(id)')
-          .in('event_id', arrangementIds) as { data: Array<{ event_id: string; capacity: number; claims: Array<{ id: string }> }> | null }
-
+      // Vakt-aggregater: shift_data er allerede talt opp i RPC-en
+      const shiftData = home.shift_data || []
+      if (shiftData.length > 0) {
         const agg = new Map<string, { total: number; free: number; totalCapacity: number }>()
-        for (const s of shiftsData ?? []) {
+        for (const s of shiftData) {
           const a = agg.get(s.event_id) ?? { total: 0, free: 0, totalCapacity: 0 }
           a.total += 1
           a.totalCapacity += s.capacity
-          a.free += Math.max(0, s.capacity - s.claims.length)
+          a.free += Math.max(0, s.capacity - s.claim_count)
           agg.set(s.event_id, a)
         }
         setShiftAggregates(agg)
@@ -180,10 +158,9 @@ export default function HomePage() {
     localStorage.setItem('onboarding_complete', '1')
     setShowOnboarding(false)
     async function reload() {
-      const { data: { user } } = await supabaseRef.current.auth.getUser()
-      if (!user) return
-      const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
-      if (data) setProfile(data as unknown as Profile)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabaseRef.current.rpc as any)('get_home_data')
+      if (data?.profile) setProfile((data as HomeData).profile as Profile)
     }
     reload()
   }
