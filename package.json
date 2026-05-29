@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "convert-kml": "tsx scripts/convert-kml.ts",
-    "seed-zones": "tsx scripts/seed-zones.ts"
+    "seed-zones": "tsx scripts/seed-zones.ts",
+    "verify-home-data": "tsx scripts/verify-home-data.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
