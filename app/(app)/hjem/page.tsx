@@ -43,12 +43,13 @@ export default function HomePage() {
   const [shiftAggregates, setShiftAggregates] = useState<Map<string, { total: number; free: number; totalCapacity: number }>>(new Map())
   const supabaseRef = useRef(createClient())
 
-  // Trigger onboarding først når vi vet at brukeren er innlogget — unngår blink under logout/redirect
+  // Trigger onboarding først når vi vet at brukeren er innlogget — unngår blink under logout/redirect.
+  // Per-user-flag så delt enhet eller bruker-skifte ikke skjuler onboarding for ny bruker.
   useEffect(() => {
     if (loading) return
     if (!profile) return
     if (typeof window === 'undefined') return
-    if (localStorage.getItem('onboarding_complete')) return
+    if (localStorage.getItem(`onboarding_complete_${profile.id}`)) return
     setShowOnboarding(true)
   }, [loading, profile])
 
@@ -155,7 +156,7 @@ export default function HomePage() {
   const futureEvents = events.filter(e => e.status === 'upcoming' && (e as any).type !== 'arrangement')
 
   function completeOnboarding() {
-    localStorage.setItem('onboarding_complete', '1')
+    if (profile?.id) localStorage.setItem(`onboarding_complete_${profile.id}`, '1')
     setShowOnboarding(false)
     async function reload() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,7 +185,7 @@ export default function HomePage() {
       </header>
 
       <main className="pt-20 pb-28 px-5 space-y-8">
-        <PushPrompt />
+        <PushPrompt userId={profile?.id ?? null} />
 
         {/* Hilsen */}
         <motion.section

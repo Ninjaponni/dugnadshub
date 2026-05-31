@@ -30,6 +30,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'eventId required' }, { status: 400 })
   }
 
+  // Krev at brukeren enten har claim på eventet eller er admin.
+  // Ellers kan hvem som helst trigge rekalkulering på vilkårlige events.
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const isAdmin = (profile as { role?: string } | null)?.role === 'admin'
+  if (!isAdmin) {
+    const { data: ownClaim } = await supabase
+      .from('zone_claims')
+      .select('id, zone_assignments!inner(event_id)')
+      .eq('user_id', user.id)
+      .eq('zone_assignments.event_id', eventId)
+      .limit(1)
+    if (!ownClaim || ownClaim.length === 0) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   // Hent alle claims for hendelsen, sortert etter claimed_at (eldste først)
   const { data: claims } = await supabase
     .from('zone_claims')

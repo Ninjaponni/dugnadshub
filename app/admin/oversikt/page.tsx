@@ -183,7 +183,7 @@ export default function AdminOverviewPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Aktiv nå</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Aktiv dugnad</p>
                       <p className="text-lg font-semibold mt-0.5 font-[var(--font-display)]">{event.title}</p>
                       <p className="text-sm text-text-secondary">
                         {formatDate(event.date, event.start_time)}

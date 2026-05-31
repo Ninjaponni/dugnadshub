@@ -11,6 +11,7 @@ function getSupabase() {
 // Returnerer alle user_ids som regnes som «deltakere» på et arrangement:
 // - foreldre med sone-claim
 // - sjåfører, stripsere og verter (driver_assignments — alle roller inkludert host)
+// - vakttakere på arrangement (shift_claims via event_shifts)
 // - musikanter som har lastet ned appen (event_musicians.profile_id + is_musician=true)
 // - eventuelle ekstra IDer sendt inn manuelt
 export async function getEventParticipants(
@@ -52,7 +53,27 @@ export async function getEventParticipants(
     if (d.user_id) userIds.add(d.user_id)
   }
 
-  // 3. Musikanter med egen app-bruker (is_musician=true).
+  // 3. Vakttakere på arrangement (shift_claims via event_shifts)
+  const { data: shifts, error: shiftErr } = await supabase
+    .from('event_shifts')
+    .select('id')
+    .eq('event_id', eventId)
+  if (shiftErr) console.error('getEventParticipants event_shifts error:', shiftErr)
+
+  const shiftIds = (shifts ?? []).map((s: { id: string }) => s.id)
+  if (shiftIds.length > 0) {
+    const { data: shiftClaims, error: shiftClaimErr } = await supabase
+      .from('shift_claims')
+      .select('user_id')
+      .in('shift_id', shiftIds)
+    if (shiftClaimErr) console.error('getEventParticipants shift_claims error:', shiftClaimErr)
+
+    for (const c of shiftClaims ?? []) {
+      if (c.user_id) userIds.add(c.user_id)
+    }
+  }
+
+  // 4. Musikanter med egen app-bruker (is_musician=true).
   // OBS: event_musicians.profile_id kan også peke på FORELDERENS profil når
   // matchen skjer via children[].name. Vi henter alle profile_ids og filtrerer
   // mot profiles.is_musician etterpå for å bare få musikantene selv.

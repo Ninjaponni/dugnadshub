@@ -77,57 +77,47 @@ export default function ProfilePage() {
         setAvatarId(p.avatar_url || getRandomAvatarId())
         setDittBidrag(mockDittBidrag)
 
-        // Hent dugnad-historikk: claims → assignments → events (completed)
-        const { data: claims } = await supabaseRef.current
-          .from('zone_claims')
-          .select('assignment_id')
-          .eq('user_id', user.id)
+        // Hent dugnad-historikk: sone-claims OG vakt-claims på completed events.
+        const [claimsRes, shiftClaimsRes] = await Promise.all([
+          supabaseRef.current
+            .from('zone_claims')
+            .select('zone_assignments!inner(id, event_id)')
+            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ zone_assignments: { id: string; event_id: string } }> | null }>,
+          supabaseRef.current
+            .from('shift_claims')
+            .select('event_shifts!inner(id, event_id)')
+            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ event_shifts: { id: string; event_id: string } }> | null }>,
+        ])
 
-        if (claims && claims.length > 0) {
-          const assignmentIds = claims.map(c => (c as unknown as { assignment_id: string }).assignment_id)
-          const { data: assignments } = await supabaseRef.current
-            .from('zone_assignments')
-            .select('event_id')
-            .in('id', assignmentIds)
+        const zoneRows = claimsRes.data ?? []
+        const shiftRows = shiftClaimsRes.data ?? []
 
-          if (assignments && assignments.length > 0) {
-            const eventIds = [...new Set(assignments.map(a => (a as unknown as { event_id: string }).event_id))]
-            const { data: events } = await supabaseRef.current
-              .from('events')
-              .select('id, title, date, status')
-              .in('id', eventIds)
-              .eq('status', 'completed')
-              .order('date', { ascending: false })
+        const zonesPerEvent = new Map<string, number>()
+        for (const r of zoneRows) {
+          const eid = r.zone_assignments?.event_id
+          if (eid) zonesPerEvent.set(eid, (zonesPerEvent.get(eid) || 0) + 1)
+        }
+        const shiftsPerEvent = new Map<string, number>()
+        for (const r of shiftRows) {
+          const eid = r.event_shifts?.event_id
+          if (eid) shiftsPerEvent.set(eid, (shiftsPerEvent.get(eid) || 0) + 1)
+        }
 
-            if (events && events.length > 0) {
-              // Tell soner per hendelse
-              const eventAssignmentIds = new Map<string, string[]>()
-              for (const a of assignments) {
-                const ea = a as unknown as { event_id: string; id?: string }
-                // Vi trenger assignment_id → event_id mapping
-                // men vi har bare event_id fra assignments. Trenger å koble tilbake.
-              }
-              // Enklere: grupper claims via assignments per event
-              const { data: fullAssignments } = await supabaseRef.current
-                .from('zone_assignments')
-                .select('id, event_id')
-                .in('id', assignmentIds)
+        const allEventIds = [...new Set([...zonesPerEvent.keys(), ...shiftsPerEvent.keys()])]
+        if (allEventIds.length > 0) {
+          const { data: events } = await supabaseRef.current
+            .from('events')
+            .select('id, title, date, status')
+            .in('id', allEventIds)
+            .eq('status', 'completed')
+            .order('date', { ascending: false })
 
-              const countPerEvent = new Map<string, number>()
-              for (const fa of (fullAssignments || [])) {
-                const a = fa as unknown as { id: string; event_id: string }
-                const ev = (events as unknown as Array<{ id: string }>).find(e => e.id === a.event_id)
-                if (ev) {
-                  countPerEvent.set(a.event_id, (countPerEvent.get(a.event_id) || 0) + 1)
-                }
-              }
-
-              setHistory((events as unknown as Array<{ id: string; title: string; date: string }>).map(e => ({
-                title: e.title,
-                date: e.date,
-                zones: countPerEvent.get(e.id) || 0,
-              })))
-            }
+          if (events && events.length > 0) {
+            setHistory((events as unknown as Array<{ id: string; title: string; date: string }>).map(e => ({
+              title: e.title,
+              date: e.date,
+              zones: (zonesPerEvent.get(e.id) || 0) + (shiftsPerEvent.get(e.id) || 0),
+            })))
           }
         }
         setHistoryLoaded(true)
@@ -596,7 +586,7 @@ export default function ProfilePage() {
               <p className="font-bold text-sm flex-1">Vis velkomstguiden på nytt</p>
               <button
                 onClick={() => {
-                  localStorage.removeItem('onboarding_complete')
+                  if (profile?.id) localStorage.removeItem(`onboarding_complete_${profile.id}`)
                   router.push('/hjem')
                 }}
                 className="text-accent text-sm font-medium"
@@ -607,7 +597,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.8
+              Tillerbyen Skolekorps Dugnadshub v 10.9
             </p>
 
             {/* Logg ut */}

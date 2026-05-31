@@ -18,14 +18,19 @@ export async function POST(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token)
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Verifiser at brukeren har minst ett aktivt claim (er samler)
-  const { data: activeClaims } = await supabase
-    .from('zone_claims')
-    .select('id')
-    .eq('user_id', user.id)
-    .limit(1)
-  if (!activeClaims || activeClaims.length === 0) {
-    return NextResponse.json({ error: 'No active claims' }, { status: 403 })
+  // Verifiser at brukeren har grunn til å trigge admin-varselet:
+  // samler med claim, sjåfør, stripser eller vert (host) i et driver_assignment,
+  // eller selve admin. Ellers kan vilkårlige innloggede spamme admin-push.
+  const [claimRes, assignRes, profileRes] = await Promise.all([
+    supabase.from('zone_claims').select('id').eq('user_id', user.id).limit(1),
+    supabase.from('driver_assignments').select('id').eq('user_id', user.id).limit(1),
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+  ])
+  const isAdmin = (profileRes.data as { role?: string } | null)?.role === 'admin'
+  const hasClaim = (claimRes.data ?? []).length > 0
+  const hasAssignment = (assignRes.data ?? []).length > 0
+  if (!isAdmin && !hasClaim && !hasAssignment) {
+    return NextResponse.json({ error: 'No active participation' }, { status: 403 })
   }
 
   const { zoneName } = await request.json()

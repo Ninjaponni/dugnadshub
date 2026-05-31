@@ -7,21 +7,30 @@ import { Bell, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
 // Banner som spor bruker om push-tillatelse
-export default function PushPrompt() {
+interface Props {
+  userId: string | null
+}
+
+export default function PushPrompt({ userId }: Props) {
   const [show, setShow] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
   const supabaseRef = useRef(createClient())
 
+  // Per-user-flag for «ikke vis igjen» så bruker-skifte på samme enhet ikke
+  // skjuler prompten for ny innlogget bruker.
+  const dismissKey = userId ? `push_dismissed_${userId}` : null
+
   useEffect(() => {
+    if (!dismissKey) return
     async function check() {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
       if (Notification.permission === 'denied') return
       if (await isPushSubscribed()) return
-      if (localStorage.getItem('push_dismissed')) return
+      if (localStorage.getItem(dismissKey!)) return
       setShow(true)
     }
     check()
-  }, [])
+  }, [dismissKey])
 
   async function handleSubscribe() {
     setSubscribing(true)
@@ -42,7 +51,7 @@ export default function PushPrompt() {
   }
 
   function handleDismiss() {
-    localStorage.setItem('push_dismissed', '1')
+    if (dismissKey) localStorage.setItem(dismissKey, '1')
     setShow(false)
   }
 

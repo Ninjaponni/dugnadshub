@@ -298,7 +298,7 @@ function MapPageContent() {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] font-bold text-accent uppercase tracking-widest">
-                      {event.status === 'active' ? 'Pågår nå' : 'Kommende'}
+                      {event.status === 'active' ? 'Aktiv dugnad' : 'Kommende'}
                     </p>
                     {allEvents.length > 1 && !overrideEventId && (
                       <span className="flex items-center gap-0.5 text-[11px] text-text-tertiary">

@@ -39,6 +39,7 @@ export default function MembersAdminPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userBadges, setUserBadges] = useState<UserBadge[]>([])
   const [allClaims, setAllClaims] = useState<ZoneClaim[]>([])
+  const [allShiftClaims, setAllShiftClaims] = useState<Array<{ user_id: string }>>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
@@ -51,24 +52,32 @@ export default function MembersAdminPage() {
   const supabaseRef = useRef(createClient())
 
   async function loadData() {
-    const [profilesRes, badgesRes, claimsRes] = await Promise.all([
+    const [profilesRes, badgesRes, claimsRes, shiftClaimsRes] = await Promise.all([
       supabaseRef.current.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
       supabaseRef.current.from('user_badges').select('*') as unknown as Promise<{ data: UserBadge[] | null }>,
       supabaseRef.current.from('zone_claims').select('*') as unknown as Promise<{ data: ZoneClaim[] | null }>,
+      supabaseRef.current.from('shift_claims').select('user_id') as unknown as Promise<{ data: Array<{ user_id: string }> | null }>,
     ])
 
     setProfiles(profilesRes.data || [])
     setUserBadges(badgesRes.data || [])
     setAllClaims(claimsRes.data || [])
+    setAllShiftClaims(shiftClaimsRes.data || [])
     setLoading(false)
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData() }, [])
 
-  // Hjelpefunksjoner for sortering
+  // Antall sone-claims (vises i lista som "X soner")
   function getClaimCount(userId: string): number {
     return allClaims.filter(c => c.user_id === userId).length
+  }
+
+  // Total aktivitet for sortering = sone-claims + vakt-claims, så vakttakere
+  // på arrangement ikke fremstår som inaktive.
+  function getActivityCount(userId: string): number {
+    return getClaimCount(userId) + allShiftClaims.filter(c => c.user_id === userId).length
   }
 
   function getBadgeCountForUser(userId: string): number {
@@ -94,7 +103,7 @@ export default function MembersAdminPage() {
         case 'badges':
           return getBadgeCountForUser(b.id) - getBadgeCountForUser(a.id)
         case 'least_active':
-          return (getBadgeCountForUser(a.id) + getClaimCount(a.id)) - (getBadgeCountForUser(b.id) + getClaimCount(b.id))
+          return (getBadgeCountForUser(a.id) + getActivityCount(a.id)) - (getBadgeCountForUser(b.id) + getActivityCount(b.id))
         case 'alpha':
         default:
           return (a.full_name || '').localeCompare(b.full_name || '', 'nb')
