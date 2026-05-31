@@ -27,6 +27,19 @@ export async function GET(
   }
 
   const { id: eventId } = await params
+
+  // Valider UUID-format — fanger typos før vi sender uvalidert input til Postgres
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_RE.test(eventId)) {
+    return NextResponse.json({ error: 'Invalid event id' }, { status: 400 })
+  }
+
+  // Verifiser at eventet finnes — ellers vil tom liste se ut som "0 deltakere"
+  const { data: event } = await supabase.from('events').select('id').eq('id', eventId).single()
+  if (!event) {
+    return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+  }
+
   const userIds = await getEventParticipants(eventId)
 
   if (userIds.length === 0) {

@@ -48,12 +48,15 @@ export async function POST(request: NextRequest) {
 
   const rows = (assignments || []) as Array<{ user_id: string; role: string }>
 
-  // Tildel merker — unique partial index hindrer duplikater per (user, badge, event)
-  const badgeRows = rows.map(a => ({
-    user_id: a.user_id,
-    badge_id: a.role === 'driver' ? 14 : 15,
-    event_id: eventId,
-  }))
+  // Tildel merker for sjåfør (14) og stripser (15). Host (vert på plast) får
+  // ikke disse — Plastminister tildeles separat via getEventParticipants-flyt.
+  const badgeRows = rows
+    .filter(a => a.role === 'driver' || a.role === 'strapper')
+    .map(a => ({
+      user_id: a.user_id,
+      badge_id: a.role === 'driver' ? 14 : 15,
+      event_id: eventId,
+    }))
 
   let awarded = 0
   if (badgeRows.length > 0) {

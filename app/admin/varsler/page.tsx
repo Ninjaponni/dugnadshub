@@ -61,16 +61,24 @@ export default function AdminNotificationsPage() {
     }
     let cancelled = false
     setLoadingPreview(true)
+    setPreview(null) // tøm gammel preview før ny henting
     ;(async () => {
       const supabase = supabaseRef.current
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { setLoadingPreview(false); return }
-      const res = await fetch(`/api/admin/event-participants/${selectedEventId}`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-      })
-      if (!cancelled && res.ok) {
-        const data = await res.json()
-        setPreview(data)
+      try {
+        const res = await fetch(`/api/admin/event-participants/${selectedEventId}`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        })
+        if (!cancelled) {
+          if (res.ok) {
+            setPreview(await res.json())
+          } else {
+            setPreview({ count: 0, users: [] })
+          }
+        }
+      } catch {
+        if (!cancelled) setPreview({ count: 0, users: [] })
       }
       if (!cancelled) setLoadingPreview(false)
     })()
@@ -158,7 +166,10 @@ export default function AdminNotificationsPage() {
     setSending(false)
   }
 
-  const canSend = title.trim() && body.trim() && (sendToAll || selectedRoles.length > 0 || selectedGroups.length > 0 || selectedEventId !== '')
+  // Hvis admin har valgt en aktivitet må preview være ferdig lastet før Send aktiveres,
+  // så telleren i UI matcher faktisk antall mottakere.
+  const eventReady = selectedEventId === '' || (!loadingPreview && preview !== null)
+  const canSend = !!title.trim() && !!body.trim() && eventReady && (sendToAll || selectedRoles.length > 0 || selectedGroups.length > 0 || selectedEventId !== '')
 
   return (
     <>

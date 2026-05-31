@@ -26,7 +26,9 @@ interface SendFilter {
 
 // Hent subscriptions basert pa filter
 async function getSubscriptions(filter: SendFilter) {
-  // Filter på «deltakere på et arrangement» — utvider userIds-listen
+  // Filter på «deltakere på et arrangement» — utvider userIds-listen.
+  // eventId vinner over roles/childGroups: hvis satt, sendes kun til deltakerne
+  // (de matcher userIds-grenen under). roles/childGroups ignoreres i praksis.
   if (filter.eventId) {
     const eventUserIds = await getEventParticipants(filter.eventId, filter.userIds ?? [])
     filter = { ...filter, userIds: eventUserIds }
