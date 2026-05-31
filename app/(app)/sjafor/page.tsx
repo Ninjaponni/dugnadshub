@@ -118,6 +118,7 @@ export default function DriverPage() {
   const [trailerGroups, setTrailerGroups] = useState<TrailerGroup[]>([])
   const [myTrailer, setMyTrailer] = useState<{ area: string; trailerGroup: number } | null>(null)
   const [myDriverEvent, setMyDriverEvent] = useState<{ id: string; title: string } | null>(null)
+  const [plastDriverInfo, setPlastDriverInfo] = useState<{ eventTitle: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [pickingUp, setPickingUp] = useState<string | null>(null)
   const [confirmPickUp, setConfirmPickUp] = useState<string | null>(null)
@@ -140,27 +141,50 @@ export default function DriverPage() {
   async function loadData() {
     const sb = supabaseRef.current
 
-    // Hent aktive hendelser — kun flaskeinnsamling (andre typer har ikke henting)
+    // Hent aktive hendelser — flaskeinnsamling har soner og henting, plast har
+    // bare møteplass-info (kun for sjåføren på plast-eventet).
     const { data: eventsData } = await sb
       .from('events')
       .select('*')
       .eq('status', 'active')
-      .eq('type', 'bottle_collection')
+      .in('type', ['bottle_collection', 'plast'])
       .order('date') as unknown as { data: DugnadEvent[] | null }
 
     const activeEvents = eventsData || []
     setEvents(activeEvents)
 
-    if (activeEvents.length === 0) {
+    // Hent innlogget bruker for å sjekke om de er plast-sjåfør
+    const { data: { user: earlyUser } } = await sb.auth.getUser()
+
+    // Sjekk om brukeren er driver på et aktivt plast-event
+    const plastEvents = activeEvents.filter(e => e.type === 'plast')
+    if (earlyUser && plastEvents.length > 0) {
+      const { data: plastDriver } = await sb
+        .from('driver_assignments')
+        .select('event_id')
+        .eq('user_id', earlyUser.id)
+        .eq('role', 'driver')
+        .in('event_id', plastEvents.map(e => e.id))
+        .limit(1) as unknown as { data: Array<{ event_id: string }> | null }
+      if (plastDriver && plastDriver.length > 0) {
+        const ev = plastEvents.find(e => e.id === plastDriver[0].event_id)
+        if (ev) setPlastDriverInfo({ eventTitle: ev.title })
+      }
+    }
+
+    // Filtrer ut plast for resten av flyten — bare flaskeinnsamling har soner
+    const bottleEvents = activeEvents.filter(e => e.type === 'bottle_collection')
+
+    if (bottleEvents.length === 0) {
       setZones([])
       setLoading(false)
       return
     }
 
-    const eventIds = activeEvents.map(e => e.id)
-
-    // Hent innlogget bruker
-    const { data: { user } } = await sb.auth.getUser()
+    // Resten av flyten gjelder kun flaskeinnsamlinger (soner + henter-flyt)
+    const eventIds = bottleEvents.map(e => e.id)
+    setEvents(bottleEvents)
+    const user = earlyUser
 
     // Hent sjåførtildelinger med profilnavn
     const { data: driverAssignments } = await sb
@@ -463,6 +487,25 @@ export default function DriverPage() {
           </p>
         </section>
 
+        {/* Plast-sjåfør — egen flyt uten soner, bare instruks */}
+        {plastDriverInfo && (
+          <div className="card rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Package size={20} className="text-accent" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-accent mb-1">
+                  Plast-sjåfør · {plastDriverInfo.eventTitle}
+                </p>
+                <p className="text-sm text-text-primary leading-relaxed">
+                  Du er sjåfør på plastdugnaden. Sørg for å kjøre avfallet til et mottak som kan ta imot søppelet etter endt dugnad.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Del posisjon — kun synlig hvis bruker er sjåfør på aktiv hendelse */}
         {myDriverEvent && (
           <DelPosisjon share={share} eventTitle={myDriverEvent.title} />
@@ -495,8 +538,8 @@ export default function DriverPage() {
           </div>
         )}
 
-        {/* Tom tilstand */}
-        {!loading && zones.length === 0 && trailerGroups.length === 0 && (
+        {/* Tom tilstand — skjules hvis plast-sjåfør-kortet allerede dekker bruker */}
+        {!loading && zones.length === 0 && trailerGroups.length === 0 && !plastDriverInfo && (
           <div className="card rounded-[2.5rem] p-8 text-center">
             <Package size={32} className="text-text-tertiary mx-auto mb-3" />
             <p className="text-text-secondary">
