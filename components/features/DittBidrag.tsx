@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { ShoppingBag, FileText, Cake, Gift, Calendar, Coins, Ticket, Beef, IceCream2, CakeSlice, CupSoda } from 'lucide-react'
+import { ShoppingBag, FileText, Cake, Gift, Calendar, Coins, Ticket, Beef, IceCream2, CakeSlice, CupSoda, Recycle } from 'lucide-react'
 import { Heart } from 'lucide-react'
 import type { DittBidragData } from '@/lib/mock/data'
 
@@ -23,6 +23,7 @@ const stats = [
   { key: 'isSolgt' as const, label: 'IS SOLGT', icon: IceCream2 },
   { key: 'kakestykkerSolgt' as const, label: 'KAKESTYKKER SOLGT', icon: CakeSlice },
   { key: 'brusSolgt' as const, label: 'BRUS SOLGT', icon: CupSoda },
+  { key: 'literSoppel' as const, label: 'LITER SØPPEL PLUKKET', icon: Recycle },
   { key: 'kronerOpptjent' as const, label: 'KRONER OPPTJENT', icon: Coins },
 ]
 
