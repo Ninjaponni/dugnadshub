@@ -6,7 +6,9 @@ import type { DugnadEvent } from '@/lib/supabase/types'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockEvents } from '@/lib/mock/data'
 
-// Henter første aktive event, eller første kommende hvis ingen er aktive
+// Henter første aktive KART-relevante event (bottle_collection/lapper/plast),
+// eller første kommende hvis ingen er aktive. Arrangement-events bruker shifts,
+// ikke soner, så de skal aldri vises på kartet.
 export function useActiveEvent() {
   const [event, setEvent] = useState<DugnadEvent | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,6 +26,7 @@ export function useActiveEvent() {
         .from('events')
         .select('*')
         .in('status', ['active', 'upcoming'])
+        .in('type', ['bottle_collection', 'lapper', 'plast'])
         .order('date', { ascending: true })
 
       const events = (data || []) as unknown as DugnadEvent[]
