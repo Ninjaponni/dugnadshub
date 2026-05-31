@@ -1,18 +1,22 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import KorpsLogo from '@/components/ui/KorpsLogo'
-import { ArrowLeft, Send, AlertTriangle, Check } from 'lucide-react'
+import { ArrowLeft, Send, AlertTriangle, Check, Users } from 'lucide-react'
 import Link from 'next/link'
+
+type CompletedEvent = { id: string; title: string; date: string }
+type ParticipantPreview = { count: number; users: Array<{ id: string; full_name: string | null }> }
 
 const roleLabels: Record<string, string> = {
   admin: 'Admin',
   collector: 'Samler',
   driver: 'Sjåfør',
   strapper: 'Stripser',
+  host: 'Vert',
 }
 
 const groupLabels = ['Aspirant', 'Junior', 'Hovedkorps']
@@ -26,15 +30,58 @@ export default function AdminNotificationsPage() {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
   const [sendToAll, setSendToAll] = useState(true)
+  const [selectedEventId, setSelectedEventId] = useState<string>('')
+  const [completedEvents, setCompletedEvents] = useState<CompletedEvent[]>([])
+  const [preview, setPreview] = useState<ParticipantPreview | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
   const [sending, setSending] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null)
   const [toastSuccess, setToastSuccess] = useState<{ sent: number } | null>(null)
 
+  // Hent ferdige arrangementer ved første render
+  useEffect(() => {
+    const supabase = supabaseRef.current
+    supabase
+      .from('events')
+      .select('id, title, date')
+      .eq('status', 'completed')
+      .order('date', { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setCompletedEvents(data as CompletedEvent[])
+      })
+  }, [])
+
+  // Hent forhåndsvisning av deltakere når event velges
+  useEffect(() => {
+    if (!selectedEventId) {
+      setPreview(null)
+      return
+    }
+    let cancelled = false
+    setLoadingPreview(true)
+    ;(async () => {
+      const supabase = supabaseRef.current
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setLoadingPreview(false); return }
+      const res = await fetch(`/api/admin/event-participants/${selectedEventId}`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
+      if (!cancelled && res.ok) {
+        const data = await res.json()
+        setPreview(data)
+      }
+      if (!cancelled) setLoadingPreview(false)
+    })()
+    return () => { cancelled = true }
+  }, [selectedEventId])
+
   const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-card ring-1 ring-text-tertiary/20 text-[15px] outline-none focus:ring-2 focus:ring-accent/30 box-border'
 
   function toggleRole(role: string) {
     setSendToAll(false)
+    setSelectedEventId('')
     setSelectedRoles(prev =>
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
     )
@@ -42,6 +89,7 @@ export default function AdminNotificationsPage() {
 
   function toggleGroup(group: string) {
     setSendToAll(false)
+    setSelectedEventId('')
     setSelectedGroups(prev =>
       prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group]
     )
@@ -51,6 +99,16 @@ export default function AdminNotificationsPage() {
     setSendToAll(true)
     setSelectedRoles([])
     setSelectedGroups([])
+    setSelectedEventId('')
+  }
+
+  function handleEventChange(eventId: string) {
+    setSelectedEventId(eventId)
+    if (eventId) {
+      setSendToAll(false)
+      setSelectedRoles([])
+      setSelectedGroups([])
+    }
   }
 
   async function handleSend() {
@@ -61,7 +119,9 @@ export default function AdminNotificationsPage() {
     if (!session) { setSending(false); return }
 
     const filter: Record<string, unknown> = {}
-    if (sendToAll) {
+    if (selectedEventId) {
+      filter.eventId = selectedEventId
+    } else if (sendToAll) {
       filter.all = true
     } else {
       if (selectedRoles.length > 0) filter.roles = selectedRoles
@@ -98,7 +158,7 @@ export default function AdminNotificationsPage() {
     setSending(false)
   }
 
-  const canSend = title.trim() && body.trim() && (sendToAll || selectedRoles.length > 0 || selectedGroups.length > 0)
+  const canSend = title.trim() && body.trim() && (sendToAll || selectedRoles.length > 0 || selectedGroups.length > 0 || selectedEventId !== '')
 
   return (
     <>
@@ -164,6 +224,43 @@ export default function AdminNotificationsPage() {
         <div>
           <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-3">Mottakere</label>
 
+          {/* Ferdig aktivitet — overskriver rolle/gruppe-filter */}
+          {completedEvents.length > 0 && (
+            <div className="mb-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5">Ferdig aktivitet</p>
+              <select
+                value={selectedEventId}
+                onChange={e => handleEventChange(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Velg arrangement…</option>
+                {completedEvents.map(ev => (
+                  <option key={ev.id} value={ev.id}>{ev.title} — {ev.date}</option>
+                ))}
+              </select>
+              {selectedEventId && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-text-secondary">
+                  <Users size={14} />
+                  {loadingPreview ? (
+                    <span>Henter deltakere…</span>
+                  ) : preview ? (
+                    <span>Vil nå {preview.count} deltaker{preview.count === 1 ? '' : 'e'}</span>
+                  ) : null}
+                </div>
+              )}
+              {preview && preview.users.length > 0 && (
+                <details className="mt-1.5">
+                  <summary className="text-xs text-accent cursor-pointer select-none">Vis liste</summary>
+                  <ul className="mt-1.5 text-xs text-text-secondary space-y-0.5 max-h-40 overflow-y-auto pl-1">
+                    {preview.users.map(u => (
+                      <li key={u.id}>{u.full_name || '(uten navn)'}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          )}
+
           {/* Alle-toggle */}
           <button
             onClick={handleAllToggle}
@@ -227,7 +324,11 @@ export default function AdminNotificationsPage() {
               <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
               <p className="font-medium mb-1 font-[var(--font-display)]">Send varsel?</p>
               <p className="text-sm text-text-secondary">
-                {sendToAll ? 'Sendes til alle brukere' :
+                {selectedEventId ? (
+                  preview
+                    ? `Sendes til ${preview.count} deltaker${preview.count === 1 ? '' : 'e'} på ${completedEvents.find(e => e.id === selectedEventId)?.title ?? 'arrangement'}`
+                    : 'Sendes til deltakere på valgt arrangement'
+                ) : sendToAll ? 'Sendes til alle brukere' :
                   [
                     selectedRoles.length > 0 && `Roller: ${selectedRoles.map(r => roleLabels[r]).join(', ')}`,
                     selectedGroups.length > 0 && `Grupper: ${selectedGroups.join(', ')}`,

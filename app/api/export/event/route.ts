@@ -233,6 +233,7 @@ export async function GET(request: NextRequest) {
 
     const sjaforer = driverRows.filter(d => d.role === 'driver')
     const stripsere = driverRows.filter(d => d.role === 'strapper')
+    const verter = driverRows.filter(d => d.role === 'host')
 
     const footerRows: string[] = ['', '']
 
@@ -256,6 +257,14 @@ export async function GET(request: NextRequest) {
     // Stripsere — første person har "Stripse sekker:" som label
     stripsere.forEach((s, i) => {
       footerRows.push(buildPersonRow(s, i === 0 ? 'Stripse sekker:' : null))
+    })
+
+    // Verter (plast) — første person har "Vertskap:" som label
+    if (verter.length > 0 && (sjaforer.length > 0 || stripsere.length > 0)) {
+      footerRows.push(',,,,,,,,')
+    }
+    verter.forEach((v, i) => {
+      footerRows.push(buildPersonRow(v, i === 0 ? 'Vertskap:' : null))
     })
 
     // Hentested — fra driver_notes hvis satt (f.eks. "Infinitum: Torgardstrøa 5")

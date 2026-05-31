@@ -1,5 +1,6 @@
 import { webpush, ensureVapid } from './vapid'
 import { createClient } from '@supabase/supabase-js'
+import { getEventParticipants } from '@/lib/events/participants'
 
 // Lazy Supabase-init — env vars er ikke tilgjengelige ved build-time
 function getSupabase() {
@@ -19,11 +20,18 @@ interface SendFilter {
   userIds?: string[]
   roles?: string[]
   childGroups?: string[]
+  eventId?: string
   all?: boolean
 }
 
 // Hent subscriptions basert pa filter
 async function getSubscriptions(filter: SendFilter) {
+  // Filter på «deltakere på et arrangement» — utvider userIds-listen
+  if (filter.eventId) {
+    const eventUserIds = await getEventParticipants(filter.eventId, filter.userIds ?? [])
+    filter = { ...filter, userIds: eventUserIds }
+  }
+
   // Spesifikke brukere (f.eks. badge-tildeling)
   if (filter.userIds && filter.userIds.length > 0) {
     const { data } = await getSupabase()

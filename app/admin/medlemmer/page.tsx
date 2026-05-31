@@ -30,6 +30,7 @@ const roleLabels: Record<Role, string> = {
   collector: 'Samler',
   driver: 'Sjåfør',
   strapper: 'Stripser',
+  host: 'Vert',
   admin: 'Admin',
 }
 
@@ -350,6 +351,7 @@ export default function MembersAdminPage() {
                         profile.role === 'admin' ? 'bg-purple/10 text-purple' :
                         profile.role === 'driver' ? 'bg-teal/10 text-teal' :
                         profile.role === 'strapper' ? 'bg-warning/10 text-warning' :
+                        profile.role === 'host' ? 'bg-accent/10 text-accent' :
                         'bg-surface-low text-text-secondary'
                       }`}>
                         {roleLabels[profile.role]}

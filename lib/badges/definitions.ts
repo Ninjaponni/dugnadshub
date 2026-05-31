@@ -40,6 +40,7 @@ export const badgeDefinitions = [
   { id: 26, name: 'Solpanter', icon: '/badges/solpanter.png', category: 'aktivitet' as const, description: 'Samlet flasker i strålende solskinn', auto_criteria: null },
   { id: 27, name: 'Snøpanter', icon: '/badges/snopanter.png', category: 'aktivitet' as const, description: 'Trasket gjennom snøen for korpset', auto_criteria: null },
   { id: 28, name: 'Førstemann', icon: '/badges/forstemann.png', category: 'aktivitet' as const, description: 'Først ute med å ta en sone', auto_criteria: 'first_zone_in_event' },
+  { id: 67, name: 'Plastminister', icon: '/badges/plastminister.png', category: 'aktivitet' as const, description: 'Deltatt i plastdugnad', auto_criteria: null },
 
   // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
   { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },

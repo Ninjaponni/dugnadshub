@@ -16,19 +16,19 @@ interface MeetingPointSheetProps {
   onClose: () => void
 }
 
-// Slot-data for vertskap (strapper) eller søppelsjåfør (driver) på møteplassen
+// Slot-data for vertskap (host) eller søppelsjåfør (driver) på møteplassen
 type SlotKind = 'host' | 'driver'
 
 interface SlotConfig {
   kind: SlotKind
-  role: 'driver' | 'strapper'
+  role: 'driver' | 'host'
   slotNumber: number
   label: string
 }
 
 const slotConfigs: SlotConfig[] = [
-  { kind: 'host', role: 'strapper', slotNumber: 1, label: 'Vert 1' },
-  { kind: 'host', role: 'strapper', slotNumber: 2, label: 'Vert 2' },
+  { kind: 'host', role: 'host', slotNumber: 1, label: 'Vert 1' },
+  { kind: 'host', role: 'host', slotNumber: 2, label: 'Vert 2' },
   { kind: 'driver', role: 'driver', slotNumber: 1, label: 'Søppelsjåfør' },
 ]
 

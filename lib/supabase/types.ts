@@ -1,5 +1,5 @@
 // Supabase database-typer — manuelt definert (erstatt med genererte typer senere)
-export type Role = 'admin' | 'collector' | 'driver' | 'strapper'
+export type Role = 'admin' | 'collector' | 'driver' | 'strapper' | 'host'
 export type ChildGroup = 'Aspirant' | 'Junior' | 'Hovedkorps'
 export interface Child {
   name: string
@@ -129,7 +129,9 @@ export interface ZoneClaim {
   notes: string | null
 }
 
-export type BaseRole = 'driver' | 'strapper'
+// host = vert på plastdugnad-møteplass (egen rolle, ikke stripser).
+// Begge bor i driver_assignments, men synkes til ulik profiles.role.
+export type BaseRole = 'driver' | 'strapper' | 'host'
 
 export interface DriverAssignment {
   id: string

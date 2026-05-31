@@ -22,11 +22,15 @@ export async function syncRoleForUser(
 
   const active = (assignments || []) as Array<{ role: string; events: { status: string } }>
 
+  // Prioritet: driver > strapper > host > collector. Sjåfør og stripser har
+  // operasjonelt ansvar over plast-vert, så de vinner ved overlapp.
   let nextRole: string
   if (active.some(a => a.role === 'driver')) {
     nextRole = 'driver'
   } else if (active.some(a => a.role === 'strapper')) {
     nextRole = 'strapper'
+  } else if (active.some(a => a.role === 'host')) {
+    nextRole = 'host'
   } else {
     nextRole = 'collector'
   }
