@@ -1931,9 +1931,29 @@ export default function EventsAdminPage() {
                             )}
                           </AnimatePresence>
 
-                          {/* Fullførings-dialog med sekker og notater */}
+                          {/* Fullførings-dialog — innhold tilpasses event.type */}
                           <AnimatePresence>
-                            {completeConfirmId === event.id && (
+                            {completeConfirmId === event.id && (() => {
+                              // Antall-felt vises kun for sone-baserte dugnader. Arrangement og diverse
+                              // har bare notatfelt siden tallet ikke gir mening der.
+                              const showCountField = event.type === 'plast' || event.type === 'bottle_collection' || event.type === 'lapper'
+                              const countLabel =
+                                event.type === 'plast' ? 'Hvor mange sekker ble levert?' :
+                                event.type === 'bottle_collection' ? 'Hvor mange flasker/panteenheter?' :
+                                event.type === 'lapper' ? 'Hvor mange lapper ble levert?' :
+                                ''
+                              const countPlaceholder =
+                                event.type === 'plast' ? 'F.eks. 45' :
+                                event.type === 'bottle_collection' ? 'F.eks. 1200' :
+                                event.type === 'lapper' ? 'F.eks. 350' :
+                                ''
+                              const heading =
+                                event.type === 'plast' ? 'Fullfør plastdugnad' :
+                                event.type === 'bottle_collection' ? 'Fullfør flaskeinnsamling' :
+                                event.type === 'lapper' ? 'Fullfør lappeutdeling' :
+                                event.type === 'arrangement' ? 'Fullfør arrangement' :
+                                'Fullfør hendelsen'
+                              return (
                               <motion.div
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
@@ -1943,26 +1963,30 @@ export default function EventsAdminPage() {
                                 <div className="rounded-2xl overflow-hidden bg-success/5">
                                   <div className="p-4">
                                     <CheckCircle size={32} className="text-success mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-3 text-center font-[var(--font-display)]">Fullfør hendelsen</p>
+                                    <p className="text-[15px] font-medium mb-3 text-center font-[var(--font-display)]">{heading}</p>
                                     <div className="space-y-3">
+                                      {showCountField && (
+                                        <div>
+                                          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">{countLabel}</label>
+                                          <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            value={completeBags}
+                                            onChange={e => setCompleteBags(e.target.value)}
+                                            placeholder={countPlaceholder}
+                                            className={inputClass}
+                                          />
+                                        </div>
+                                      )}
                                       <div>
-                                        <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Hvor mange sekker ble levert?</label>
-                                        <input
-                                          type="number"
-                                          inputMode="numeric"
-                                          value={completeBags}
-                                          onChange={e => setCompleteBags(e.target.value)}
-                                          placeholder="F.eks. 45"
-                                          className={inputClass}
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Annet å notere? (valgfritt)</label>
+                                        <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
+                                          {event.type === 'arrangement' ? 'Hvordan gikk det? (valgfritt)' : 'Annet å notere? (valgfritt)'}
+                                        </label>
                                         <textarea
                                           value={completeNotes}
                                           onChange={e => setCompleteNotes(e.target.value)}
                                           rows={2}
-                                          placeholder="F.eks. Fantastisk oppmøte, ferdig på 1,5 time"
+                                          placeholder={event.type === 'arrangement' ? 'F.eks. Bra oppmøte, alle vakter dekket' : 'F.eks. Fantastisk oppmøte, ferdig på 1,5 time'}
                                           className={`${inputClass} resize-none`}
                                         />
                                       </div>
@@ -1994,7 +2018,8 @@ export default function EventsAdminPage() {
                                   </div>
                                 </div>
                               </motion.div>
-                            )}
+                              )
+                            })()}
                           </AnimatePresence>
 
                           {/* Handlingsknapper — rediger, slett, statusendring */}
