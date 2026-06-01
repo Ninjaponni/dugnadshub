@@ -31,13 +31,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Aktivitet- og 17mai-merker som indikerer event-deltakelse når event_id er satt
+const PARTICIPATION_BADGE_IDS = new Set([
+  17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 43, 44, 66, 67,
+  29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 63, 64, 65,
+])
+
 // Server-side badge-evaluering med admin-klient (bypass RLS)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function evaluateBadgesServer(supabase: any, userId: string) {
   // Hent eksisterende badges
   const { data: existingBadges } = await supabase
     .from('user_badges')
-    .select('badge_id')
+    .select('badge_id, event_id')
     .eq('user_id', userId)
 
   const earned = new Set((existingBadges || []).map((b: { badge_id: number }) => b.badge_id))
@@ -64,12 +70,59 @@ async function evaluateBadgesServer(supabase: any, userId: string) {
 
   const zoneMap = new Map<string, { id: string; area: string }>((zones || []).map((z: { id: string; area: string }) => [z.id, z]))
 
-  // Hent fullførte hendelser
-  const eventIds = [...new Set(userClaims.map(c => c.zone_assignments?.event_id).filter(Boolean))]
+  // Hent ALLE fullførte event-ids brukeren har deltatt på, fra union av deltakelse-kilder.
+  // Slik teller 17. mai, plast, arrangement-vakter og sjåfør-/stripse-/vert-roller likt
+  // med flaskeinnsamling og lapper. Set-semantikk hindrer dobbelt-telling.
+  const participatedEventIds = new Set<string>()
+
+  // 1. Zone claims (flaske/lapper/plast-soner)
+  for (const c of userClaims) {
+    const eid = c.zone_assignments?.event_id
+    if (eid) participatedEventIds.add(eid)
+  }
+
+  // 2. Shift claims (arrangement-vakter)
+  const { data: shiftClaims } = await supabase
+    .from('shift_claims')
+    .select('event_shifts!inner(event_id)')
+    .eq('user_id', userId)
+  for (const r of (shiftClaims || []) as Array<{ event_shifts: { event_id: string } }>) {
+    const eid = r.event_shifts?.event_id
+    if (eid) participatedEventIds.add(eid)
+  }
+
+  // 3. Driver/stripser/vert-roller
+  const { data: driverAssigns } = await supabase
+    .from('driver_assignments')
+    .select('event_id')
+    .eq('user_id', userId)
+  for (const r of (driverAssigns || []) as Array<{ event_id: string }>) {
+    if (r.event_id) participatedEventIds.add(r.event_id)
+  }
+
+  // 4. Musikanter på plast (profile_id peker på forelderen, men det er riktig
+  // siden det er forelderen som "deltar" via barnet)
+  const { data: musicianRecords } = await supabase
+    .from('event_musicians')
+    .select('event_id')
+    .eq('profile_id', userId)
+  for (const r of (musicianRecords || []) as Array<{ event_id: string }>) {
+    if (r.event_id) participatedEventIds.add(r.event_id)
+  }
+
+  // 5. Eksisterende aktivitet- og 17mai-merker med event_id
+  for (const b of (existingBadges || []) as Array<{ badge_id: number; event_id: string | null }>) {
+    if (b.event_id && PARTICIPATION_BADGE_IDS.has(b.badge_id)) {
+      participatedEventIds.add(b.event_id)
+    }
+  }
+
+  // Filtrer til kun fullførte events
+  const allEventIds = Array.from(participatedEventIds)
   const { data: events } = await supabase
     .from('events')
     .select('id, status')
-    .in('id', eventIds.length > 0 ? eventIds : ['none'])
+    .in('id', allEventIds.length > 0 ? allEventIds : ['none'])
 
   const completedEvents = (events || []).filter((e: { status: string }) => e.status === 'completed')
 
