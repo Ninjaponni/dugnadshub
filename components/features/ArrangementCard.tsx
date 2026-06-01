@@ -97,9 +97,12 @@ export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity 
       </p>
 
       {deadlinePassed && (
-        <p className="mt-2 text-xs text-warning text-center font-semibold relative">
-          Påmelding stengt, du beholder vaktene dine
-        </p>
+        <div className="mt-3 flex justify-center relative">
+          <span className="bg-warning/15 text-text-primary text-xs font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+            Påmelding stengt, du beholder vaktene
+          </span>
+        </div>
       )}
     </div>
   )
