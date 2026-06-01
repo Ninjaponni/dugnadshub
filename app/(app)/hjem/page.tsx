@@ -44,12 +44,18 @@ export default function HomePage() {
   const supabaseRef = useRef(createClient())
 
   // Trigger onboarding først når vi vet at brukeren er innlogget — unngår blink under logout/redirect.
-  // Per-user-flag så delt enhet eller bruker-skifte ikke skjuler onboarding for ny bruker.
+  // DB er sannhet (onboarding_completed_at), localStorage er rask cache. Safari ITP kan purge
+  // localStorage etter inaktivitet i PWA, men DB består.
   useEffect(() => {
     if (loading) return
     if (!profile) return
     if (typeof window === 'undefined') return
-    if (localStorage.getItem(`onboarding_complete_${profile.id}`)) return
+    const key = `onboarding_complete_${profile.id}`
+    if (profile.onboarding_completed_at) {
+      if (!localStorage.getItem(key)) localStorage.setItem(key, '1')
+      return
+    }
+    if (localStorage.getItem(key)) return
     setShowOnboarding(true)
   }, [loading, profile])
 
@@ -155,15 +161,22 @@ export default function HomePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const futureEvents = events.filter(e => e.status === 'upcoming' && (e as any).type !== 'arrangement')
 
-  function completeOnboarding() {
-    if (profile?.id) localStorage.setItem(`onboarding_complete_${profile.id}`, '1')
-    setShowOnboarding(false)
-    async function reload() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabaseRef.current.rpc as any)('get_home_data')
-      if (data?.profile) setProfile((data as HomeData).profile as Profile)
+  async function completeOnboarding() {
+    if (!profile?.id) return
+    // DB først, så localStorage. Hvis DB-skriving feiler, behold wizarden så bruker kan prøve igjen.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseRef.current.from('profiles') as any)
+      .update({ onboarding_completed_at: new Date().toISOString() })
+      .eq('id', profile.id)
+    if (error) {
+      console.error('Kunne ikke lagre onboarding-status', error)
+      return
     }
-    reload()
+    localStorage.setItem(`onboarding_complete_${profile.id}`, '1')
+    setShowOnboarding(false)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabaseRef.current.rpc as any)('get_home_data')
+    if (data?.profile) setProfile((data as HomeData).profile as Profile)
   }
 
   return (

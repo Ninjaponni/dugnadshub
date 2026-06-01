@@ -104,6 +104,16 @@ export default function ArrangementPage() {
             <p className="text-text-secondary text-balance leading-relaxed">{event.description}</p>
           )}
 
+          {/* Banner når påmelding er stengt — bruker beholder vakter, men kan ikke melde seg på eller av */}
+          {deadlinePassed && (
+            <div className="rounded-2xl bg-warning/10 border border-warning/30 p-4">
+              <p className="text-sm font-semibold text-text-primary mb-1">Påmelding er stengt</p>
+              <p className="text-sm text-text-secondary">
+                Du beholder vaktene du har valgt og kan se dem helt frem til hendelsen. Trenger du å bytte, kontakt admin.
+              </p>
+            </div>
+          )}
+
           {/* Mine vakter */}
           {userId && <MyShiftsCard shifts={sorted} currentUserId={userId} onShiftClick={setSelectedShift} />}
 

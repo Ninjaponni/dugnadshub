@@ -585,8 +585,14 @@ export default function ProfilePage() {
               </div>
               <p className="font-bold text-sm flex-1">Vis velkomstguiden på nytt</p>
               <button
-                onClick={() => {
-                  if (profile?.id) localStorage.removeItem(`onboarding_complete_${profile.id}`)
+                onClick={async () => {
+                  if (!profile?.id) return
+                  // Nullstill både DB og localStorage så onboarding trigges på nytt
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  await (supabaseRef.current.from('profiles') as any)
+                    .update({ onboarding_completed_at: null })
+                    .eq('id', profile.id)
+                  localStorage.removeItem(`onboarding_complete_${profile.id}`)
                   router.push('/hjem')
                 }}
                 className="text-accent text-sm font-medium"
@@ -597,7 +603,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.10
+              Tillerbyen Skolekorps Dugnadshub v 10.11
             </p>
 
             {/* Logg ut */}

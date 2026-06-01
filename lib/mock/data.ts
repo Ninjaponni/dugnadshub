@@ -15,6 +15,7 @@ export const mockProfile: Profile = {
   created_at: '2026-01-15T10:00:00Z',
   is_musician: false,
   musician_group: null,
+  onboarding_completed_at: '2026-01-15T10:00:00Z',
 }
 
 // --- Hendelser ---
@@ -38,6 +39,7 @@ export const mockEvents: DugnadEvent[] = [
     completion_notes: null,
     meeting_point: null,
     send_push_on_activate: true,
+    signup_deadline: null,
   },
 ]
 

@@ -37,6 +37,7 @@ function daysUntilLabel(isoDate: string): string {
 export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity }: Props) {
   const filled = Math.max(0, totalCapacity - freePlaces)
   const progress = totalCapacity > 0 ? Math.round((filled / totalCapacity) * 100) : 0
+  const deadlinePassed = event.signup_deadline ? new Date(event.signup_deadline) < new Date() : false
 
   return (
     <div className="card rounded-[2rem] p-7 relative overflow-hidden">
@@ -90,10 +91,16 @@ export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity 
       {/* Sub-info: antall vakter + signup deadline */}
       <p className="text-xs text-text-tertiary mt-3 text-center relative">
         {totalShifts} {totalShifts === 1 ? 'vakt' : 'vakter'}
-        {event.signup_deadline && (
+        {event.signup_deadline && !deadlinePassed && (
           <> · Påmelding stenger {new Date(event.signup_deadline).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}</>
         )}
       </p>
+
+      {deadlinePassed && (
+        <p className="mt-2 text-xs text-warning text-center font-semibold relative">
+          Påmelding stengt, du beholder vaktene dine
+        </p>
+      )}
     </div>
   )
 }

@@ -22,6 +22,7 @@ export interface Profile {
   created_at: string
   is_musician: boolean
   musician_group: ChildGroup | null
+  onboarding_completed_at: string | null
 }
 
 export interface Zone {
@@ -75,6 +76,7 @@ export interface DugnadEvent {
   completion_notes: string | null
   meeting_point: MeetingPoint | null
   send_push_on_activate: boolean
+  signup_deadline: string | null
 }
 
 // Lettvekts-event som get_home_data returnerer (kun feltene hjem-siden + ArrangementCard bruker).

@@ -137,6 +137,9 @@ export default function EventsAdminPage() {
   const [completeBags, setCompleteBags] = useState('')
   const [completeNotes, setCompleteNotes] = useState('')
 
+  // Lås påmelding (setter signup_deadline = now()) / Åpne påmelding igjen (setter null)
+  const [lockingId, setLockingId] = useState<string | null>(null)
+
   // Tab-navigasjon
   type Tab = 'active' | 'upcoming' | 'completed'
   const [activeTab, setActiveTab] = useState<Tab>('active')
@@ -525,6 +528,25 @@ export default function EventsAdminPage() {
 
     await loadEvents()
     setUpdatingId(null)
+  }
+
+  // Lås påmelding ved å sette signup_deadline til nå. Brukere som allerede har vakter
+  // beholder dem og kan se dem, men kan ikke melde seg på eller av. Event-status forblir 'active'
+  // så vakter er synlige helt frem til selve hendelsen.
+  async function handleToggleSignupLock(eventId: string, lock: boolean) {
+    setLockingId(eventId)
+    setErrorMsg(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseRef.current.from('events') as any)
+      .update({ signup_deadline: lock ? new Date().toISOString() : null })
+      .eq('id', eventId)
+    if (error) {
+      setErrorMsg(lock ? 'Kunne ikke låse påmelding' : 'Kunne ikke åpne påmelding')
+      setLockingId(null)
+      return
+    }
+    await loadEvents()
+    setLockingId(null)
   }
 
   // Nullstill alle claims og reset assignments for en hendelse
@@ -1992,45 +2014,73 @@ export default function EventsAdminPage() {
                                 </Button>
                               )}
 
-                              {event.status === 'active' && (
-                                <div className="space-y-3">
-                                  {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      className="w-full bg-warning/10 text-warning rounded-full"
-                                      onClick={() => handleSendHelp(event)}
-                                    >
-                                      <Bell size={14} />
-                                      Send hjelp-varsel ({event.zoneStats.available} ledige)
-                                    </Button>
-                                  )}
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      className="rounded-full"
-                                      loading={updatingId === event.id}
-                                      onClick={() => handleDeactivateClick(event)}
-                                    >
-                                      Deaktiver
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      className="bg-success/10 text-success hover:bg-success/20 rounded-full"
-                                      loading={updatingId === event.id}
-                                      onClick={() => {
-                                        setCompleteConfirmId(event.id)
-                                        setCompleteBags('')
-                                        setCompleteNotes('')
-                                      }}
-                                    >
-                                      Merk som fullført
-                                    </Button>
+                              {event.status === 'active' && (() => {
+                                const signupLocked = !!event.signup_deadline && new Date(event.signup_deadline) < new Date()
+                                return (
+                                  <div className="space-y-3">
+                                    {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full bg-warning/10 text-warning rounded-full"
+                                        onClick={() => handleSendHelp(event)}
+                                      >
+                                        <Bell size={14} />
+                                        Send hjelp-varsel ({event.zoneStats.available} ledige)
+                                      </Button>
+                                    )}
+
+                                    {/* Lås / åpne påmelding — kun for arrangement-events */}
+                                    {event.type === 'arrangement' && !signupLocked && (
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full rounded-full"
+                                        loading={lockingId === event.id}
+                                        onClick={() => handleToggleSignupLock(event.id, true)}
+                                      >
+                                        Lås påmelding nå
+                                      </Button>
+                                    )}
+                                    {event.type === 'arrangement' && signupLocked && (
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full rounded-full"
+                                        loading={lockingId === event.id}
+                                        onClick={() => handleToggleSignupLock(event.id, false)}
+                                      >
+                                        Åpne påmelding igjen
+                                      </Button>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="rounded-full"
+                                        loading={updatingId === event.id}
+                                        onClick={() => handleDeactivateClick(event)}
+                                      >
+                                        Deaktiver
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="bg-success/10 text-success hover:bg-success/20 rounded-full"
+                                        loading={updatingId === event.id}
+                                        onClick={() => {
+                                          setCompleteConfirmId(event.id)
+                                          setCompleteBags('')
+                                          setCompleteNotes('')
+                                        }}
+                                      >
+                                        Merk som fullført
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )
+                              })()}
 
                               {/* Nullstill claims — kun for sonebaserte dugnader */}
                               {(event.zoneStats.claimed + event.zoneStats.completed) > 0 && event.type !== 'arrangement' && (
