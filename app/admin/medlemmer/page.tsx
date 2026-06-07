@@ -5,12 +5,13 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import BrandLink from '@/components/layout/BrandLink'
-import { Users, Search, Award, ChevronDown, ChevronUp, X, ArrowLeft, ArrowUpDown, Trash2, AlertTriangle, Music } from 'lucide-react'
+import { Users, Search, Award, ChevronRight, X, ArrowLeft, ArrowUpDown, Trash2, AlertTriangle, Music } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import type { Child } from '@/lib/supabase/types'
 import type { Profile, Role, UserBadge, ZoneClaim, ChildGroup } from '@/lib/supabase/types'
+import MemberDetailOverlay from '@/components/admin/MemberDetailOverlay'
 
 type SortMode = 'alpha' | 'badges' | 'least_active'
 
@@ -43,13 +44,17 @@ export default function MembersAdminPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [updatingType, setUpdatingType] = useState<string | null>(null)
   const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const supabaseRef = useRef(createClient())
+
+  // Aktivt valgt medlem (vises i overlay). Slås opp på id for å holde data ferskt
+  // etter mutasjoner (rolle, merker osv.) i samme render.
+  const selectedProfile = profiles.find(p => p.id === selectedId) ?? null
 
   // Supabase har server-side hard cap på 1000 rader per request.
   // Vi henter alt i 1000-bolker til tabellen er tom.
@@ -217,7 +222,7 @@ export default function MembersAdminPage() {
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
     setAllClaims(prev => prev.filter(c => c.user_id !== userId))
     setDeleteConfirmId(null)
-    setExpandedId(null)
+    setSelectedId(null)
     setDeleting(false)
   }
 
@@ -322,9 +327,6 @@ export default function MembersAdminPage() {
       {!loading && filtered.length > 0 && (
         <div className="space-y-2">
           {filtered.map((profile, i) => {
-            const isExpanded = expandedId === profile.id
-            const userBadgeList = getBadgesForUser(profile.id)
-
             return (
               <motion.div
                 key={profile.id}
@@ -333,9 +335,9 @@ export default function MembersAdminPage() {
                 transition={{ delay: Math.min(i * 0.02, 0.3) }}
               >
                 <Card animate={false} className="p-0 overflow-hidden rounded-2xl">
-                  {/* Kort-header */}
+                  {/* Kort-header — åpner overlay */}
                   <button
-                    onClick={() => setExpandedId(isExpanded ? null : profile.id)}
+                    onClick={() => setSelectedId(profile.id)}
                     className="w-full text-left p-4 flex items-center gap-3"
                   >
                     {/* Avatar */}
@@ -377,245 +379,20 @@ export default function MembersAdminPage() {
                       }`}>
                         {roleLabels[profile.role]}
                       </span>
-                      {isExpanded ? <ChevronUp size={14} className="text-text-tertiary" /> : <ChevronDown size={14} className="text-text-tertiary" />}
+                      <ChevronRight size={14} className="text-text-tertiary" />
                     </div>
                   </button>
-
-                  {/* Ekspandert panel */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-4 py-3 space-y-4">
-                          {/* Kontaktinfo */}
-                          <div className="text-xs text-text-tertiary space-y-0.5">
-                            <p>E-post: <a href={`mailto:${profile.email}`} className="text-accent">{profile.email}</a></p>
-                            {profile.phone && <p>Telefon: <a href={`tel:${profile.phone}`} className="text-accent">{profile.phone}</a></p>}
-                            {profile.is_musician ? (
-                              <p>Musikant{profile.musician_group ? ` (${profile.musician_group})` : ''}</p>
-                            ) : profile.children && profile.children.length > 0 ? (
-                              profile.children.map((c: Child, i: number) => (
-                                <p key={i}>Barn: {c.name}{c.group ? ` (${c.group})` : ''}</p>
-                              ))
-                            ) : null}
-                            <p>Registrert: {new Date(profile.created_at).toLocaleDateString('nb-NO')}</p>
-                          </div>
-
-                          {/* Rollevelger */}
-                          <div>
-                            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Rolle</label>
-                            <div className="grid grid-cols-4 gap-1.5">
-                              {(Object.keys(roleLabels) as Role[]).map(role => (
-                                <button
-                                  key={role}
-                                  onClick={() => handleRoleChange(profile.id, role)}
-                                  disabled={updatingRole === profile.id}
-                                  className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                                    profile.role === role
-                                      ? 'bg-accent text-white'
-                                      : 'bg-surface-low text-text-secondary hover:bg-surface-low'
-                                  } ${updatingRole === profile.id ? 'opacity-50' : ''}`}
-                                >
-                                  {roleLabels[role]}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Type-velger: forelder eller musikant */}
-                          <div>
-                            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Type</label>
-                            <div className="grid grid-cols-2 gap-1.5">
-                              <button
-                                onClick={() => handleTypeChange(profile.id, false, null)}
-                                disabled={updatingType === profile.id}
-                                className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                                  !profile.is_musician
-                                    ? 'bg-accent text-white'
-                                    : 'bg-surface-low text-text-secondary hover:bg-surface-low'
-                                } ${updatingType === profile.id ? 'opacity-50' : ''}`}
-                              >
-                                Forelder
-                              </button>
-                              <button
-                                onClick={() => handleTypeChange(profile.id, true, profile.musician_group || 'Aspirant')}
-                                disabled={updatingType === profile.id}
-                                className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                                  profile.is_musician
-                                    ? 'bg-accent text-white'
-                                    : 'bg-surface-low text-text-secondary hover:bg-surface-low'
-                                } ${updatingType === profile.id ? 'opacity-50' : ''}`}
-                              >
-                                Musikant
-                              </button>
-                            </div>
-
-                            {/* Gruppe-velger for musikanter */}
-                            {profile.is_musician && (
-                              <div className="grid grid-cols-3 gap-1.5 mt-1.5">
-                                {(['Aspirant', 'Junior', 'Hovedkorps'] as ChildGroup[]).map(g => (
-                                  <button
-                                    key={g}
-                                    onClick={() => handleTypeChange(profile.id, true, g)}
-                                    disabled={updatingType === profile.id}
-                                    className={`px-2 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                                      profile.musician_group === g
-                                        ? 'bg-accent/15 text-accent ring-1 ring-accent/30'
-                                        : 'bg-surface-low text-text-secondary hover:bg-surface-low'
-                                    } ${updatingType === profile.id ? 'opacity-50' : ''}`}
-                                  >
-                                    {g}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Merker */}
-                          <div>
-                            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
-                              <Award size={12} className="inline mr-1" />
-                              Merker
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                              {manualBadges.map(badge => {
-                                const hasBadge = userBadgeList.some(b => b.id === badge.id)
-                                const isActivity = STACKABLE_CATEGORIES.has(badge.category)
-                                const count = getBadgeCount(profile.id, badge.id)
-                                const isAwarding = awardingBadge === `${profile.id}-${badge.id}`
-
-                                return (
-                                  <div key={badge.id} className="flex items-center gap-0.5">
-                                    {/* Minus-knapp for aktivitetsmerker */}
-                                    {isActivity && count > 0 && (
-                                      <button
-                                        onClick={() => handleRemoveBadge(profile.id, badge.id)}
-                                        disabled={isAwarding}
-                                        className="w-6 h-6 rounded-full bg-danger/10 text-danger flex items-center justify-center text-xs font-bold active:bg-danger/20"
-                                      >
-                                        −
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => {
-                                        if (isActivity) {
-                                          handleAwardBadge(profile.id, badge.id)
-                                        } else {
-                                          hasBadge
-                                            ? handleRemoveBadge(profile.id, badge.id)
-                                            : handleAwardBadge(profile.id, badge.id)
-                                        }
-                                      }}
-                                      disabled={isAwarding}
-                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                        hasBadge
-                                          ? 'bg-accent/10 text-accent ring-1 ring-accent/20'
-                                          : 'bg-surface-low text-text-secondary hover:bg-surface-low'
-                                      } ${isAwarding ? 'opacity-50' : ''}`}
-                                    >
-                                      <img src={badge.icon} alt={badge.name} className="w-4 h-4" />
-                                      <span>{badge.name}{isActivity && count > 0 ? ` ×${count}` : ''}</span>
-                                      {isActivity ? <span className="text-accent">+</span> : null}
-                                      {!isActivity && hasBadge && <X size={12} />}
-                                    </button>
-                                  </div>
-                                )
-                              })}
-                            </div>
-
-                            {/* Nullstill alle merker */}
-                            {userBadgeList.length > 0 && (
-                              <button
-                                onClick={() => handleResetBadges(profile.id)}
-                                disabled={awardingBadge === `${profile.id}-reset`}
-                                className="mt-2 text-xs text-danger/70 active:text-danger"
-                              >
-                                {awardingBadge === `${profile.id}-reset` ? 'Fjerner...' : 'Nullstill alle merker'}
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Opptjente merker */}
-                          {userBadgeList.length > 0 && (
-                            <div>
-                              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
-                                Opptjente merker
-                              </label>
-                              <div className="grid grid-cols-4 gap-3">
-                                {userBadgeList.map(b => {
-                                  const count = getBadgeCount(profile.id, b.id)
-                                  return (
-                                    <div key={b.id} className="flex flex-col items-center text-center">
-                                      <img src={b.icon} alt={b.name} className="w-12 h-12 rounded-[12px] ring-1 ring-amber-300/50 shadow-sm" />
-                                      <span className="text-[10px] text-text-secondary mt-1 leading-tight">{b.name}{count > 1 ? ` ×${count}` : ''}</span>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Slett medlem */}
-                          <AnimatePresence>
-                            {deleteConfirmId === profile.id ? (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="rounded-2xl overflow-hidden bg-danger/5">
-                                  <div className="p-4 text-center">
-                                    <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Slette {profile.full_name || 'dette medlemmet'}?</p>
-                                    <p className="text-sm text-text-secondary">
-                                      Profil, merker og claims fjernes permanent.
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2 px-4 pb-4">
-                                    <button
-                                      onClick={() => setDeleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
-                                    >
-                                      Avbryt
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteMember(profile.id)}
-                                      disabled={deleting}
-                                      className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
-                                    >
-                                      {deleting ? 'Sletter...' : 'Slett'}
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                className="w-full rounded-full"
-                                onClick={() => setDeleteConfirmId(profile.id)}
-                              >
-                                <Trash2 size={14} />
-                                Slett medlem
-                              </Button>
-                            )}
-                          </AnimatePresence>
-
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </Card>
               </motion.div>
             )
           })}
         </div>
       )}
+
+      <MemberDetailOverlay
+        profile={selectedProfile}
+        onClose={() => setSelectedId(null)}
+      />
     </div>
     </>
   )
