@@ -94,15 +94,15 @@ export const badgeDefinitions = [
   { id: 61, name: 'Vaffelvakta', icon: '/badges/vaffelvakta.png', category: 'vakt' as const, description: 'Stekte vafler på vaffeltorsdag', auto_criteria: null },
 ]
 
+// Type utledet fra badge-definisjonene
+export type BadgeCategory = (typeof badgeDefinitions)[number]['category']
+export type BadgeDefinition = (typeof badgeDefinitions)[number]
+
 // Hvilke kategorier kan stables (gis flere ganger til samme person)
-export const STACKABLE_BADGE_CATEGORIES = new Set([
+export const STACKABLE_BADGE_CATEGORIES: Set<BadgeCategory> = new Set([
   'aktivitet',
   '17mai',
   'styret',
   'komite',
   'vakt',
-] as const)
-
-// Type utledet fra badge-definisjonene
-export type BadgeCategory = (typeof badgeDefinitions)[number]['category']
-export type BadgeDefinition = (typeof badgeDefinitions)[number]
+])

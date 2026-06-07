@@ -142,7 +142,7 @@ export default function MembersAdminPage() {
   // Tildel merke — stable-bare kategorier kan gis flere ganger
   async function handleAwardBadge(userId: string, badgeId: number) {
     const badge = badgeDefinitions.find(b => b.id === badgeId)
-    const canStack = badge ? STACKABLE_BADGE_CATEGORIES.has(badge.category as never) : false
+    const canStack = badge ? STACKABLE_BADGE_CATEGORIES.has(badge.category) : false
 
     // Engangs-merker: blokker om allerede har
     if (!canStack) {

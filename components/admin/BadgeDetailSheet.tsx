@@ -28,7 +28,7 @@ export default function BadgeDetailSheet({ open, badge, count, onClose, onAward,
   if (!badge) return <BottomSheet open={open} onClose={onClose}><div /></BottomSheet>
 
   const earned = count > 0
-  const stackable = STACKABLE_BADGE_CATEGORIES.has(badge.category as never)
+  const stackable = STACKABLE_BADGE_CATEGORIES.has(badge.category)
   const isAuto = badge.auto_criteria !== null
 
   return (
