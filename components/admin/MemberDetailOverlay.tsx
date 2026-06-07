@@ -7,6 +7,7 @@ import type { Profile, Child, Role, ChildGroup } from '@/lib/supabase/types'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import BadgeTile from './BadgeTile'
 import RoleEditorSheet from './RoleEditorSheet'
+import BadgeDetailSheet from './BadgeDetailSheet'
 
 const roleLabels: Record<Role, string> = {
   collector: 'Samler',
@@ -25,7 +26,8 @@ interface Props {
   onClose: () => void
   onRoleChange: (role: Role) => void
   onTypeChange: (isMusician: boolean, group: ChildGroup | null) => void
-  onSelectBadge: (badgeId: number) => void
+  onAwardBadge: (badgeId: number) => void
+  onRemoveBadge: (badgeId: number) => void
 }
 
 export default function MemberDetailOverlay({
@@ -36,12 +38,17 @@ export default function MemberDetailOverlay({
   onClose,
   onRoleChange,
   onTypeChange,
-  onSelectBadge,
+  onAwardBadge,
+  onRemoveBadge,
 }: Props) {
   // Filter for merke-rutenettet
   const [filter, setFilter] = useState<'alle' | 'opptjent' | 'mangler'>('alle')
   // Styrer rolle-editor-sheeten
   const [roleEditorOpen, setRoleEditorOpen] = useState(false)
+  // Hvilket merke som er valgt for detalj-visning
+  const [selectedBadgeId, setSelectedBadgeId] = useState<number | null>(null)
+  const selectedBadge = badgeDefinitions.find(b => b.id === selectedBadgeId) ?? null
+  const selectedBadgeCount = selectedBadgeId ? (badgeCounts.get(selectedBadgeId) ?? 0) : 0
 
   // Slå sammen definisjoner med antall, så vi vet hva som er opptjent
   const badges = badgeDefinitions.map(def => ({
@@ -206,7 +213,7 @@ export default function MemberDetailOverlay({
                     icon={b.icon}
                     earned={b.earned}
                     count={b.count}
-                    onClick={() => onSelectBadge(b.id)}
+                    onClick={() => setSelectedBadgeId(b.id)}
                   />
                 ))}
               </div>
@@ -223,6 +230,22 @@ export default function MemberDetailOverlay({
             onClose={() => setRoleEditorOpen(false)}
             onRoleChange={onRoleChange}
             onTypeChange={onTypeChange}
+          />
+
+          {/* Merke-detalj med gi/fjern-flyt — auto-merker er readonly */}
+          <BadgeDetailSheet
+            open={selectedBadgeId !== null}
+            badge={selectedBadge}
+            count={selectedBadgeCount}
+            onClose={() => setSelectedBadgeId(null)}
+            onAward={() => {
+              if (selectedBadgeId !== null) onAwardBadge(selectedBadgeId)
+              setSelectedBadgeId(null)
+            }}
+            onRemove={() => {
+              if (selectedBadgeId !== null) onRemoveBadge(selectedBadgeId)
+              setSelectedBadgeId(null)
+            }}
           />
         </motion.div>
       )}

@@ -406,7 +406,8 @@ export default function MembersAdminPage() {
         onClose={() => setSelectedId(null)}
         onRoleChange={(role) => { if (selectedProfile) handleRoleChange(selectedProfile.id, role) }}
         onTypeChange={(isM, g) => { if (selectedProfile) handleTypeChange(selectedProfile.id, isM, g) }}
-        onSelectBadge={() => { /* Task 5 wirer dette */ }}
+        onAwardBadge={(id) => { if (selectedProfile) handleAwardBadge(selectedProfile.id, id) }}
+        onRemoveBadge={(id) => { if (selectedProfile) handleRemoveBadge(selectedProfile.id, id) }}
       />
     </div>
     </>
