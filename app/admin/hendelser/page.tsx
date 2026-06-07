@@ -474,7 +474,7 @@ export default function EventsAdminPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: rpcError } = await (supabaseRef.current.rpc as any)('mark_event_completed', { p_event_id: eventId })
       if (rpcError) {
-        setErrorMsg('Kunne ikke fullføre hendelsen. Prøv igjen.')
+        setErrorMsg(`Kunne ikke fullføre hendelsen: ${rpcError.message || 'ukjent feil'} (${rpcError.code || ''})`)
         setUpdatingId(null)
         return
       }
