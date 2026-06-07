@@ -3,9 +3,10 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Pencil, Music } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { Profile, Child, Role } from '@/lib/supabase/types'
+import type { Profile, Child, Role, ChildGroup } from '@/lib/supabase/types'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import BadgeTile from './BadgeTile'
+import RoleEditorSheet from './RoleEditorSheet'
 
 const roleLabels: Record<Role, string> = {
   collector: 'Samler',
@@ -22,7 +23,8 @@ interface Props {
   // Antall ganger brukeren har hvert merke (badge_id -> antall)
   badgeCounts: Map<number, number>
   onClose: () => void
-  onEditRoles: () => void
+  onRoleChange: (role: Role) => void
+  onTypeChange: (isMusician: boolean, group: ChildGroup | null) => void
   onSelectBadge: (badgeId: number) => void
 }
 
@@ -32,11 +34,14 @@ export default function MemberDetailOverlay({
   zoneCount,
   badgeCounts,
   onClose,
-  onEditRoles,
+  onRoleChange,
+  onTypeChange,
   onSelectBadge,
 }: Props) {
   // Filter for merke-rutenettet
   const [filter, setFilter] = useState<'alle' | 'opptjent' | 'mangler'>('alle')
+  // Styrer rolle-editor-sheeten
+  const [roleEditorOpen, setRoleEditorOpen] = useState(false)
 
   // Slå sammen definisjoner med antall, så vi vet hva som er opptjent
   const badges = badgeDefinitions.map(def => ({
@@ -75,7 +80,8 @@ export default function MemberDetailOverlay({
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-          className="fixed inset-0 z-50 bg-bg flex flex-col"
+          // Bruker z-40 her så BottomSheet (z-40 overlay + z-50 panel) legger seg over
+          className="fixed inset-0 z-40 bg-bg flex flex-col"
         >
           {/* Topptekst */}
           <header className="shrink-0 z-10 bg-card border-b border-black/[0.03] safe-top">
@@ -122,7 +128,7 @@ export default function MemberDetailOverlay({
                     </span>
                     <button
                       type="button"
-                      onClick={onEditRoles}
+                      onClick={() => setRoleEditorOpen(true)}
                       className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full bg-transparent border-[1.5px] border-dashed border-accent/45 text-accent text-xs font-bold active:opacity-70"
                     >
                       <Pencil size={12} /> Endre
@@ -206,6 +212,18 @@ export default function MemberDetailOverlay({
               </div>
             </div>
           </main>
+
+          {/* Rolle- og type-editor — ligger inne i overlayet så den følger samme stack */}
+          <RoleEditorSheet
+            open={roleEditorOpen}
+            name={profile.full_name || 'medlemmet'}
+            role={profile.role}
+            isMusician={profile.is_musician}
+            musicianGroup={profile.musician_group ?? null}
+            onClose={() => setRoleEditorOpen(false)}
+            onRoleChange={onRoleChange}
+            onTypeChange={onTypeChange}
+          />
         </motion.div>
       )}
     </AnimatePresence>

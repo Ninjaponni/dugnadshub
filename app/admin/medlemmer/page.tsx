@@ -404,7 +404,8 @@ export default function MembersAdminPage() {
         zoneCount={selectedProfile ? getClaimCount(selectedProfile.id) : 0}
         badgeCounts={selectedProfile ? getBadgeCountsForUser(selectedProfile.id) : new Map()}
         onClose={() => setSelectedId(null)}
-        onEditRoles={() => { /* Task 4 wirer dette */ }}
+        onRoleChange={(role) => { if (selectedProfile) handleRoleChange(selectedProfile.id, role) }}
+        onTypeChange={(isM, g) => { if (selectedProfile) handleTypeChange(selectedProfile.id, isM, g) }}
         onSelectBadge={() => { /* Task 5 wirer dette */ }}
       />
     </div>
