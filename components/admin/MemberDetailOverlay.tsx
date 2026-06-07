@@ -2,22 +2,16 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Pencil, Music, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Profile, Child, Role, ChildGroup } from '@/lib/supabase/types'
 import { badgeDefinitions } from '@/lib/badges/definitions'
+import { ROLE_LABELS } from '@/lib/roles'
+import { useToast } from '@/lib/hooks/useToast'
 import BadgeTile from './BadgeTile'
 import RoleEditorSheet from './RoleEditorSheet'
 import BadgeDetailSheet from './BadgeDetailSheet'
 import MemberToast from './MemberToast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-
-const roleLabels: Record<Role, string> = {
-  collector: 'Samler',
-  driver: 'Sjåfør',
-  strapper: 'Stripser',
-  host: 'Vert',
-  admin: 'Admin',
-}
 
 interface Props {
   profile: Profile | null
@@ -60,21 +54,7 @@ export default function MemberDetailOverlay({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Toast for bekreftelse av handlinger
-  const [toast, setToast] = useState<string | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg)
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), 2400)
-  }, [])
-
-  // Rydd opp timer ved unmount så vi ikke setter state på en avmontert komponent
-  useEffect(() => {
-    return () => {
-      if (toastTimer.current) clearTimeout(toastTimer.current)
-    }
-  }, [])
+  const { message: toast, showToast } = useToast()
 
   // Wrappere som kjører forelder-handler og viser toast etterpå.
   // Vi leser merkenavn og antall før kallet, så meldingen reflekterer
@@ -101,7 +81,7 @@ export default function MemberDetailOverlay({
 
   const handleRoleChangeWrapped = (role: Role) => {
     onRoleChange(role)
-    showToast(`Rolle oppdatert: ${roleLabels[role]}`)
+    showToast(`Rolle oppdatert: ${ROLE_LABELS[role]}`)
   }
 
   const handleTypeChangeWrapped = (isM: boolean, g: ChildGroup | null) => {
@@ -185,7 +165,7 @@ export default function MemberDetailOverlay({
                   </p>
                   <div className="flex flex-wrap gap-1.5 items-center">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold bg-accent/10 text-accent">
-                      {roleLabels[profile.role]}
+                      {ROLE_LABELS[profile.role]}
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold border-[1.5px] border-text-primary/[0.14] text-text-secondary">
                       {profile.is_musician ? (

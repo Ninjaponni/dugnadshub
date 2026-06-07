@@ -3,11 +3,7 @@
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import { Award, Check, Lock, Plus } from 'lucide-react'
-
-// Kategorier som kan stables (samme merke kan gis flere ganger)
-type Category = 'starter' | 'vanlig' | 'veteran' | 'elite' | 'aktivitet' | '17mai' | 'styret' | 'komite' | 'vakt'
-
-const STACKABLE = new Set<Category>(['aktivitet', '17mai', 'styret', 'komite', 'vakt'])
+import { STACKABLE_BADGE_CATEGORIES, type BadgeCategory } from '@/lib/badges/definitions'
 
 interface Props {
   open: boolean
@@ -16,7 +12,7 @@ interface Props {
     name: string
     icon: string
     description: string
-    category: Category
+    category: BadgeCategory
     auto_criteria: string | null
   } | null
   count: number
@@ -32,7 +28,7 @@ export default function BadgeDetailSheet({ open, badge, count, onClose, onAward,
   if (!badge) return <BottomSheet open={open} onClose={onClose}><div /></BottomSheet>
 
   const earned = count > 0
-  const stackable = STACKABLE.has(badge.category)
+  const stackable = STACKABLE_BADGE_CATEGORIES.has(badge.category as never)
   const isAuto = badge.auto_criteria !== null
 
   return (

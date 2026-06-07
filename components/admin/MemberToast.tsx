@@ -14,6 +14,8 @@ export default function MemberToast({ message }: Props) {
     <AnimatePresence>
       {message && (
         <motion.div
+          role="status"
+          aria-live="polite"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}

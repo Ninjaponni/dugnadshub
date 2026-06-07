@@ -7,17 +7,11 @@ import Button from '@/components/ui/Button'
 import BrandLink from '@/components/layout/BrandLink'
 import { ArrowLeft, Send, AlertTriangle, Check, Users } from 'lucide-react'
 import Link from 'next/link'
+import { ROLE_LABELS } from '@/lib/roles'
+import type { Role } from '@/lib/supabase/types'
 
 type CompletedEvent = { id: string; title: string; date: string }
 type ParticipantPreview = { count: number; users: Array<{ id: string; full_name: string | null }> }
-
-const roleLabels: Record<string, string> = {
-  admin: 'Admin',
-  collector: 'Samler',
-  driver: 'Sjåfør',
-  strapper: 'Stripser',
-  host: 'Vert',
-}
 
 const groupLabels = ['Aspirant', 'Junior', 'Hovedkorps']
 
@@ -280,7 +274,7 @@ export default function AdminNotificationsPage() {
           {/* Rolle-filter */}
           <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mt-3 mb-1.5">Roller</p>
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {Object.entries(roleLabels).map(([role, label]) => (
+            {Object.entries(ROLE_LABELS).map(([role, label]) => (
               <button
                 key={role}
                 onClick={() => toggleRole(role)}
@@ -336,7 +330,7 @@ export default function AdminNotificationsPage() {
                     : 'Sendes til deltakere på valgt arrangement'
                 ) : sendToAll ? 'Sendes til alle brukere' :
                   [
-                    selectedRoles.length > 0 && `Roller: ${selectedRoles.map(r => roleLabels[r]).join(', ')}`,
+                    selectedRoles.length > 0 && `Roller: ${selectedRoles.map(r => ROLE_LABELS[r as Role]).join(', ')}`,
                     selectedGroups.length > 0 && `Grupper: ${selectedGroups.join(', ')}`,
                   ].filter(Boolean).join(' · ')
                 }

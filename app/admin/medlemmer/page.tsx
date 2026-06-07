@@ -7,9 +7,10 @@ import BrandLink from '@/components/layout/BrandLink'
 import { Users, Search, ChevronRight, X, ArrowLeft, ArrowUpDown, Music } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { badgeDefinitions } from '@/lib/badges/definitions'
+import { badgeDefinitions, STACKABLE_BADGE_CATEGORIES } from '@/lib/badges/definitions'
 import type { Child } from '@/lib/supabase/types'
 import type { Profile, Role, UserBadge, ZoneClaim, ChildGroup } from '@/lib/supabase/types'
+import { ROLE_LABELS } from '@/lib/roles'
 import MemberDetailOverlay from '@/components/admin/MemberDetailOverlay'
 
 type SortMode = 'alpha' | 'badges' | 'least_active'
@@ -18,20 +19,6 @@ const sortLabels: Record<SortMode, string> = {
   alpha: 'A–Å',
   badges: 'Flest merker',
   least_active: 'Minst aktiv',
-}
-
-// Merker som kan tildeles manuelt av admin
-const manualBadges = badgeDefinitions.filter(b => b.auto_criteria === null)
-
-// Kategorier som kan stables ×N (samme merke flere ganger)
-const STACKABLE_CATEGORIES = new Set(['aktivitet', '17mai', 'styret', 'komite', 'vakt'])
-
-const roleLabels: Record<Role, string> = {
-  collector: 'Samler',
-  driver: 'Sjåfør',
-  strapper: 'Stripser',
-  host: 'Vert',
-  admin: 'Admin',
 }
 
 // Medlemsadministrasjon — se, rediger og tildel merker
@@ -44,11 +31,6 @@ export default function MembersAdminPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [updatingRole, setUpdatingRole] = useState<string | null>(null)
-  const [updatingType, setUpdatingType] = useState<string | null>(null)
-  const [awardingBadge, setAwardingBadge] = useState<string | null>(null)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
   const supabaseRef = useRef(createClient())
 
   // Aktivt valgt medlem (vises i overlay). Slås opp på id for å holde data ferskt
@@ -120,7 +102,7 @@ export default function MembersAdminPage() {
     .filter(p => {
       if (!searchQuery) return true
       const q = searchQuery.toLowerCase()
-      const roleLabel = roleLabels[p.role as Role] || ''
+      const roleLabel = ROLE_LABELS[p.role as Role] || ''
       return (
         (p.full_name || '').toLowerCase().includes(q) ||
         p.email.toLowerCase().includes(q) ||
@@ -143,28 +125,24 @@ export default function MembersAdminPage() {
 
   // Endre rolle
   async function handleRoleChange(userId: string, newRole: Role) {
-    setUpdatingRole(userId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseRef.current.from('profiles') as any).update({ role: newRole }).eq('id', userId)
     setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p))
-    setUpdatingRole(null)
   }
 
   // Bytt mellom forelder og musikant, eller endre musikant-gruppe
   async function handleTypeChange(userId: string, isMusician: boolean, group: ChildGroup | null) {
-    setUpdatingType(userId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseRef.current.from('profiles') as any)
       .update({ is_musician: isMusician, musician_group: isMusician ? group : null })
       .eq('id', userId)
     setProfiles(prev => prev.map(p => p.id === userId ? { ...p, is_musician: isMusician, musician_group: isMusician ? group : null } : p))
-    setUpdatingType(null)
   }
 
   // Tildel merke — stable-bare kategorier kan gis flere ganger
   async function handleAwardBadge(userId: string, badgeId: number) {
     const badge = badgeDefinitions.find(b => b.id === badgeId)
-    const canStack = badge ? STACKABLE_CATEGORIES.has(badge.category) : false
+    const canStack = badge ? STACKABLE_BADGE_CATEGORIES.has(badge.category as never) : false
 
     // Engangs-merker: blokker om allerede har
     if (!canStack) {
@@ -172,7 +150,6 @@ export default function MembersAdminPage() {
       if (alreadyHas) return
     }
 
-    setAwardingBadge(`${userId}-${badgeId}`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabaseRef.current.from('user_badges') as any).insert({
       user_id: userId,
@@ -183,7 +160,6 @@ export default function MembersAdminPage() {
     if (data) {
       setUserBadges(prev => [...prev, data])
     }
-    setAwardingBadge(null)
   }
 
   // Fjern ett merke (siste instans)
@@ -192,24 +168,18 @@ export default function MembersAdminPage() {
     const badge = badges[badges.length - 1]
     if (!badge) return
 
-    setAwardingBadge(`${userId}-${badgeId}`)
     await supabaseRef.current.from('user_badges').delete().eq('id', badge.id)
     setUserBadges(prev => prev.filter(ub => ub.id !== badge.id))
-    setAwardingBadge(null)
   }
 
   // Fjern alle merker for en bruker
   async function handleResetBadges(userId: string) {
-    setAwardingBadge(`${userId}-reset`)
     await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
-    setAwardingBadge(null)
   }
 
   // Slett medlem — fjerner profil, merker, claims og auth-bruker
   async function handleDeleteMember(userId: string) {
-    setDeleting(true)
-
     // Slett relaterte data forst
     await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
     await supabaseRef.current.from('zone_claims').delete().eq('user_id', userId)
@@ -230,20 +200,7 @@ export default function MembersAdminPage() {
     setProfiles(prev => prev.filter(p => p.id !== userId))
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
     setAllClaims(prev => prev.filter(c => c.user_id !== userId))
-    setDeleteConfirmId(null)
     setSelectedId(null)
-    setDeleting(false)
-  }
-
-  // Tell antall ganger en bruker har fått et badge
-  function getBadgeCount(userId: string, badgeId: number): number {
-    return userBadges.filter(ub => ub.user_id === userId && ub.badge_id === badgeId).length
-  }
-
-  // Hent unike merker for en bruker
-  function getBadgesForUser(userId: string) {
-    const badgeIds = [...new Set(userBadges.filter(ub => ub.user_id === userId).map(ub => ub.badge_id))]
-    return badgeDefinitions.filter(b => badgeIds.includes(b.id))
   }
 
   return (
@@ -386,7 +343,7 @@ export default function MembersAdminPage() {
                         profile.role === 'host' ? 'bg-accent/10 text-accent' :
                         'bg-surface-low text-text-secondary'
                       }`}>
-                        {roleLabels[profile.role]}
+                        {ROLE_LABELS[profile.role]}
                       </span>
                       <ChevronRight size={14} className="text-text-tertiary" />
                     </div>

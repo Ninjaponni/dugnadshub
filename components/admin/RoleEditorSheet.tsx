@@ -3,16 +3,10 @@
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import type { Role, ChildGroup } from '@/lib/supabase/types'
+import { ROLE_LABELS } from '@/lib/roles'
 
 // Roller (single-rolle-modell — chips fungerer som radio)
 const ROLES: Role[] = ['collector', 'driver', 'strapper', 'host', 'admin']
-const ROLE_LABELS: Record<Role, string> = {
-  collector: 'Samler',
-  driver: 'Sjåfør',
-  strapper: 'Stripser',
-  host: 'Vert',
-  admin: 'Admin',
-}
 
 const TYPES = ['Forelder', 'Musikant'] as const
 const GROUPS: ChildGroup[] = ['Aspirant', 'Junior', 'Hovedkorps']
