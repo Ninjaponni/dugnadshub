@@ -51,19 +51,35 @@ export default function MembersAdminPage() {
   const [deleting, setDeleting] = useState(false)
   const supabaseRef = useRef(createClient())
 
+  // Supabase har server-side hard cap på 1000 rader per request.
+  // Vi henter alt i 1000-bolker til tabellen er tom.
+  async function fetchAll<T>(table: string, select: string): Promise<T[]> {
+    const PAGE = 1000
+    const out: T[] = []
+    for (let offset = 0; ; offset += PAGE) {
+      const { data } = await supabaseRef.current
+        .from(table)
+        .select(select)
+        .range(offset, offset + PAGE - 1) as unknown as { data: T[] | null }
+      if (!data || data.length === 0) break
+      out.push(...data)
+      if (data.length < PAGE) break
+    }
+    return out
+  }
+
   async function loadData() {
-    const [profilesRes, badgesRes, claimsRes, shiftClaimsRes] = await Promise.all([
+    const [profilesRes, badges, claims, shiftClaims] = await Promise.all([
       supabaseRef.current.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
-      // PostgREST default-grense er 1000 rader. Vi har >1000 i alle tre, så sett eksplisitt range.
-      supabaseRef.current.from('user_badges').select('*').range(0, 9999) as unknown as Promise<{ data: UserBadge[] | null }>,
-      supabaseRef.current.from('zone_claims').select('*').range(0, 9999) as unknown as Promise<{ data: ZoneClaim[] | null }>,
-      supabaseRef.current.from('shift_claims').select('user_id').range(0, 9999) as unknown as Promise<{ data: Array<{ user_id: string }> | null }>,
+      fetchAll<UserBadge>('user_badges', '*'),
+      fetchAll<ZoneClaim>('zone_claims', '*'),
+      fetchAll<{ user_id: string }>('shift_claims', 'user_id'),
     ])
 
     setProfiles(profilesRes.data || [])
-    setUserBadges(badgesRes.data || [])
-    setAllClaims(claimsRes.data || [])
-    setAllShiftClaims(shiftClaimsRes.data || [])
+    setUserBadges(badges)
+    setAllClaims(claims)
+    setAllShiftClaims(shiftClaims)
     setLoading(false)
   }
 
