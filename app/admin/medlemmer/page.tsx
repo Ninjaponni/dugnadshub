@@ -390,7 +390,10 @@ export default function MembersAdminPage() {
 
       <MemberDetailOverlay
         profile={selectedProfile}
+        badgeCount={selectedProfile ? getBadgeCountForUser(selectedProfile.id) : 0}
+        zoneCount={selectedProfile ? getClaimCount(selectedProfile.id) : 0}
         onClose={() => setSelectedId(null)}
+        onEditRoles={() => { /* Task 4 wirer dette */ }}
       />
     </div>
     </>
