@@ -19,6 +19,15 @@ export default function MemberDetailOverlay({ profile, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [profile, onClose])
 
+  // Lås body-scroll mens overlayet er åpent, så bakgrunnssiden ikke skroller
+  // under finger-drag på mobil.
+  useEffect(() => {
+    if (!profile) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [profile])
+
   return (
     <AnimatePresence>
       {profile && (
