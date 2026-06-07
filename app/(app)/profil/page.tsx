@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const [pushSupported, setPushSupported] = useState(false)
 
   // Mine dugnader — historikk over fullførte hendelser
-  const [history, setHistory] = useState<Array<{ title: string; date: string; zones: number }>>([])
+  const [history, setHistory] = useState<Array<{ title: string; date: string; count: number; unit: 'sone' | 'vakt' }>>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [dittBidrag, setDittBidrag] = useState<DittBidragData | null>(null)
   const [avatarId, setAvatarId] = useState<string>('')
@@ -107,17 +107,22 @@ export default function ProfilePage() {
         if (allEventIds.length > 0) {
           const { data: events } = await supabaseRef.current
             .from('events')
-            .select('id, title, date, status')
+            .select('id, title, date, status, type')
             .in('id', allEventIds)
             .eq('status', 'completed')
             .order('date', { ascending: false })
 
           if (events && events.length > 0) {
-            setHistory((events as unknown as Array<{ id: string; title: string; date: string }>).map(e => ({
-              title: e.title,
-              date: e.date,
-              zones: (zonesPerEvent.get(e.id) || 0) + (shiftsPerEvent.get(e.id) || 0),
-            })))
+            setHistory((events as unknown as Array<{ id: string; title: string; date: string; type: string }>).map(e => {
+              // Arrangement har vakter, ikke soner. Andre typer har soner.
+              const isVakt = e.type === 'arrangement'
+              return {
+                title: e.title,
+                date: e.date,
+                count: isVakt ? (shiftsPerEvent.get(e.id) || 0) : (zonesPerEvent.get(e.id) || 0),
+                unit: isVakt ? 'vakt' as const : 'sone' as const,
+              }
+            }))
           }
         }
         setHistoryLoaded(true)
@@ -498,7 +503,9 @@ export default function ProfilePage() {
                         </p>
                       </div>
                       <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full">
-                        {h.zones} {h.zones === 1 ? 'SONE' : 'SONER'}
+                        {h.count} {h.count === 1
+                          ? (h.unit === 'vakt' ? 'VAKT' : 'SONE')
+                          : (h.unit === 'vakt' ? 'VAKTER' : 'SONER')}
                       </span>
                     </div>
                   ))}
@@ -603,7 +610,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.19
+              Tillerbyen Skolekorps Dugnadshub v 10.20
             </p>
 
             {/* Logg ut */}
