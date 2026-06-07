@@ -1,13 +1,15 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Pencil, Music } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ArrowLeft, Pencil, Music, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile, Child, Role, ChildGroup } from '@/lib/supabase/types'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import BadgeTile from './BadgeTile'
 import RoleEditorSheet from './RoleEditorSheet'
 import BadgeDetailSheet from './BadgeDetailSheet'
+import MemberToast from './MemberToast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 const roleLabels: Record<Role, string> = {
   collector: 'Samler',
@@ -28,6 +30,8 @@ interface Props {
   onTypeChange: (isMusician: boolean, group: ChildGroup | null) => void
   onAwardBadge: (badgeId: number) => void
   onRemoveBadge: (badgeId: number) => void
+  onResetBadges: () => void
+  onDeleteMember: () => void
 }
 
 export default function MemberDetailOverlay({
@@ -40,6 +44,8 @@ export default function MemberDetailOverlay({
   onTypeChange,
   onAwardBadge,
   onRemoveBadge,
+  onResetBadges,
+  onDeleteMember,
 }: Props) {
   // Filter for merke-rutenettet
   const [filter, setFilter] = useState<'alle' | 'opptjent' | 'mangler'>('alle')
@@ -49,6 +55,59 @@ export default function MemberDetailOverlay({
   const [selectedBadgeId, setSelectedBadgeId] = useState<number | null>(null)
   const selectedBadge = badgeDefinitions.find(b => b.id === selectedBadgeId) ?? null
   const selectedBadgeCount = selectedBadgeId ? (badgeCounts.get(selectedBadgeId) ?? 0) : 0
+
+  // Bekreftelse for sletting av medlem
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // Toast for bekreftelse av handlinger
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2400)
+  }, [])
+
+  // Rydd opp timer ved unmount så vi ikke setter state på en avmontert komponent
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+    }
+  }, [])
+
+  // Wrappere som kjører forelder-handler og viser toast etterpå.
+  // Vi leser merkenavn og antall før kallet, så meldingen reflekterer
+  // tilstanden brukeren akkurat utløste.
+  const handleAward = (badgeId: number) => {
+    const b = badgeDefinitions.find(bb => bb.id === badgeId)
+    const c = badgeCounts.get(badgeId) ?? 0
+    onAwardBadge(badgeId)
+    if (b) {
+      if (c > 0) showToast(`«${b.name}» gitt på nytt, nå ×${c + 1}`)
+      else showToast(`«${b.name}» tildelt`)
+    }
+  }
+
+  const handleRemove = (badgeId: number) => {
+    const b = badgeDefinitions.find(bb => bb.id === badgeId)
+    const c = badgeCounts.get(badgeId) ?? 0
+    onRemoveBadge(badgeId)
+    if (b) {
+      if (c > 1) showToast(`«${b.name}» redusert til ×${c - 1}`)
+      else showToast(`«${b.name}» fjernet`)
+    }
+  }
+
+  const handleRoleChangeWrapped = (role: Role) => {
+    onRoleChange(role)
+    showToast(`Rolle oppdatert: ${roleLabels[role]}`)
+  }
+
+  const handleTypeChangeWrapped = (isM: boolean, g: ChildGroup | null) => {
+    onTypeChange(isM, g)
+    showToast(isM ? `Type: Musikant${g ? ` · ${g}` : ''}` : 'Type: Forelder')
+  }
 
   // Slå sammen definisjoner med antall, så vi vet hva som er opptjent
   const badges = badgeDefinitions.map(def => ({
@@ -217,6 +276,27 @@ export default function MemberDetailOverlay({
                   />
                 ))}
               </div>
+
+              {/* Faresone — nullstill merker og slett medlem */}
+              <div className="mt-7 flex flex-col gap-3.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onResetBadges()
+                    showToast('Alle merker nullstilt')
+                  }}
+                  className="bg-transparent border-0 text-danger text-sm font-semibold p-1 text-center active:opacity-70"
+                >
+                  Nullstill alle merker
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="inline-flex items-center justify-center gap-2.5 bg-danger/[0.08] text-danger border-0 rounded-full py-[15px] font-[var(--font-display)] font-bold text-[15px] active:bg-danger/15"
+                >
+                  <Trash2 size={17} /> Slett medlem
+                </button>
+              </div>
             </div>
           </main>
 
@@ -228,8 +308,8 @@ export default function MemberDetailOverlay({
             isMusician={profile.is_musician}
             musicianGroup={profile.musician_group ?? null}
             onClose={() => setRoleEditorOpen(false)}
-            onRoleChange={onRoleChange}
-            onTypeChange={onTypeChange}
+            onRoleChange={handleRoleChangeWrapped}
+            onTypeChange={handleTypeChangeWrapped}
           />
 
           {/* Merke-detalj med gi/fjern-flyt — auto-merker er readonly */}
@@ -239,14 +319,33 @@ export default function MemberDetailOverlay({
             count={selectedBadgeCount}
             onClose={() => setSelectedBadgeId(null)}
             onAward={() => {
-              if (selectedBadgeId !== null) onAwardBadge(selectedBadgeId)
+              if (selectedBadgeId !== null) handleAward(selectedBadgeId)
               setSelectedBadgeId(null)
             }}
             onRemove={() => {
-              if (selectedBadgeId !== null) onRemoveBadge(selectedBadgeId)
+              if (selectedBadgeId !== null) handleRemove(selectedBadgeId)
               setSelectedBadgeId(null)
             }}
           />
+
+          {/* Bekreftelse før vi sletter medlemmet permanent */}
+          <ConfirmDialog
+            open={showDeleteConfirm}
+            title="Slett medlem?"
+            message="Profil, merker og soner fjernes permanent. Dette kan ikke angres."
+            confirmLabel="Slett medlem"
+            cancelLabel="Avbryt"
+            variant="danger"
+            onCancel={() => setShowDeleteConfirm(false)}
+            onConfirm={() => {
+              setShowDeleteConfirm(false)
+              onDeleteMember()
+              onClose()
+            }}
+          />
+
+          {/* Toast nederst som bekrefter siste handling */}
+          <MemberToast message={toast} />
         </motion.div>
       )}
     </AnimatePresence>

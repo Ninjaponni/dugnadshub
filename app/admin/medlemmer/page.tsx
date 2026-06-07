@@ -408,6 +408,8 @@ export default function MembersAdminPage() {
         onTypeChange={(isM, g) => { if (selectedProfile) handleTypeChange(selectedProfile.id, isM, g) }}
         onAwardBadge={(id) => { if (selectedProfile) handleAwardBadge(selectedProfile.id, id) }}
         onRemoveBadge={(id) => { if (selectedProfile) handleRemoveBadge(selectedProfile.id, id) }}
+        onResetBadges={() => { if (selectedProfile) handleResetBadges(selectedProfile.id) }}
+        onDeleteMember={() => { if (selectedProfile) handleDeleteMember(selectedProfile.id) }}
       />
     </div>
     </>
