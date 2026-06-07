@@ -72,7 +72,7 @@ export default function MemberDetailOverlay({ profile, badgeCount, zoneCount, on
               <div className="flex items-start gap-3.5 mb-2">
                 <div className="w-14 h-14 rounded-full bg-surface-low flex items-center justify-center shrink-0">
                   <span className="font-[var(--font-display)] text-[22px] font-bold text-accent">
-                    {(profile.full_name || profile.email)[0].toUpperCase()}
+                    {((profile.full_name || profile.email || '?')[0] || '?').toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -93,6 +93,7 @@ export default function MemberDetailOverlay({ profile, badgeCount, zoneCount, on
                       ) : 'Forelder'}
                     </span>
                     <button
+                      type="button"
                       onClick={onEditRoles}
                       className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full bg-transparent border-[1.5px] border-dashed border-accent/45 text-accent text-xs font-bold active:opacity-70"
                     >
