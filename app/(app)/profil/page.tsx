@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Trash2, Sun, Moon, Monitor, ArrowLeft, Pencil, PlusCircle, ChevronRight, Music, Users } from 'lucide-react'
-import KorpsLogo from '@/components/ui/KorpsLogo'
+import BrandLink from '@/components/layout/BrandLink'
 import type { Child, ChildGroup } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
 import { evaluateBadges } from '@/lib/badges/evaluator'
@@ -412,10 +412,7 @@ export default function ProfilePage() {
           {/* Dugnadshub header */}
           <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
             <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
-              <div className="flex items-center gap-3">
-                <KorpsLogo size={32} />
-                <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">Dugnadshub</span>
-              </div>
+              <BrandLink />
               <div className="w-9" />
             </div>
           </header>

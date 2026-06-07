@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import { Check, Lock, X, Sparkles } from 'lucide-react'
-import KorpsLogo from '@/components/ui/KorpsLogo'
+import BrandLink from '@/components/layout/BrandLink'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockBadgeCounts } from '@/lib/mock/data'
 
@@ -182,12 +182,7 @@ export default function BadgesPage() {
       {/* Dugnadshub-header — samme som hjem */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
         <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
-          <div className="flex items-center gap-3">
-            <KorpsLogo size={32} />
-            <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
-              Dugnadshub
-            </span>
-          </div>
+          <BrandLink />
           <div className="w-9" />
         </div>
       </header>

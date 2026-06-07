@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button'
 import { Truck, MapPin, Check, Package, Info, Phone, StickyNote, Navigation } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import KorpsLogo from '@/components/ui/KorpsLogo'
+import BrandLink from '@/components/layout/BrandLink'
 import type { DugnadEvent } from '@/lib/supabase/types'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockEvents, mockDriverZones, mockTrailerGroups } from '@/lib/mock/data'
@@ -466,12 +466,7 @@ export default function DriverPage() {
       {/* Header — fast topp med logo */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
         <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
-          <div className="flex items-center gap-3">
-            <KorpsLogo size={32} />
-            <span className="text-xl font-bold text-accent tracking-tight font-[var(--font-display)]">
-              Dugnadshub
-            </span>
-          </div>
+          <BrandLink />
           <div className="w-9" />
         </div>
       </header>
