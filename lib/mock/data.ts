@@ -315,8 +315,8 @@ export const mockBadgeCounts = new Map<number, number>([
 
 // --- Profilhistorikk ---
 export const mockHistory = [
-  { title: 'Lappeutdeling Sør', date: '2026-04-06', count: 2, unit: 'sone' as const },
-  { title: 'Flaskeinnsamling Sør', date: '2026-03-15', count: 3, unit: 'sone' as const },
+  { title: 'Lappeutdeling Sør', date: '2026-04-06', label: '2 SONER' },
+  { title: 'Flaskeinnsamling Sør', date: '2026-03-15', label: '3 SONER' },
 ]
 
 // --- Ditt bidrag (korps-total for året) ---

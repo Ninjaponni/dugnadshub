@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const [pushSupported, setPushSupported] = useState(false)
 
   // Mine dugnader — historikk over fullførte hendelser
-  const [history, setHistory] = useState<Array<{ title: string; date: string; count: number; unit: 'sone' | 'vakt' }>>([])
+  const [history, setHistory] = useState<Array<{ title: string; date: string; label: string }>>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [dittBidrag, setDittBidrag] = useState<DittBidragData | null>(null)
   const [avatarId, setAvatarId] = useState<string>('')
@@ -77,33 +77,83 @@ export default function ProfilePage() {
         setAvatarId(p.avatar_url || getRandomAvatarId())
         setDittBidrag(mockDittBidrag)
 
-        // Hent dugnad-historikk: sone-claims OG vakt-claims på completed events.
-        const [claimsRes, shiftClaimsRes] = await Promise.all([
+        // Hent deltakelse fra alle 6 kilder: soner, vakter, sjåfør/stripser/vert,
+        // musikant, dugnadsansvarlig (matching contact_phone), og user_badges
+        // med event_id satt (17. mai-merker og lignende koblet til konkrete events).
+        const userPhone = (p.phone || '').replace(/\s+/g, '')
+        const [zoneRes, shiftRes, driverRes, musRes, allEvents, badgesRes] = await Promise.all([
           supabaseRef.current
             .from('zone_claims')
-            .select('zone_assignments!inner(id, event_id)')
-            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ zone_assignments: { id: string; event_id: string } }> | null }>,
+            .select('zone_assignments!inner(event_id)')
+            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ zone_assignments: { event_id: string } }> | null }>,
           supabaseRef.current
             .from('shift_claims')
-            .select('event_shifts!inner(id, event_id)')
-            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ event_shifts: { id: string; event_id: string } }> | null }>,
+            .select('event_shifts!inner(event_id)')
+            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ event_shifts: { event_id: string } }> | null }>,
+          supabaseRef.current
+            .from('driver_assignments')
+            .select('event_id, role')
+            .eq('user_id', user.id) as unknown as Promise<{ data: Array<{ event_id: string; role: string }> | null }>,
+          supabaseRef.current
+            .from('event_musicians')
+            .select('event_id')
+            .eq('profile_id', user.id) as unknown as Promise<{ data: Array<{ event_id: string }> | null }>,
+          // Alle completed events med contact_phone for matching mot brukers telefon
+          supabaseRef.current
+            .from('events')
+            .select('id, contact_phone')
+            .eq('status', 'completed') as unknown as Promise<{ data: Array<{ id: string; contact_phone: string | null }> | null }>,
+          // Brukers merker med event_id (17. mai etc. koblet til konkrete events)
+          supabaseRef.current
+            .from('user_badges')
+            .select('event_id')
+            .eq('user_id', user.id)
+            .not('event_id', 'is', null) as unknown as Promise<{ data: Array<{ event_id: string }> | null }>,
         ])
 
-        const zoneRows = claimsRes.data ?? []
-        const shiftRows = shiftClaimsRes.data ?? []
+        const responsibleEvents = new Set<string>()
+        if (userPhone) {
+          for (const e of allEvents.data ?? []) {
+            if (e.contact_phone && e.contact_phone.replace(/\s+/g, '') === userPhone) {
+              responsibleEvents.add(e.id)
+            }
+          }
+        }
+        const badgeEvents = new Set<string>()
+        for (const b of badgesRes.data ?? []) {
+          if (b.event_id) badgeEvents.add(b.event_id)
+        }
 
         const zonesPerEvent = new Map<string, number>()
-        for (const r of zoneRows) {
+        for (const r of zoneRes.data ?? []) {
           const eid = r.zone_assignments?.event_id
           if (eid) zonesPerEvent.set(eid, (zonesPerEvent.get(eid) || 0) + 1)
         }
         const shiftsPerEvent = new Map<string, number>()
-        for (const r of shiftRows) {
+        for (const r of shiftRes.data ?? []) {
           const eid = r.event_shifts?.event_id
           if (eid) shiftsPerEvent.set(eid, (shiftsPerEvent.get(eid) || 0) + 1)
         }
+        const rolesPerEvent = new Map<string, Set<string>>()
+        for (const r of driverRes.data ?? []) {
+          if (!r.event_id) continue
+          if (!rolesPerEvent.has(r.event_id)) rolesPerEvent.set(r.event_id, new Set())
+          rolesPerEvent.get(r.event_id)!.add(r.role)
+        }
+        const musicianEvents = new Set<string>()
+        for (const r of musRes.data ?? []) {
+          if (r.event_id) musicianEvents.add(r.event_id)
+        }
 
-        const allEventIds = [...new Set([...zonesPerEvent.keys(), ...shiftsPerEvent.keys()])]
+        const allEventIds = [...new Set([
+          ...zonesPerEvent.keys(),
+          ...shiftsPerEvent.keys(),
+          ...rolesPerEvent.keys(),
+          ...musicianEvents,
+          ...responsibleEvents,
+          ...badgeEvents,
+        ])]
+
         if (allEventIds.length > 0) {
           const { data: events } = await supabaseRef.current
             .from('events')
@@ -113,14 +163,36 @@ export default function ProfilePage() {
             .order('date', { ascending: false })
 
           if (events && events.length > 0) {
+            const roleLabels: Record<string, string> = {
+              driver: 'SJÅFØR',
+              strapper: 'STRIPSER',
+              host: 'VERT',
+            }
             setHistory((events as unknown as Array<{ id: string; title: string; date: string; type: string }>).map(e => {
-              // Arrangement har vakter, ikke soner. Andre typer har soner.
-              const isVakt = e.type === 'arrangement'
+              const labels: string[] = []
+              const zones = zonesPerEvent.get(e.id) || 0
+              const shifts = shiftsPerEvent.get(e.id) || 0
+              const roles = rolesPerEvent.get(e.id)
+              const isMusician = musicianEvents.has(e.id)
+
+              if (e.type === 'arrangement') {
+                if (shifts > 0) labels.push(`${shifts} ${shifts === 1 ? 'VAKT' : 'VAKTER'}`)
+              } else {
+                if (zones > 0) labels.push(`${zones} ${zones === 1 ? 'SONE' : 'SONER'}`)
+              }
+              if (roles) {
+                for (const r of roles) {
+                  const lab = roleLabels[r]
+                  if (lab) labels.push(lab)
+                }
+              }
+              if (isMusician) labels.push('MUSIKANT')
+              if (responsibleEvents.has(e.id)) labels.push('ANSVARLIG')
+
               return {
                 title: e.title,
                 date: e.date,
-                count: isVakt ? (shiftsPerEvent.get(e.id) || 0) : (zonesPerEvent.get(e.id) || 0),
-                unit: isVakt ? 'vakt' as const : 'sone' as const,
+                label: labels.length > 0 ? labels.join(' · ') : 'DELTOK',
               }
             }))
           }
@@ -499,10 +571,8 @@ export default function ProfilePage() {
                           {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full">
-                        {h.count} {h.count === 1
-                          ? (h.unit === 'vakt' ? 'VAKT' : 'SONE')
-                          : (h.unit === 'vakt' ? 'VAKTER' : 'SONER')}
+                      <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
+                        {h.label}
                       </span>
                     </div>
                   ))}
@@ -607,7 +677,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.21
+              Tillerbyen Skolekorps Dugnadshub v 10.22
             </p>
 
             {/* Logg ut */}
