@@ -41,6 +41,8 @@ export const badgeDefinitions = [
   { id: 27, name: 'Snøpanter', icon: '/badges/snopanter.png', category: 'aktivitet' as const, description: 'Trasket gjennom snøen for korpset', auto_criteria: null },
   { id: 28, name: 'Førstemann', icon: '/badges/forstemann.png', category: 'aktivitet' as const, description: 'Først ute med å ta en sone', auto_criteria: 'first_zone_in_event' },
   { id: 67, name: 'Plastminister', icon: '/badges/plastminister.png', category: 'aktivitet' as const, description: 'Deltatt i plastdugnad', auto_criteria: null },
+  { id: 69, name: 'Festivalvakt', icon: '/badges/festivalvakt.png', category: 'aktivitet' as const, description: 'Sto vakt på festival', auto_criteria: null },
+  { id: 70, name: 'VM-vakt', icon: '/badges/vm-vakt.png', category: 'aktivitet' as const, description: 'Sto vakt under Fotball-VM', auto_criteria: null },
 
   // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
   { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },
@@ -61,6 +63,7 @@ export const badgeDefinitions = [
   { id: 64, name: 'Isflytter', icon: '/badges/isflytter.png', category: '17mai' as const, description: 'Flytte is fra A til B', auto_criteria: null },
   { id: 65, name: 'Lagersjef', icon: '/badges/lagersjef.png', category: '17mai' as const, description: 'Holder orden på Rosten-lageret — kasser, isoporbokser, varetelling og at alt kommer på plass igjen', auto_criteria: null },
   { id: 66, name: 'Kaffinator', icon: '/badges/kaffinator.png', category: '17mai' as const, description: 'Tok med kaffekanner og termoser til 17. mai-dugnaden', auto_criteria: null },
+  { id: 68, name: 'Frokostfiksern', icon: '/badges/frokostfiksern.png', category: '17mai' as const, description: 'Lagde frokost til ungene 17. mai-morgen', auto_criteria: null },
 
   // Konfirmasjonsspilling og innhopp (kan stables ×N)
   { id: 43, name: 'Konfirmasjonsfaneren', icon: '/badges/konfirmasjonsfaneren.png', category: 'aktivitet' as const, description: 'Bar fanen på konfirmasjonsspilling', auto_criteria: null },
