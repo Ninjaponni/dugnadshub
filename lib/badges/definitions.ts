@@ -61,7 +61,7 @@ export const badgeDefinitions = [
   { id: 42, name: 'Portøren', icon: '/badges/portor.png', category: '17mai' as const, description: 'Sørget for trygg frakt av brus uten å bryte plasten', auto_criteria: null },
   { id: 63, name: 'Israider', icon: '/badges/israider.png', category: '17mai' as const, description: 'Tømme butikkene for is', auto_criteria: null },
   { id: 64, name: 'Isflytter', icon: '/badges/isflytter.png', category: '17mai' as const, description: 'Flytte is fra A til B', auto_criteria: null },
-  { id: 65, name: 'Lagersjef', icon: '/badges/lagersjef.png', category: '17mai' as const, description: 'Holder orden på Rosten-lageret — kasser, isoporbokser, varetelling og at alt kommer på plass igjen', auto_criteria: null },
+  { id: 65, name: 'Lagersjef', icon: '/badges/lagersjef.png', category: '17mai' as const, description: 'Holder orden på Rosten-lageret: kasser, isoporbokser, varetelling og at alt kommer på plass igjen', auto_criteria: null },
   { id: 66, name: 'Kaffinator', icon: '/badges/kaffinator.png', category: '17mai' as const, description: 'Tok med kaffekanner og termoser til 17. mai-dugnaden', auto_criteria: null },
   { id: 68, name: 'Frokostfiksern', icon: '/badges/frokostfiksern.png', category: '17mai' as const, description: 'Lagde frokost til ungene 17. mai-morgen', auto_criteria: null },
 
@@ -79,7 +79,7 @@ export const badgeDefinitions = [
   { id: 51, name: 'Materialforvalter', icon: '/badges/materialforvalter.png', category: 'styret' as const, description: 'Tar vare på uniformer, noter og annet utstyr', auto_criteria: null },
   { id: 52, name: 'Instrumentansvarlig', icon: '/badges/instrumentansvarlig.png', category: 'styret' as const, description: 'Holder orden på instrumentparken', auto_criteria: null },
   { id: 53, name: 'Dugnadsansvarlig', icon: '/badges/dugnadsansvarlig.png', category: 'styret' as const, description: 'Koordinerer korpsets dugnader', auto_criteria: null },
-  { id: 62, name: 'Innkjøpsansvarlig', icon: '/badges/innkjopsansvarlig.png', category: 'styret' as const, description: 'Sørger for at korpset har alt det trenger — kaffe, is, saft, servietter', auto_criteria: null },
+  { id: 62, name: 'Innkjøpsansvarlig', icon: '/badges/innkjopsansvarlig.png', category: 'styret' as const, description: 'Sørger for at korpset har alt det trenger: kaffe, is, saft, servietter', auto_criteria: null },
 
   // Komitéer (manuelt tildelt, kan stables ×N år)
   { id: 54, name: 'Uniformskomiteen', icon: '/badges/uniformskomiteen.png', category: 'komite' as const, description: 'Sittet i uniformskomiteen', auto_criteria: null },

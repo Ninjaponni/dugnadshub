@@ -320,7 +320,7 @@ export default function MembersAdminPage() {
                         </p>
                         {profile.is_musician && (
                           <span
-                            title={profile.musician_group ? `Musikant — ${profile.musician_group}` : 'Musikant'}
+                            title={profile.musician_group ? `Musikant · ${profile.musician_group}` : 'Musikant'}
                             className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider"
                           >
                             <Music size={10} />

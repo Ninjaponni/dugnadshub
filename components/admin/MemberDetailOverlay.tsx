@@ -53,6 +53,11 @@ export default function MemberDetailOverlay({
   // Bekreftelse for sletting av medlem
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
+  // Animasjons-state for nylig tildelt eller bumpet merke.
+  // Trigger ring-pop ved første tildeling, og ×N-bump ved gjentatt.
+  const [awardedBadgeId, setAwardedBadgeId] = useState<number | null>(null)
+  const [bumpedBadgeId, setBumpedBadgeId] = useState<number | null>(null)
+
   // Toast for bekreftelse av handlinger
   const { message: toast, showToast } = useToast()
 
@@ -64,8 +69,17 @@ export default function MemberDetailOverlay({
     const c = badgeCounts.get(badgeId) ?? 0
     onAwardBadge(badgeId)
     if (b) {
-      if (c > 0) showToast(`«${b.name}» gitt på nytt, nå ×${c + 1}`)
-      else showToast(`«${b.name}» tildelt`)
+      if (c > 0) {
+        // Bump ×N-pille når merket allerede er gitt en gang
+        setBumpedBadgeId(badgeId)
+        setTimeout(() => setBumpedBadgeId(null), 520)
+        showToast(`«${b.name}» gitt på nytt, nå ×${c + 1}`)
+      } else {
+        // Ring-pop og scale-up ved første tildeling
+        setAwardedBadgeId(badgeId)
+        setTimeout(() => setAwardedBadgeId(null), 650)
+        showToast(`«${b.name}» tildelt`)
+      }
     }
   }
 
@@ -133,6 +147,7 @@ export default function MemberDetailOverlay({
           <header className="shrink-0 z-10 bg-card border-b border-black/[0.03] safe-top">
             <div className="flex items-center h-14 px-3 max-w-[430px] mx-auto w-full">
               <button
+                type="button"
                 onClick={onClose}
                 className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center active:opacity-70"
                 aria-label="Tilbake"
@@ -175,7 +190,7 @@ export default function MemberDetailOverlay({
                     <button
                       type="button"
                       onClick={() => setRoleEditorOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full bg-transparent border-[1.5px] border-dashed border-accent/45 text-accent text-xs font-bold active:opacity-70"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-transparent border-[1.5px] border-dashed border-accent/45 text-accent text-xs font-bold active:opacity-70"
                     >
                       <Pencil size={12} /> Endre
                     </button>
@@ -252,6 +267,8 @@ export default function MemberDetailOverlay({
                     icon={b.icon}
                     earned={b.earned}
                     count={b.count}
+                    awarded={awardedBadgeId === b.id}
+                    bumped={bumpedBadgeId === b.id}
                     onClick={() => setSelectedBadgeId(b.id)}
                   />
                 ))}
@@ -265,7 +282,7 @@ export default function MemberDetailOverlay({
                     onResetBadges()
                     showToast('Alle merker nullstilt')
                   }}
-                  className="bg-transparent border-0 text-danger text-sm font-semibold p-1 text-center active:opacity-70"
+                  className="bg-transparent border-0 text-danger text-sm font-semibold py-3 text-center active:opacity-70"
                 >
                   Nullstill alle merker
                 </button>
