@@ -2,8 +2,10 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Pencil, Music } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { Profile, Child, Role } from '@/lib/supabase/types'
+import { badgeDefinitions } from '@/lib/badges/definitions'
+import BadgeTile from './BadgeTile'
 
 const roleLabels: Record<Role, string> = {
   collector: 'Samler',
@@ -17,11 +19,37 @@ interface Props {
   profile: Profile | null
   badgeCount: number
   zoneCount: number
+  // Antall ganger brukeren har hvert merke (badge_id -> antall)
+  badgeCounts: Map<number, number>
   onClose: () => void
   onEditRoles: () => void
+  onSelectBadge: (badgeId: number) => void
 }
 
-export default function MemberDetailOverlay({ profile, badgeCount, zoneCount, onClose, onEditRoles }: Props) {
+export default function MemberDetailOverlay({
+  profile,
+  badgeCount,
+  zoneCount,
+  badgeCounts,
+  onClose,
+  onEditRoles,
+  onSelectBadge,
+}: Props) {
+  // Filter for merke-rutenettet
+  const [filter, setFilter] = useState<'alle' | 'opptjent' | 'mangler'>('alle')
+
+  // Slå sammen definisjoner med antall, så vi vet hva som er opptjent
+  const badges = badgeDefinitions.map(def => ({
+    ...def,
+    count: badgeCounts.get(def.id) ?? 0,
+    earned: (badgeCounts.get(def.id) ?? 0) > 0,
+  }))
+
+  const visibleBadges = badges.filter(b =>
+    filter === 'alle' ? true : filter === 'opptjent' ? b.earned : !b.earned
+  )
+  // Sum av antall opptjente (teller multiple tildelinger flere ganger)
+  const earnedTotal = badges.reduce((s, b) => s + b.count, 0)
   // Lukk på ESC
   useEffect(() => {
     if (!profile) return
@@ -131,8 +159,51 @@ export default function MemberDetailOverlay({ profile, badgeCount, zoneCount, on
 
               <hr className="my-5 border-0 border-t border-text-primary/[0.07]" />
 
-              {/* Merker + faresone fylles i Task 3 og 5 */}
-              <p className="text-text-tertiary text-sm">[Merker kommer]</p>
+              {/* Merker-seksjon: overskrift + telling */}
+              <div className="flex items-center gap-2.5 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-text-secondary">
+                  Merker
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-accent whitespace-nowrap">
+                  {earnedTotal} opptjent · {badges.length} totalt
+                </span>
+              </div>
+              <p className="text-[13.5px] text-text-tertiary mt-0 mb-4 leading-[1.5]">
+                Trykk på et merke for å lese hva det betyr og dele det ut.
+                Farge = opptjent, grå = ikke gitt ennå.
+              </p>
+
+              {/* Filter mellom Alle / Opptjente / Mangler */}
+              <div className="flex gap-0.5 bg-surface-low rounded-full p-1 mb-5">
+                {(['alle', 'opptjent', 'mangler'] as const).map(k => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setFilter(k)}
+                    className={`flex-1 border-0 cursor-pointer text-[12.5px] font-semibold py-2 px-1.5 rounded-full transition-all ${
+                      filter === k
+                        ? 'bg-card text-accent shadow-[0_1px_4px_rgba(57,56,43,0.1)]'
+                        : 'bg-transparent text-text-secondary'
+                    }`}
+                  >
+                    {k === 'alle' ? 'Alle' : k === 'opptjent' ? 'Opptjente' : 'Mangler'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Merke-rutenett, 3 kolonner */}
+              <div className="grid grid-cols-3 gap-x-0.5 gap-y-1.5">
+                {visibleBadges.map(b => (
+                  <BadgeTile
+                    key={b.id}
+                    name={b.name}
+                    icon={b.icon}
+                    earned={b.earned}
+                    count={b.count}
+                    onClick={() => onSelectBadge(b.id)}
+                  />
+                ))}
+              </div>
             </div>
           </main>
         </motion.div>

@@ -105,6 +105,16 @@ export default function MembersAdminPage() {
     return userBadges.filter(ub => ub.user_id === userId).length
   }
 
+  // Antall ganger brukeren har hvert merke, så BadgeTile kan vise x2/x3 osv
+  function getBadgeCountsForUser(userId: string): Map<number, number> {
+    const m = new Map<number, number>()
+    for (const ub of userBadges) {
+      if (ub.user_id !== userId) continue
+      m.set(ub.badge_id, (m.get(ub.badge_id) ?? 0) + 1)
+    }
+    return m
+  }
+
   // Filtrer og sorter profiler
   const filtered = profiles
     .filter(p => {
@@ -392,8 +402,10 @@ export default function MembersAdminPage() {
         profile={selectedProfile}
         badgeCount={selectedProfile ? getBadgeCountForUser(selectedProfile.id) : 0}
         zoneCount={selectedProfile ? getClaimCount(selectedProfile.id) : 0}
+        badgeCounts={selectedProfile ? getBadgeCountsForUser(selectedProfile.id) : new Map()}
         onClose={() => setSelectedId(null)}
         onEditRoles={() => { /* Task 4 wirer dette */ }}
+        onSelectBadge={() => { /* Task 5 wirer dette */ }}
       />
     </div>
     </>
