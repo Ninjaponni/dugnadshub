@@ -54,9 +54,10 @@ export default function MembersAdminPage() {
   async function loadData() {
     const [profilesRes, badgesRes, claimsRes, shiftClaimsRes] = await Promise.all([
       supabaseRef.current.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
-      supabaseRef.current.from('user_badges').select('*') as unknown as Promise<{ data: UserBadge[] | null }>,
-      supabaseRef.current.from('zone_claims').select('*') as unknown as Promise<{ data: ZoneClaim[] | null }>,
-      supabaseRef.current.from('shift_claims').select('user_id') as unknown as Promise<{ data: Array<{ user_id: string }> | null }>,
+      // PostgREST default-grense er 1000 rader. Vi har >1000 i alle tre, så sett eksplisitt range.
+      supabaseRef.current.from('user_badges').select('*').range(0, 9999) as unknown as Promise<{ data: UserBadge[] | null }>,
+      supabaseRef.current.from('zone_claims').select('*').range(0, 9999) as unknown as Promise<{ data: ZoneClaim[] | null }>,
+      supabaseRef.current.from('shift_claims').select('user_id').range(0, 9999) as unknown as Promise<{ data: Array<{ user_id: string }> | null }>,
     ])
 
     setProfiles(profilesRes.data || [])
