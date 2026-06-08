@@ -19,20 +19,22 @@ interface Props {
   onClose: () => void
   onAward: () => void
   onRemove: () => void
+  // Sender videre til BottomSheet — true når sheeten åpnes i admin-overlay uten BottomNav
+  pinToBottom?: boolean
 }
 
 // Bottom sheet som viser merke-detaljer og lar admin gi eller fjerne merket.
 // Auto-merker er readonly siden de tildeles av systemet.
-export default function BadgeDetailSheet({ open, badge, count, onClose, onAward, onRemove }: Props) {
+export default function BadgeDetailSheet({ open, badge, count, onClose, onAward, onRemove, pinToBottom = false }: Props) {
   // Hvis ingen merke er valgt, render tom sheet så AnimatePresence kan animere ut
-  if (!badge) return <BottomSheet open={open} onClose={onClose}><div /></BottomSheet>
+  if (!badge) return <BottomSheet open={open} onClose={onClose} pinToBottom={pinToBottom}><div /></BottomSheet>
 
   const earned = count > 0
   const stackable = STACKABLE_BADGE_CATEGORIES.has(badge.category)
   const isAuto = badge.auto_criteria !== null
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
+    <BottomSheet open={open} onClose={onClose} pinToBottom={pinToBottom}>
       <div className="text-center pt-1">
         {/* Stor merke-ikon (112px) med løft hvis opptjent */}
         <div

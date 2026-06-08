@@ -140,8 +140,11 @@ export default function MemberDetailOverlay({
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-          // Bruker z-40 her så BottomSheet (z-40 overlay + z-50 panel) legger seg over
-          className="fixed inset-0 z-40 bg-bg flex flex-col"
+          // Overlay må ligge strikt over sidens egen fixed-header (z-40), ellers
+          // kan klikk på tilbake-knappen feile på desktop fordi paint-rekkefølgen
+          // tipper feil vei i noen browsere når DOM-rekkefølgen ikke er garantert.
+          // BottomSheet bumpes til z-[55]/z-[60] så den fortsatt legger seg over.
+          className="fixed inset-0 z-[45] bg-bg flex flex-col"
         >
           {/* Topptekst */}
           <header className="shrink-0 z-10 bg-card border-b border-black/[0.03] safe-top">
@@ -297,7 +300,8 @@ export default function MemberDetailOverlay({
             </div>
           </main>
 
-          {/* Rolle- og type-editor — ligger inne i overlayet så den følger samme stack */}
+          {/* Rolle- og type-editor — ligger inne i overlayet så den følger samme stack.
+              pinToBottom: overlayet har ingen BottomNav, så sheeten må sitte helt nede. */}
           <RoleEditorSheet
             open={roleEditorOpen}
             name={profile.full_name || 'medlemmet'}
@@ -307,6 +311,7 @@ export default function MemberDetailOverlay({
             onClose={() => setRoleEditorOpen(false)}
             onRoleChange={handleRoleChangeWrapped}
             onTypeChange={handleTypeChangeWrapped}
+            pinToBottom
           />
 
           {/* Merke-detalj med gi/fjern-flyt — auto-merker er readonly */}
@@ -323,6 +328,7 @@ export default function MemberDetailOverlay({
               if (selectedBadgeId !== null) handleRemove(selectedBadgeId)
               setSelectedBadgeId(null)
             }}
+            pinToBottom
           />
 
           {/* Bekreftelse før vi sletter medlemmet permanent */}

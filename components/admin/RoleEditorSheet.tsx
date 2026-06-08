@@ -20,15 +20,17 @@ interface Props {
   onClose: () => void
   onRoleChange: (role: Role) => void
   onTypeChange: (isMusician: boolean, group: ChildGroup | null) => void
+  // Sender videre til BottomSheet — true når sheeten åpnes i admin-overlay uten BottomNav
+  pinToBottom?: boolean
 }
 
 // Bottom sheet for å endre rolle og type for et medlem
 export default function RoleEditorSheet(props: Props) {
-  const { open, name, role, isMusician, musicianGroup, onClose, onRoleChange, onTypeChange } = props
+  const { open, name, role, isMusician, musicianGroup, onClose, onRoleChange, onTypeChange, pinToBottom = false } = props
   const typeValue = isMusician ? 'Musikant' : 'Forelder'
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Roller og type">
+    <BottomSheet open={open} onClose={onClose} title="Roller og type" pinToBottom={pinToBottom}>
       <p className="text-sm text-text-secondary mb-5 leading-[1.5]">
         Velg rolle og type for {name}. Endringer lagres med en gang.
       </p>

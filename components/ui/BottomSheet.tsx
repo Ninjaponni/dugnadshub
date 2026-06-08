@@ -8,10 +8,13 @@ interface BottomSheetProps {
   onClose: () => void
   children: React.ReactNode
   title?: string
+  // Lim sheeten helt nederst (bottom-0). Standard er bottom-20 for å sitte over BottomNav.
+  // Bruk pinToBottom når sheeten åpnes i et overlay uten BottomNav (f.eks. admin-overlay).
+  pinToBottom?: boolean
 }
 
 // Bottom sheet med drag-håndtak — varm claymorphism
-export default function BottomSheet({ open, onClose, children, title }: BottomSheetProps) {
+export default function BottomSheet({ open, onClose, children, title, pinToBottom = false }: BottomSheetProps) {
   const dragControls = useDragControls()
 
   const handleDragEnd = useCallback((_: unknown, info: PanInfo) => {
@@ -30,7 +33,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/30 z-40"
+            className="fixed inset-0 bg-black/30 z-[50]"
             onClick={onClose}
           />
 
@@ -46,7 +49,7 @@ export default function BottomSheet({ open, onClose, children, title }: BottomSh
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-20 left-0 right-0 z-50 bg-bg rounded-t-[28px] max-h-[75dvh] flex flex-col shadow-[0_-12px_30px_rgba(61,53,48,0.08)] safe-bottom"
+            className={`fixed ${pinToBottom ? 'bottom-0' : 'bottom-20'} left-0 right-0 z-[55] bg-bg rounded-t-[28px] max-h-[75dvh] flex flex-col shadow-[0_-12px_30px_rgba(61,53,48,0.08)] safe-bottom`}
           >
             {/* Drag-håndtak — kun dette området trigger drag-to-close */}
             <div
