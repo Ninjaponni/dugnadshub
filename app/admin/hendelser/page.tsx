@@ -455,6 +455,9 @@ function DesktopEventCard({
                 Send hjelp-varsel ({available})
               </EventActionButton>
             )}
+            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+              Rediger
+            </EventActionButton>
             <EventActionButton variant="ghost" icon={<Power size={14} />} onClick={onDeactivate} disabled={updating}>
               Deaktiver
             </EventActionButton>
@@ -556,17 +559,49 @@ export default function EventsAdminPage() {
 
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
-    const [eventsRes, assignmentsRes, claimsRes] = await Promise.all([
+    const [eventsRes, assignmentsRes, claimsRes, shiftsRes, shiftClaimsRes] = await Promise.all([
       supabaseRef.current.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
       supabaseRef.current.from('zone_assignments').select('*') as unknown as Promise<{ data: ZoneAssignment[] | null }>,
       supabaseRef.current.from('zone_claims').select('assignment_id') as unknown as Promise<{ data: Array<{ assignment_id: string }> | null }>,
+      // Vakt-data for arrangement-events så vi kan vise progress og ledige vakter i listen
+      supabaseRef.current.from('event_shifts').select('id, event_id, capacity') as unknown as Promise<{ data: Array<{ id: string; event_id: string; capacity: number }> | null }>,
+      supabaseRef.current.from('shift_claims').select('shift_id') as unknown as Promise<{ data: Array<{ shift_id: string }> | null }>,
     ])
 
     const allEvents = eventsRes.data || []
     const allAssignments = assignmentsRes.data || []
     const allClaims = claimsRes.data || []
+    const allShifts = shiftsRes.data || []
+    const allShiftClaims = shiftClaimsRes.data || []
+
+    // Tell vakt-plasser fylt per shift_id (kan være flere claims per vakt opp til capacity)
+    const claimsPerShift = new Map<string, number>()
+    for (const c of allShiftClaims) {
+      claimsPerShift.set(c.shift_id, (claimsPerShift.get(c.shift_id) ?? 0) + 1)
+    }
 
     const eventsWithZones: EventWithZones[] = allEvents.map(event => {
+      // For arrangement-events: regn ledige vakter basert på event_shifts og shift_claims
+      if (event.type === 'arrangement') {
+        const eventShifts = allShifts.filter(s => s.event_id === event.id)
+        let totalSlots = 0
+        let filledSlots = 0
+        for (const s of eventShifts) {
+          totalSlots += s.capacity
+          filledSlots += Math.min(claimsPerShift.get(s.id) ?? 0, s.capacity)
+        }
+        return {
+          ...event,
+          zoneStats: {
+            total: totalSlots,
+            available: Math.max(0, totalSlots - filledSlots),
+            claimed: filledSlots,
+            completed: 0,
+          },
+        }
+      }
+
+      // For sone-baserte events: behold eksisterende sone-beregning
       const eventAssignments = allAssignments.filter(a => a.event_id === event.id)
       // Tell basert på claims, ikke assignment-status
       const zonesWithClaims = eventAssignments.filter(a =>
