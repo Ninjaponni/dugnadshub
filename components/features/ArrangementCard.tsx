@@ -40,7 +40,7 @@ export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity 
   const deadlinePassed = event.signup_deadline ? new Date(event.signup_deadline) < new Date() : false
 
   return (
-    <div className="card rounded-[2rem] p-7 relative overflow-hidden">
+    <div className="card rounded-[2rem] p-7 relative overflow-hidden lg:hover:-translate-y-0.5 lg:transition-transform lg:duration-200">
       {/* Subtil glow-effekt */}
       <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-container/20 rounded-full blur-3xl" />
 
