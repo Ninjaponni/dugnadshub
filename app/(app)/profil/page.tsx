@@ -677,7 +677,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.25.1
+              Tillerbyen Skolekorps Dugnadshub v 10.25.2
             </p>
 
             {/* Logg ut */}
@@ -711,6 +711,9 @@ export default function ProfilePage() {
                 await (supabaseRef.current.from('profiles') as any)
                   .update({ avatar_url: newId })
                   .eq('id', user.id)
+                // Server-komponenten DesktopShell henter profilen ved hver request.
+                // router.refresh() trigger en re-render slik at sidebar-avataren oppdateres.
+                router.refresh()
               }
             }
           }}

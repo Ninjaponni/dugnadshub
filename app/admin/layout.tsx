@@ -25,9 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="lg:hidden max-w-4xl mx-auto min-h-dvh px-4 pt-14 pb-8 safe-top">
         {children}
       </div>
-      <div className="hidden lg:block">
-        <DesktopShell>{children}</DesktopShell>
-      </div>
+      <DesktopShell>{children}</DesktopShell>
     </>
   )
 }

@@ -74,9 +74,9 @@ export default function DesktopSidebar({
             : 'Samler'
 
   return (
-    <aside className="hidden lg:flex w-[264px] shrink-0 h-screen sticky top-0 flex-col bg-card border-r border-text-primary/[0.06] px-[18px] pt-[26px] pb-[18px]">
+    <aside className="hidden lg:flex w-[264px] shrink-0 h-screen sticky top-0 flex-col bg-card border-r border-text-primary/[0.06] px-[18px] py-6 overflow-y-auto">
       {/* Merkevareblokk */}
-      <div className="flex items-center gap-3 px-2 mb-[30px]">
+      <div className="flex items-center gap-3 px-2 mb-7 shrink-0" style={{ minHeight: 44 }}>
         <KorpsLogo size={36} className="shrink-0" />
         <div className="min-w-0">
           <div className="font-display text-[19px] font-extrabold text-accent leading-none tracking-tight">

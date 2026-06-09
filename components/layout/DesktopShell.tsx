@@ -5,7 +5,9 @@ import type { Profile, Role } from '@/lib/supabase/types'
 
 type SidebarProfile = Pick<Profile, 'full_name' | 'role' | 'avatar_url'> & { type?: string }
 
-// Wrapper som rendrer desktop-chrome på lg+ og passer mobilinnhold gjennom uendret.
+// Wrapper som rendrer desktop-chrome på lg+. Selve `hidden lg:flex` ligger på
+// rotnoden her, slik at vi unngår en ekstra block-wrapper i layout-filene som
+// kan forstyrre sticky-posisjonering av sidebaren.
 // Henter profil server-side slik at sidebaren kan vise rolle og navn uten klienthenting.
 export default async function DesktopShell({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -46,11 +48,11 @@ export default async function DesktopShell({ children }: { children: React.React
   }
 
   return (
-    <div className="lg:flex lg:min-h-screen lg:bg-bg">
+    <div className="hidden lg:flex lg:min-h-screen lg:bg-bg">
       <DesktopSidebar profile={profile} />
-      <div className="flex-1 lg:flex lg:flex-col lg:min-w-0">
+      <div className="flex-1 flex flex-col min-w-0">
         <DesktopTopbar />
-        <main className="lg:max-w-[1320px] lg:w-full lg:mx-auto lg:px-9 lg:py-8">
+        <main className="max-w-[1320px] w-full mx-auto px-9 py-8">
           {children}
         </main>
       </div>
