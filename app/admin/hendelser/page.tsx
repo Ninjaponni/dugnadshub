@@ -418,9 +418,15 @@ function DesktopEventCard({
                 <b className="font-[var(--font-display)] text-base text-text-primary">{event.bags_collected}</b>{' '}
                 sekker samlet inn
               </>
-            ) : total > 0 ? (
+            ) : zoneBased && total > 0 ? (
+              // Sone-basert: alle soner er som regel ferdige når dugnaden lukkes
               <>
                 <b className="font-[var(--font-display)] text-base text-text-primary">Alle {total}</b> {unit} fullført
+              </>
+            ) : !zoneBased && total > 0 ? (
+              // Arrangement: vis faktisk fylt antall, ikke en hardkodet «alle»
+              <>
+                <b className="font-[var(--font-display)] text-base text-text-primary">{claimed + completed}</b> av {total} {unit} fylt
               </>
             ) : null}
           </div>
