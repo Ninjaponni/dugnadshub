@@ -211,7 +211,7 @@ export default function MembersAdminPage() {
           <div className="w-9" />
         </div>
       </header>
-      <div className="pt-16 pb-28">
+      <div className="pt-16 lg:pt-0 pb-28">
 
       {/* Tilbake + tittel */}
       <div className="flex items-center gap-3 mb-6">
@@ -291,7 +291,7 @@ export default function MembersAdminPage() {
 
       {/* Medlemsliste */}
       {!loading && filtered.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
           {filtered.map((profile, i) => {
             return (
               <motion.div

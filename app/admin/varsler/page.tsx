@@ -173,7 +173,7 @@ export default function AdminNotificationsPage() {
           <div className="w-9" />
         </div>
       </header>
-      <div className="pt-16 pb-28">
+      <div className="pt-16 lg:pt-0 pb-28">
 
       {/* Tilbake + tittel */}
       <div className="flex items-center gap-3 mb-5">
@@ -183,137 +183,145 @@ export default function AdminNotificationsPage() {
         <h2 className="text-xl font-bold text-accent font-[var(--font-display)] flex-1">Varsler</h2>
       </div>
 
-      <Card className="p-5 space-y-5 rounded-2xl">
-        {/* Tittel */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Tittel</label>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="F.eks. Dugnad i morgen!"
-            className={inputClass}
-          />
-        </div>
+      <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
 
-        {/* Melding */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Melding</label>
-          <textarea
-            value={body}
-            onChange={e => setBody(e.target.value)}
-            placeholder="Skriv meldingen som skal vises i varselet..."
-            rows={3}
-            className={`${inputClass} resize-none`}
-          />
-        </div>
+        {/* Venstre: meldingsinnhold */}
+        <Card className="p-5 space-y-5 rounded-2xl">
+          {/* Tittel */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Tittel</label>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="F.eks. Dugnad i morgen!"
+              className={inputClass}
+            />
+          </div>
 
-        {/* URL (valgfritt) */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Lenke (valgfritt)</label>
-          <input
-            type="text"
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            placeholder="/kart eller /hjem"
-            className={inputClass}
-          />
-        </div>
+          {/* Melding */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Melding</label>
+            <textarea
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              placeholder="Skriv meldingen som skal vises i varselet..."
+              rows={3}
+              className={`${inputClass} resize-none`}
+            />
+          </div>
 
-        {/* Mottakere */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-3">Mottakere</label>
+          {/* URL (valgfritt) */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Lenke (valgfritt)</label>
+            <input
+              type="text"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="/kart eller /hjem"
+              className={inputClass}
+            />
+          </div>
+        </Card>
 
-          {/* Ferdig aktivitet — overskriver rolle/gruppe-filter */}
-          {completedEvents.length > 0 && (
-            <div className="mb-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5">Ferdig aktivitet</p>
-              <select
-                value={selectedEventId}
-                onChange={e => handleEventChange(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Velg arrangement…</option>
-                {completedEvents.map(ev => (
-                  <option key={ev.id} value={ev.id}>{ev.title} — {ev.date}</option>
-                ))}
-              </select>
-              {selectedEventId && (
-                <div className="mt-2 flex items-center gap-2 text-sm text-text-secondary">
-                  <Users size={14} />
-                  {loadingPreview ? (
-                    <span>Henter deltakere…</span>
-                  ) : preview ? (
-                    <span>Vil nå {preview.count} deltaker{preview.count === 1 ? '' : 'e'}</span>
-                  ) : null}
-                </div>
-              )}
-              {preview && preview.users.length > 0 && (
-                <details className="mt-1.5">
-                  <summary className="text-xs text-accent cursor-pointer select-none">Vis liste</summary>
-                  <ul className="mt-1.5 text-xs text-text-secondary space-y-0.5 max-h-40 overflow-y-auto pl-1">
-                    {preview.users.map(u => (
-                      <li key={u.id}>{u.full_name || '(uten navn)'}</li>
-                    ))}
-                  </ul>
-                </details>
-              )}
+        {/* Høyre: mottakere + send */}
+        <Card className="p-5 space-y-5 rounded-2xl mt-4 lg:mt-0 lg:sticky lg:top-24">
+          {/* Mottakere */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-3">Mottakere</label>
+
+            {/* Ferdig aktivitet — overskriver rolle/gruppe-filter */}
+            {completedEvents.length > 0 && (
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5">Ferdig aktivitet</p>
+                <select
+                  value={selectedEventId}
+                  onChange={e => handleEventChange(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Velg arrangement…</option>
+                  {completedEvents.map(ev => (
+                    <option key={ev.id} value={ev.id}>{ev.title} — {ev.date}</option>
+                  ))}
+                </select>
+                {selectedEventId && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-text-secondary">
+                    <Users size={14} />
+                    {loadingPreview ? (
+                      <span>Henter deltakere…</span>
+                    ) : preview ? (
+                      <span>Vil nå {preview.count} deltaker{preview.count === 1 ? '' : 'e'}</span>
+                    ) : null}
+                  </div>
+                )}
+                {preview && preview.users.length > 0 && (
+                  <details className="mt-1.5">
+                    <summary className="text-xs text-accent cursor-pointer select-none">Vis liste</summary>
+                    <ul className="mt-1.5 text-xs text-text-secondary space-y-0.5 max-h-40 overflow-y-auto pl-1">
+                      {preview.users.map(u => (
+                        <li key={u.id}>{u.full_name || '(uten navn)'}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
+
+            {/* Alle-toggle */}
+            <button
+              onClick={handleAllToggle}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium mr-2 mb-2 transition-colors ${
+                sendToAll ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
+              }`}
+            >
+              Alle
+            </button>
+
+            {/* Rolle-filter */}
+            <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mt-3 mb-1.5">Roller</p>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                <button
+                  key={role}
+                  onClick={() => toggleRole(role)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    selectedRoles.includes(role) ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          )}
 
-          {/* Alle-toggle */}
-          <button
-            onClick={handleAllToggle}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium mr-2 mb-2 transition-colors ${
-              sendToAll ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
-            }`}
+            {/* Barnegruppe-filter */}
+            <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5">Barnegruppe</p>
+            <div className="flex flex-wrap gap-1.5">
+              {groupLabels.map(group => (
+                <button
+                  key={group}
+                  onClick={() => toggleGroup(group)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    selectedGroups.includes(group) ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
+                  }`}
+                >
+                  {group}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Send-knapp */}
+          <Button
+            className="w-full rounded-full"
+            disabled={!canSend}
+            onClick={() => setShowConfirm(true)}
           >
-            Alle
-          </button>
+            <Send size={14} />
+            Send varsel
+          </Button>
+        </Card>
 
-          {/* Rolle-filter */}
-          <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mt-3 mb-1.5">Roller</p>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {Object.entries(ROLE_LABELS).map(([role, label]) => (
-              <button
-                key={role}
-                onClick={() => toggleRole(role)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  selectedRoles.includes(role) ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Barnegruppe-filter */}
-          <p className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mb-1.5">Barnegruppe</p>
-          <div className="flex flex-wrap gap-1.5">
-            {groupLabels.map(group => (
-              <button
-                key={group}
-                onClick={() => toggleGroup(group)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  selectedGroups.includes(group) ? 'bg-accent text-white' : 'bg-surface-low text-text-secondary'
-                }`}
-              >
-                {group}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Send-knapp */}
-        <Button
-          className="w-full rounded-full"
-          disabled={!canSend}
-          onClick={() => setShowConfirm(true)}
-        >
-          <Send size={14} />
-          Send varsel
-        </Button>
-      </Card>
+      </div>
 
       {/* Bekreftelsesdialog */}
       {showConfirm && (

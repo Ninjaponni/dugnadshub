@@ -1202,7 +1202,7 @@ export default function EventsAdminPage() {
           <div className="w-9" />
         </div>
       </header>
-      <div className="pt-16 pb-28">
+      <div className="pt-16 lg:pt-0 pb-28">
 
       {/* Tilbake + tittel + ny-knapp */}
       <div className="flex items-center gap-3 mb-4">
@@ -1344,6 +1344,7 @@ export default function EventsAdminPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
+                className="lg:transition-transform lg:duration-200 lg:hover:-translate-y-1"
               >
                 <Card animate={false} className="p-4 rounded-2xl">
                   {/* Header — klikk for a ekspandere */}
