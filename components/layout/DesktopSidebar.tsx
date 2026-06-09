@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Home, Map, Truck, Ticket, Award, User, Calendar, Users, Bell } from 'lucide-react'
 import SidebarUserCard from './SidebarUserCard'
 import VakterSubNav from './VakterSubNav'
-import KorpsLogo from '@/components/ui/KorpsLogo'
 import type { Profile } from '@/lib/supabase/types'
 
 type NavItem = {
@@ -75,9 +75,17 @@ export default function DesktopSidebar({
 
   return (
     <aside className="hidden lg:flex w-[264px] shrink-0 h-screen sticky top-0 flex-col bg-card border-r border-text-primary/[0.06] px-[18px] py-6 overflow-y-auto">
-      {/* Merkevareblokk */}
-      <div className="flex items-center gap-3 px-2 mb-7 shrink-0" style={{ minHeight: 44 }}>
-        <KorpsLogo size={36} className="shrink-0" />
+      {/* Merkevareblokk — bruker PNG-logo i stedet for SVG, slik at den ikke
+          strekkes feil i flex-konteksten. */}
+      <div className="flex items-center gap-3 px-2 mb-7 shrink-0">
+        <Image
+          src="/logo-korps.png"
+          alt=""
+          width={40}
+          height={40}
+          className="shrink-0 w-10 h-10 object-contain"
+          priority
+        />
         <div className="min-w-0">
           <div className="font-display text-[19px] font-extrabold text-accent leading-none tracking-tight">
             Dugnadshub
