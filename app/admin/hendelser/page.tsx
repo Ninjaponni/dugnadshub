@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import BrandLink from '@/components/layout/BrandLink'
-import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Users, Sparkles } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Users, Sparkles, Map as MapIcon, Power } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone, MeetingPoint } from '@/lib/supabase/types'
@@ -13,6 +13,17 @@ import { evaluateBadges } from '@/lib/badges/evaluator'
 import { parseKmz } from '@/lib/plast/kmz-parser'
 import { importPlastZones, importMusicians, type TuttiCsvRow } from '@/lib/plast/admin-actions'
 import Papa from 'papaparse'
+import SegmentBar from '@/components/admin/SegmentBar'
+
+// Fargedot brukt i SegmentBar-legend
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
+      {label}
+    </span>
+  )
+}
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 // Sonestatus-teller per hendelse
@@ -1375,20 +1386,35 @@ export default function EventsAdminPage() {
                     {event.zoneStats.total > 0 && event.type !== 'arrangement' && (
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
-                          <span>{event.zoneStats.claimed + event.zoneStats.completed}/{event.zoneStats.total} soner</span>
+                          <span>{event.zoneStats.claimed + event.zoneStats.completed}/{event.zoneStats.total} soner tatt</span>
                           <span>{Math.round(progress)}%</span>
                         </div>
-                        <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${progress}%`,
-                              background: event.zoneStats.completed === event.zoneStats.total && event.zoneStats.total > 0
-                                ? 'var(--color-success, #34c759)'
-                                : 'linear-gradient(to right, var(--color-accent), var(--color-primary-container, var(--color-accent)))',
-                            }}
-                          />
-                        </div>
+                        {event.status === 'active' ? (
+                          <>
+                            <SegmentBar
+                              ferdig={event.zoneStats.completed}
+                              paagaar={event.zoneStats.claimed}
+                              ledige={event.zoneStats.available}
+                            />
+                            <div className="flex flex-wrap gap-3 mt-2">
+                              <LegendDot color="var(--color-accent)" label={`${event.zoneStats.completed} ferdig`} />
+                              <LegendDot color="rgba(162,74,51,0.38)" label={`${event.zoneStats.claimed} pågår`} />
+                              <LegendDot color="var(--color-surface-low)" label={`${event.zoneStats.available} ledige`} />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${progress}%`,
+                                background: event.zoneStats.completed === event.zoneStats.total && event.zoneStats.total > 0
+                                  ? 'var(--color-success, #34c759)'
+                                  : 'linear-gradient(to right, var(--color-accent), var(--color-primary-container, var(--color-accent)))',
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </button>
@@ -2163,6 +2189,50 @@ export default function EventsAdminPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {/* Desktop-actions: alltid synlige på lg+ for aktive hendelser */}
+                  {event.status === 'active' && !isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && completeConfirmId !== event.id && (
+                    <div className="hidden lg:flex items-center gap-2 mt-4 pt-3 border-t border-text-tertiary/10 overflow-x-auto">
+                      <Link
+                        href={`/kart?event=${event.id}`}
+                        className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+                      >
+                        <MapIcon size={13} />
+                        Se kart
+                      </Link>
+                      {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
+                        <button
+                          type="button"
+                          onClick={() => handleSendHelp(event)}
+                          className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
+                        >
+                          <Bell size={13} />
+                          Send hjelp-varsel ({event.zoneStats.available})
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeactivateClick(event)}
+                        className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-surface-low text-text-secondary hover:bg-text-tertiary/10 transition-colors"
+                      >
+                        <Power size={13} />
+                        Deaktiver
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompleteConfirmId(event.id)
+                          setCompleteBags('')
+                          setCompleteNotes('')
+                          setExpandedId(event.id)
+                        }}
+                        className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-success/10 text-success hover:bg-success/20 transition-colors"
+                      >
+                        <CheckCircle size={13} />
+                        Marker fullført
+                      </button>
+                    </div>
+                  )}
                 </Card>
               </motion.div>
             )
