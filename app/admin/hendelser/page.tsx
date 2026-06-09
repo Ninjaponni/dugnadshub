@@ -1816,14 +1816,8 @@ export default function EventsAdminPage() {
                   onDelete={() => setDesktopConfirm({ kind: 'delete', event })}
                   onEdit={() => {
                     startEditing(event)
-                    setExpandedId(event.id)
-                    setDesktopEditEventId(event.id)
-                    // Scroll redigeringskortet til toppen av viewport så brukeren
-                    // ikke må scrolle ned for å finne det.
-                    requestAnimationFrame(() => {
-                      const node = document.getElementById(`event-edit-${event.id}`)
-                      if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    })
+                    // På desktop: editingId trigger en sentrert modal (se nedenfor).
+                    // Mobile beholder inline-rediger inni det ekspanderte kortet.
                   }}
                   onSendHelp={() => setDesktopConfirm({ kind: 'sendhelp', event })}
                   onExportCSV={() => handleExportCSV(event.id)}
@@ -1888,7 +1882,7 @@ export default function EventsAdminPage() {
         }
 
         return (
-        <div className={`space-y-3 ${desktopEditEventId ? '' : 'lg:hidden'}`}>
+        <div className="lg:hidden space-y-3">
           {filtered.map((event, i) => {
             const isExpanded = expandedId === event.id
             const isEditing = editingId === event.id
@@ -1897,18 +1891,12 @@ export default function EventsAdminPage() {
               ? ((event.zoneStats.claimed + event.zoneStats.completed) / event.zoneStats.total) * 100
               : 0
 
-            const desktopEditMode = desktopEditEventId === event.id
-            // På desktop: hvis et annet kort er i edit-modus, skjul dette.
-            // Hvis ingen kort er i edit-modus, hele containeren er allerede lg:hidden.
-            const hideOnDesktop = !!desktopEditEventId && !desktopEditMode
             return (
               <motion.div
                 key={event.id}
-                id={`event-edit-${event.id}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className={`scroll-mt-24 lg:transition-transform lg:duration-200 lg:hover:-translate-y-1 ${hideOnDesktop ? 'lg:hidden' : ''}`}
               >
                 <Card animate={false} className="p-4 rounded-2xl">
                   {/* Header — klikk for a ekspandere */}
@@ -2829,6 +2817,49 @@ export default function EventsAdminPage() {
     />
 
     {/* Desktop-bekreftelse for Slett / Deaktiver / Marker fullført */}
+    {/* Desktop edit-modal: vises kun på lg+ når brukeren klikker Rediger på desktop.
+        Mobile bruker fortsatt inline-edit inni det ekspanderte kortet. */}
+    {editingId && (
+      <div className="hidden lg:flex fixed inset-0 z-[60] items-start justify-center p-6 overflow-y-auto bg-black/40 backdrop-blur-sm" onClick={() => { setEditForm({ ...emptyForm }); setEditingId(null); setErrorMsg(null) }}>
+        <div
+          className="bg-card rounded-3xl border border-text-primary/[0.09] shadow-2xl w-full max-w-[720px] my-8"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-7 pt-6 pb-4 border-b border-text-primary/[0.06]">
+            <div>
+              <h2 className="font-display text-xl font-extrabold text-text-primary">Rediger hendelse</h2>
+              <p className="text-sm text-text-tertiary mt-0.5">{events.find(e => e.id === editingId)?.title}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setEditForm({ ...emptyForm }); setEditingId(null); setErrorMsg(null) }}
+              aria-label="Lukk"
+              className="w-9 h-9 rounded-full bg-surface-low hover:bg-surface-low/70 flex items-center justify-center text-text-secondary"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className="p-7">
+            {renderForm(
+              editForm,
+              (fn) => setEditForm(fn),
+              handleEditSave,
+              'Lagre endringer',
+              editSaving,
+              'edit',
+            )}
+            <button
+              type="button"
+              onClick={() => { setEditForm({ ...emptyForm }); setEditingId(null); setErrorMsg(null) }}
+              className="w-full mt-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-low rounded-full transition-colors"
+            >
+              Avbryt
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <ConfirmDialog
       open={!!desktopConfirm}
       title={
