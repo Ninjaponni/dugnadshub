@@ -550,7 +550,7 @@ export default function EventsAdminPage() {
   // siden mobile-flyten har inline-bekreftelser inne i ekspandert kort
   // (som er skjult på desktop).
   const [desktopConfirm, setDesktopConfirm] = useState<{
-    kind: 'delete' | 'deactivate' | 'complete'
+    kind: 'delete' | 'deactivate' | 'complete' | 'sendhelp'
     event: EventWithZones
   } | null>(null)
   // Når brukeren klikker "Rediger" på desktop, vis det inline-redigeringsskjemaet
@@ -1811,14 +1811,7 @@ export default function EventsAdminPage() {
                   pct={pct}
                   unit={zoneBased ? 'soner' : 'vakter'}
                   onActivate={() => handleStatusChange(event.id, 'active')}
-                  onDeactivate={() => {
-                    const hasClaims = event.zoneStats.claimed + event.zoneStats.completed > 0
-                    if (hasClaims) {
-                      setDesktopConfirm({ kind: 'deactivate', event })
-                    } else {
-                      handleStatusChange(event.id, 'upcoming')
-                    }
-                  }}
+                  onDeactivate={() => setDesktopConfirm({ kind: 'deactivate', event })}
                   onComplete={() => setDesktopConfirm({ kind: 'complete', event })}
                   onDelete={() => setDesktopConfirm({ kind: 'delete', event })}
                   onEdit={() => {
@@ -1832,7 +1825,7 @@ export default function EventsAdminPage() {
                       if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     })
                   }}
-                  onSendHelp={() => handleSendHelp(event)}
+                  onSendHelp={() => setDesktopConfirm({ kind: 'sendhelp', event })}
                   onExportCSV={() => handleExportCSV(event.id)}
                   exporting={exporting === event.id}
                   updatingId={updatingId}
@@ -2842,6 +2835,7 @@ export default function EventsAdminPage() {
         desktopConfirm?.kind === 'delete' ? 'Slette hendelsen?' :
         desktopConfirm?.kind === 'deactivate' ? 'Deaktivere hendelsen?' :
         desktopConfirm?.kind === 'complete' ? 'Markere som fullført?' :
+        desktopConfirm?.kind === 'sendhelp' ? 'Sende hjelp-varsel?' :
         ''
       }
       message={
@@ -2850,19 +2844,23 @@ export default function EventsAdminPage() {
               ? 'Hendelsen, alle vakter og påmeldinger blir permanent slettet.'
               : 'Hendelsen og alle sonetildelinger blir permanent slettet.')
           : desktopConfirm?.kind === 'deactivate'
-          ? `${desktopConfirm.event.zoneStats.claimed + desktopConfirm.event.zoneStats.completed} ${desktopConfirm.event.type === 'arrangement' ? 'påmeldinger' : 'soner'} er registrert. De beholdes men skjules for brukerne.`
+          ? `${desktopConfirm.event.title} settes til Kommende og skjules for medlemmer. ${desktopConfirm.event.zoneStats.claimed + desktopConfirm.event.zoneStats.completed > 0 ? `${desktopConfirm.event.zoneStats.claimed + desktopConfirm.event.zoneStats.completed} ${desktopConfirm.event.type === 'arrangement' ? 'påmeldinger' : 'soner'} beholdes men skjules.` : ''}`
           : desktopConfirm?.kind === 'complete'
           ? `«${desktopConfirm.event.title}» markeres som fullført. Merker deles ut til alle deltakere.`
+          : desktopConfirm?.kind === 'sendhelp'
+          ? `Push-varsel sendes til alle medlemmer som ikke har tatt ${desktopConfirm.event.type === 'arrangement' ? 'vakt' : 'sone'} ennå (${desktopConfirm.event.zoneStats.available} ledige). Kan ikke angres.`
           : ''
       }
       confirmLabel={
         desktopConfirm?.kind === 'delete' ? 'Slett' :
         desktopConfirm?.kind === 'deactivate' ? 'Deaktiver' :
-        desktopConfirm?.kind === 'complete' ? 'Fullfør' : 'Bekreft'
+        desktopConfirm?.kind === 'complete' ? 'Fullfør' :
+        desktopConfirm?.kind === 'sendhelp' ? 'Send varsel' : 'Bekreft'
       }
       variant={
         desktopConfirm?.kind === 'delete' ? 'danger' :
         desktopConfirm?.kind === 'deactivate' ? 'warning' :
+        desktopConfirm?.kind === 'sendhelp' ? 'warning' :
         'success'
       }
       loading={
@@ -2885,6 +2883,9 @@ export default function EventsAdminPage() {
         } else if (kind === 'complete') {
           setDesktopConfirm(null)
           handleStatusChange(ev.id, 'completed')
+        } else if (kind === 'sendhelp') {
+          setDesktopConfirm(null)
+          handleSendHelp(ev)
         }
       }}
     />
