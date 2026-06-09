@@ -662,7 +662,7 @@ export default function ProfilePage() {
 
                 {/* Versjon — separat søsken så lik 20px-avstand fra både kort over og knapp under */}
                 <p className="hidden lg:block text-center text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
-                  Tillerbyen Skolekorps Dugnadshub v 10.27.1
+                  Tillerbyen Skolekorps Dugnadshub v 10.27.2
                 </p>
 
                 {/* Logg ut — separat søsken for samme grunn */}
@@ -771,7 +771,7 @@ export default function ProfilePage() {
             {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
             <div className="lg:hidden">
               <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-                Tillerbyen Skolekorps Dugnadshub v 10.27.1
+                Tillerbyen Skolekorps Dugnadshub v 10.27.2
               </p>
               <div className="flex justify-center pt-1 pb-4">
                 <button

@@ -124,9 +124,11 @@ export default function MemberDetailOverlay({
   }, [profile, onClose])
 
   // Lås body-scroll mens overlayet er åpent, så bakgrunnssiden ikke skroller
-  // under finger-drag på mobil.
+  // under finger-drag på mobil. Hopper over på desktop (lg+) siden overlayet
+  // er skjult der via lg:hidden, men komponenten mountes fortsatt.
   useEffect(() => {
     if (!profile) return
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = prev }
