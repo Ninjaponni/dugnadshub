@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Profile } from '@/lib/supabase/types'
+import DesktopShell from '@/components/layout/DesktopShell'
 
-// Admin layout — kun tilgjengelig for admins
+// Admin-layout: krever admin-rolle. Mobile beholder dagens kompakte top-padding,
+// desktop bruker samme sidebar + topbar som medlems-sidene (lg+).
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,8 +21,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!p || p.role !== 'admin') redirect('/hjem')
 
   return (
-    <div className="max-w-4xl mx-auto min-h-dvh px-4 pt-14 pb-8 safe-top">
-      {children}
-    </div>
+    <>
+      <div className="lg:hidden max-w-4xl mx-auto min-h-dvh px-4 pt-14 pb-8 safe-top">
+        {children}
+      </div>
+      <div className="hidden lg:block">
+        <DesktopShell>{children}</DesktopShell>
+      </div>
+    </>
   )
 }
