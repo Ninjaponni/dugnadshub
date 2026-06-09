@@ -273,6 +273,7 @@ function DesktopEventCard({
   onEdit,
   onSendHelp,
   onExportCSV,
+  onShowDetails,
   exporting,
   updatingId,
 }: {
@@ -291,16 +292,16 @@ function DesktopEventCard({
   onEdit: () => void
   onSendHelp: () => void
   onExportCSV: () => void
+  onShowDetails: () => void
   exporting: boolean
   updatingId: string | null
 }) {
   const [hov, setHov] = useState(false)
-  // Aktive kort er alltid ekspandert (de er det viktigste å se på), andre kollapses
-  const [expanded, setExpanded] = useState(event.status === 'active')
+  // Aktive kort viser alltid action-footer (viktigste å se på). Andre har den synlig fast også, men
+  // ekspansjon med detaljer (vakter, plast-import, fullføringsdialog osv) skjer i desktop-modal.
   const featured = event.status === 'active'
   const isDone = event.status === 'completed'
   const updating = updatingId === event.id
-  const toggle = () => setExpanded(e => !e)
 
   return (
     <div
@@ -315,8 +316,8 @@ function DesktopEventCard({
       }}
     >
       <div style={{ padding: featured ? '26px 28px 24px' : '20px 22px 18px', flex: 1 }}>
-        {/* Header — klikkbar for å toggle expanded (kun for ikke-aktive) */}
-        <div className={`flex items-start gap-[15px] ${!featured ? 'cursor-pointer select-none' : ''}`} onClick={!featured ? toggle : undefined}>
+        {/* Header — klikkbar åpner desktop-modal med full ekspandert visning */}
+        <div className="flex items-start gap-[15px] cursor-pointer select-none" onClick={onShowDetails}>
           <DesktopMedallion type={event.type} size={featured ? 54 : 46} hovered={hov} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2.5">
@@ -328,13 +329,10 @@ function DesktopEventCard({
               </span>
               <div className="flex items-center gap-2 shrink-0">
                 <DesktopStatusPill status={event.status} />
-                {!featured && (
-                  <ChevronDown
-                    size={16}
-                    className="text-text-tertiary transition-transform"
-                    style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                  />
-                )}
+                <ChevronDown
+                  size={16}
+                  className="text-text-tertiary"
+                />
               </div>
             </div>
             <div
@@ -433,85 +431,82 @@ function DesktopEventCard({
         )}
       </div>
 
-      {/* Actions — kun synlig når kortet er ekspandert. Aktive kort er alltid ekspandert. */}
-      <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div
-              className="flex flex-wrap items-center gap-[9px]"
-              style={{
-                padding: '14px 22px',
-                background: 'var(--color-surface-low)',
-                borderTop: '1px solid rgba(57,56,43,0.05)',
-              }}
-            >
-              {event.status === 'upcoming' && (
-                <>
-                  <EventActionButton variant="primaryGhost" icon={<Zap size={15} />} onClick={onActivate} disabled={updating}>
-                    Aktiver
-                  </EventActionButton>
-                  <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
-                    Rediger
-                  </EventActionButton>
-                  <span className="flex-1" />
-                  <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
-                    Slett
-                  </EventActionButton>
-                </>
-              )}
-              {event.status === 'active' && (
-                <>
-                  {/* Skjul "Se kart" for arrangement-events */}
-                  {event.type !== 'arrangement' && (
-                    <Link
-                      href={`/kart?event=${event.id}`}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full text-text-secondary hover:bg-card transition-colors whitespace-nowrap"
-                    >
-                      <MapIcon size={14} />
-                      Se kart
-                    </Link>
-                  )}
-                  {available > 0 && (
-                    <EventActionButton variant="ghost" icon={<Bell size={14} />} onClick={onSendHelp}>
-                      Send hjelp-varsel ({available})
-                    </EventActionButton>
-                  )}
-                  <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
-                    Rediger
-                  </EventActionButton>
-                  <EventActionButton variant="ghost" icon={<Power size={14} />} onClick={onDeactivate} disabled={updating}>
-                    Deaktiver
-                  </EventActionButton>
-                  <span className="flex-1" />
-                  <EventActionButton variant="confirmGhost" icon={<Check size={15} strokeWidth={3} />} onClick={onComplete} disabled={updating}>
-                    Marker fullført
-                  </EventActionButton>
-                </>
-              )}
-              {event.status === 'completed' && (
-                <>
-                  <EventActionButton variant="secondary" icon={<Download size={14} />} onClick={onExportCSV} disabled={exporting}>
-                    {exporting ? 'Eksporterer...' : 'Eksporter CSV'}
-                  </EventActionButton>
-                  <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
-                    Rediger
-                  </EventActionButton>
-                  <span className="flex-1" />
-                  <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
-                    Slett
-                  </EventActionButton>
-                </>
-              )}
-            </div>
-          </motion.div>
+      {/* Actions — alltid synlig. Brukeren får full ekspandert visning via "Detaljer" eller header-klikk. */}
+      <div
+        className="flex flex-wrap items-center gap-[9px]"
+        style={{
+          padding: '14px 22px',
+          background: 'var(--color-surface-low)',
+          borderTop: '1px solid rgba(57,56,43,0.05)',
+        }}
+      >
+        {event.status === 'upcoming' && (
+          <>
+            <EventActionButton variant="primaryGhost" icon={<Zap size={15} />} onClick={onActivate} disabled={updating}>
+              Aktiver
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+              Rediger
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<ChevronDown size={14} />} onClick={onShowDetails}>
+              Detaljer
+            </EventActionButton>
+            <span className="flex-1" />
+            <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
+              Slett
+            </EventActionButton>
+          </>
         )}
-      </AnimatePresence>
+        {event.status === 'active' && (
+          <>
+            {/* Skjul "Se kart" for arrangement-events */}
+            {event.type !== 'arrangement' && (
+              <Link
+                href={`/kart?event=${event.id}`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full text-text-secondary hover:bg-card transition-colors whitespace-nowrap"
+              >
+                <MapIcon size={14} />
+                Se kart
+              </Link>
+            )}
+            {available > 0 && (
+              <EventActionButton variant="ghost" icon={<Bell size={14} />} onClick={onSendHelp}>
+                Send hjelp-varsel ({available})
+              </EventActionButton>
+            )}
+            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+              Rediger
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<ChevronDown size={14} />} onClick={onShowDetails}>
+              Detaljer
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<Power size={14} />} onClick={onDeactivate} disabled={updating}>
+              Deaktiver
+            </EventActionButton>
+            <span className="flex-1" />
+            <EventActionButton variant="confirmGhost" icon={<Check size={15} strokeWidth={3} />} onClick={onComplete} disabled={updating}>
+              Marker fullført
+            </EventActionButton>
+          </>
+        )}
+        {event.status === 'completed' && (
+          <>
+            <EventActionButton variant="secondary" icon={<Download size={14} />} onClick={onExportCSV} disabled={exporting}>
+              {exporting ? 'Eksporterer...' : 'Eksporter CSV'}
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+              Rediger
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<ChevronDown size={14} />} onClick={onShowDetails}>
+              Detaljer
+            </EventActionButton>
+            <span className="flex-1" />
+            <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
+              Slett
+            </EventActionButton>
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -591,6 +586,10 @@ export default function EventsAdminPage() {
   // for dette ene kortet ved å overstyre lg:hidden.
   const [desktopEditEventId, setDesktopEditEventId] = useState<string | null>(null)
 
+  // Desktop-modal som viser den fulle ekspanderte mobile-renderingen for ett event.
+  // Gjenbruker hele mobile-card-koden via renderMobileEventCard().
+  const [desktopExpandedId, setDesktopExpandedId] = useState<string | null>(null)
+
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
     const [eventsRes, assignmentsRes, claimsRes, shiftsRes, shiftClaimsRes] = await Promise.all([
@@ -661,19 +660,20 @@ export default function EventsAdminPage() {
 
   useEffect(() => { loadEvents() }, [loadEvents])
 
-  // Last vakter når et arrangement-event ekspanderes
+  // Last vakter når et arrangement-event ekspanderes (mobile inline ELLER desktop-modal)
   useEffect(() => {
-    if (!expandedId) return
-    const ev = events.find(e => e.id === expandedId)
+    const targetId = expandedId ?? desktopExpandedId
+    if (!targetId) return
+    const ev = events.find(e => e.id === targetId)
     if (!ev || ev.type !== 'arrangement') return
     // Ikke re-last om vi allerede har data
-    if (shiftsByEvent.has(expandedId)) return
+    if (shiftsByEvent.has(targetId)) return
 
     ;(async () => {
       const { data } = await supabaseRef.current
         .from('event_shifts')
         .select('*')
-        .eq('event_id', expandedId)
+        .eq('event_id', targetId)
         .order('shift_date')
         .order('start_time') as unknown as { data: Array<{ id: string; event_id: string; role: string; shift_date: string; start_time: string; end_time: string; capacity: number; notes: string | null }> | null }
 
@@ -687,9 +687,9 @@ export default function EventsAdminPage() {
         capacity: s.capacity,
         notes: s.notes ?? '',
       }))
-      setShiftsByEvent(prev => new Map(prev).set(expandedId, rows))
+      setShiftsByEvent(prev => new Map(prev).set(targetId, rows))
     })()
-  }, [expandedId, events, shiftsByEvent])
+  }, [expandedId, desktopExpandedId, events, shiftsByEvent])
 
   // Hjelpefunksjon — last vakter på nytt for et event
   async function reloadShifts(eventId: string) {
@@ -919,6 +919,7 @@ export default function EventsAdminPage() {
     setDeleteConfirmId(null)
     setDeleting(false)
     setExpandedId(null)
+    setDesktopExpandedId(null)
     await loadEvents()
   }
 
@@ -1656,6 +1657,912 @@ export default function EventsAdminPage() {
     )
   }
 
+  // Render én mobile-card. Brukes både i mobile-listen (lg:hidden) og inne i desktop-modalen.
+  // I desktop-modal-modus (opts.inDesktopModal=true) tvinges kortet til ekspandert tilstand
+  // og animasjons-delay droppes så modalen kan gjenbruke samme JSX uten å lukkes.
+  function renderMobileEventCard(
+    event: EventWithZones,
+    i: number,
+    opts: { inDesktopModal?: boolean } = {},
+  ) {
+    const inModal = !!opts.inDesktopModal
+    const isExpanded = inModal ? true : expandedId === event.id
+    const isEditing = editingId === event.id
+    const isDeleteConfirm = deleteConfirmId === event.id
+    const progress = event.zoneStats.total > 0
+      ? ((event.zoneStats.claimed + event.zoneStats.completed) / event.zoneStats.total) * 100
+      : 0
+
+    return (
+      <motion.div
+        key={event.id}
+        initial={inModal ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: inModal ? 0 : i * 0.03 }}
+      >
+        <Card animate={false} className="p-4 rounded-2xl">
+          {/* Header — klikk for a ekspandere. I desktop-modal er kortet allerede ekspandert, og lukke-knappen i modalen styrer lukking. */}
+          <button
+            onClick={() => {
+              if (inModal) return
+              setExpandedId(isExpanded ? null : event.id)
+              setEditingId(null)
+              setDeleteConfirmId(null)
+            }}
+            className="w-full text-left"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-[15px] truncate font-[var(--font-display)]">{event.title}</p>
+                <p className="text-sm text-text-secondary mt-0.5">
+                  {formatDate(event.date, event.start_time, event.end_time)} · {typeLabels[event.type]}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 ml-3">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[event.status]}`}>
+                  {statusLabels[event.status]}
+                </span>
+                {!inModal && (isExpanded ? <ChevronUp size={16} className="text-text-tertiary" /> : <ChevronDown size={16} className="text-text-tertiary" />)}
+              </div>
+            </div>
+
+            {/* Soneprogresjon — ikke for arrangement (har egen vakt-oversikt) */}
+            {event.zoneStats.total > 0 && event.type !== 'arrangement' && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
+                  <span>{event.zoneStats.claimed + event.zoneStats.completed}/{event.zoneStats.total} soner tatt</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                {event.status === 'active' ? (
+                  <>
+                    <SegmentBar
+                      ferdig={event.zoneStats.completed}
+                      paagaar={event.zoneStats.claimed}
+                      ledige={event.zoneStats.available}
+                    />
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      <LegendDot color="var(--color-accent)" label={`${event.zoneStats.completed} ferdig`} />
+                      <LegendDot color="rgba(162,74,51,0.38)" label={`${event.zoneStats.claimed} pågår`} />
+                      <LegendDot color="var(--color-surface-low)" label={`${event.zoneStats.available} ledige`} />
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${progress}%`,
+                        background: event.zoneStats.completed === event.zoneStats.total && event.zoneStats.total > 0
+                          ? 'var(--color-success, #34c759)'
+                          : 'linear-gradient(to right, var(--color-accent), var(--color-primary-container, var(--color-accent)))',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </button>
+
+          {/* Ekspandert detaljer */}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={inModal ? false : { opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 pt-4 space-y-3">
+                  {/* Beskrivelse */}
+                  {event.description && !isEditing && (
+                    <p className="text-sm text-text-secondary">{event.description}</p>
+                  )}
+
+                  {/* Fullføringsinfo */}
+                  {event.status === 'completed' && (event.bags_collected || event.completion_notes) && !isEditing && (
+                    <div className="p-3 bg-success/5 rounded-2xl text-sm space-y-1">
+                      {event.bags_collected && (
+                        <p><span className="font-medium">Sekker levert:</span> {event.bags_collected}</p>
+                      )}
+                      {event.completion_notes && (
+                        <p><span className="font-medium">Notat:</span> {event.completion_notes}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Plastdugnad-import: KMZ-soner + Tutti-musikanter */}
+                  {event.type === 'plast' && !isEditing && (
+                    <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={16} className="text-accent" />
+                        <p className="text-sm font-semibold font-[var(--font-display)]">Plastdugnad-import</p>
+                      </div>
+
+                      {/* Status */}
+                      {event.zoneStats.total === 0 && (
+                        <p className="text-xs text-text-secondary">
+                          Ingen soner opprettet enda. Last opp KMZ fra Google Maps for å lage 6 ryddesoner og møteplass.
+                        </p>
+                      )}
+                      {event.zoneStats.total > 0 && (
+                        <p className="text-xs text-text-secondary">
+                          {event.zoneStats.total} soner opprettet. Last opp Tutti-CSV for å fordele musikanter.
+                        </p>
+                      )}
+
+                      {/* KMZ-upload */}
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept=".kmz,application/vnd.google-earth.kmz"
+                          className="hidden"
+                          disabled={plastImporting === event.id}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) requestKmzUpload(event.id, f)
+                            e.target.value = ''
+                          }}
+                        />
+                        <span className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium cursor-pointer active:bg-accent/20 transition-colors">
+                          <Upload size={14} />
+                          {plastImporting === event.id ? 'Importerer…' : (event.zoneStats.total > 0 ? 'Last opp KMZ på nytt' : 'Last opp KMZ med soner')}
+                        </span>
+                      </label>
+
+                      {/* CSV-upload (kun når soner finnes) */}
+                      {event.zoneStats.total > 0 && (
+                        <label className="block">
+                          <input
+                            type="file"
+                            accept=".csv,text/csv"
+                            className="hidden"
+                            disabled={plastImporting === event.id}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) requestCsvUpload(event.id, f)
+                              e.target.value = ''
+                            }}
+                          />
+                          <span className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-success/10 text-success text-sm font-medium cursor-pointer active:bg-success/20 transition-colors">
+                            <Users size={14} />
+                            {plastImporting === event.id ? 'Importerer…' : 'Last opp Tutti-CSV med musikanter'}
+                          </span>
+                        </label>
+                      )}
+
+                      {/* Resultat-melding */}
+                      {plastImportResult?.eventId === event.id && (
+                        <div className={`p-2 rounded-2xl text-xs ${plastImportResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                          {plastImportResult.message}
+                        </div>
+                      )}
+
+                      {/* Møteplass-info */}
+                      {event.meeting_point && (
+                        <div className="p-2 rounded-2xl bg-card text-xs">
+                          <div className="flex items-center gap-1.5 font-medium text-text-primary">
+                            <MapPin size={12} className="text-accent" />
+                            {event.meeting_point.name}
+                          </div>
+                          <div className="text-text-tertiary mt-0.5">
+                            {event.meeting_point.lat.toFixed(5)}, {event.meeting_point.lng.toFixed(5)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Vakt-administrasjon for arrangement-events */}
+                  {event.type === 'arrangement' && !isEditing && (() => {
+                    const shifts = shiftsByEvent.get(event.id) ?? []
+                    const isSaving = savingShifts.has(event.id)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const roles = ((event as any).role_info as Array<{ role: string }> | null | undefined)?.map(r => r.role) ?? []
+
+                    // Oppdater én rad i state
+                    function updateShift(idx: number, patch: Partial<ShiftRow>) {
+                      setShiftsByEvent(prev => {
+                        const next = new Map(prev)
+                        const rows = [...(next.get(event.id) ?? [])]
+                        rows[idx] = { ...rows[idx], ...patch }
+                        next.set(event.id, rows)
+                        return next
+                      })
+                    }
+
+                    // Fjern én rad fra state — DB-sletting håndteres ved lagring
+                    function removeShift(idx: number) {
+                      setShiftsByEvent(prev => {
+                        const next = new Map(prev)
+                        const rows = [...(next.get(event.id) ?? [])]
+                        rows.splice(idx, 1)
+                        next.set(event.id, rows)
+                        return next
+                      })
+                    }
+
+                    // Legg til tom rad
+                    function addShift() {
+                      setShiftsByEvent(prev => {
+                        const next = new Map(prev)
+                        const rows = [...(next.get(event.id) ?? [])]
+                        rows.push({ clientId: newClientId(), shift_date: '', start_time: '', end_time: '', role: roles[0] ?? '', capacity: 1, notes: '' })
+                        next.set(event.id, rows)
+                        return next
+                      })
+                    }
+
+                    // Lagre — diff mot DB: INSERT nye, UPDATE eksisterende, DELETE fjernede
+                    async function saveShifts() {
+                      setSavingShifts(prev => new Set(prev).add(event.id))
+                      setErrorMsg(null)
+                      try {
+                        // Les ferskeste state — closure-versjonen kan være utdatert hvis Realtime har skutt inn rader
+                        const liveShifts = shiftsByEvent.get(event.id) ?? shifts
+
+                        // Hent gjeldende DB-IDer for å finne slettede
+                        const { data: dbRows, error: selectErr } = await supabaseRef.current
+                          .from('event_shifts')
+                          .select('id')
+                          .eq('event_id', event.id) as unknown as { data: Array<{ id: string }> | null; error: { message?: string } | null }
+                        if (selectErr) {
+                          setErrorMsg(`Kunne ikke hente eksisterende vakter: ${selectErr.message ?? 'ukjent feil'}`)
+                          return
+                        }
+                        const dbIds = new Set((dbRows ?? []).map(r => r.id))
+                        const currentIds = new Set(liveShifts.filter(s => s.id).map(s => s.id as string))
+
+                        // Slett rader som er fjernet fra state
+                        const toDelete = [...dbIds].filter(id => !currentIds.has(id))
+                        if (toDelete.length > 0) {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const { error: delErr } = await (supabaseRef.current.from('event_shifts') as any).delete().in('id', toDelete)
+                          if (delErr) {
+                            setErrorMsg(`Kunne ikke slette gamle vakter: ${delErr.message ?? 'ukjent feil'}`)
+                            return
+                          }
+                        }
+
+                        // Filtrer ut rader uten påkrevde felt
+                        const valid = liveShifts.filter(s => s.shift_date && s.role && s.capacity > 0)
+                        const toInsert = valid.filter(s => !s.id)
+                        const toUpdate = valid.filter(s => !!s.id)
+
+                        if (toInsert.length > 0) {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const { error: insErr } = await (supabaseRef.current.from('event_shifts') as any).insert(
+                            toInsert.map(s => ({
+                              event_id: event.id,
+                              role: s.role,
+                              shift_date: s.shift_date,
+                              start_time: s.start_time || '00:00',
+                              end_time: s.end_time || '00:00',
+                              capacity: s.capacity,
+                              notes: s.notes || null,
+                            }))
+                          )
+                          if (insErr) {
+                            setErrorMsg(`Kunne ikke lagre nye vakter: ${insErr.message ?? 'ukjent feil'}`)
+                            return
+                          }
+                        }
+
+                        // Kjør alle UPDATE-er parallelt og fang første feil
+                        const updateResults = await Promise.all(toUpdate.map(s =>
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          (supabaseRef.current.from('event_shifts') as any).update({
+                            role: s.role,
+                            shift_date: s.shift_date,
+                            start_time: s.start_time || '00:00',
+                            end_time: s.end_time || '00:00',
+                            capacity: s.capacity,
+                            notes: s.notes || null,
+                          }).eq('id', s.id)
+                        ))
+                        const updErr = updateResults.find((r: { error: unknown }) => r.error)
+                        if (updErr) {
+                          const e = (updErr as { error: { message?: string } }).error
+                          setErrorMsg(`Kunne ikke oppdatere vakter: ${e.message ?? 'ukjent feil'}`)
+                          return
+                        }
+
+                        await reloadShifts(event.id)
+                      } finally {
+                        setSavingShifts(prev => { const next = new Set(prev); next.delete(event.id); return next })
+                      }
+                    }
+
+                    return (
+                      <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
+                        <div className="flex items-center gap-2">
+                          <Users size={16} className="text-accent" />
+                          <p className="text-sm font-semibold font-[var(--font-display)]">Vakter</p>
+                        </div>
+
+                        {shifts.length === 0 && (
+                          <p className="text-xs text-text-secondary">Ingen vakter lagt til ennå.</p>
+                        )}
+
+                        {/* Vaktliste */}
+                        <div className="space-y-2">
+                          {shifts.map((s, idx) => (
+                            <div key={s.clientId} className="relative p-3 pr-10 bg-card rounded-xl ring-1 ring-text-tertiary/10 space-y-2.5">
+                              {/* Slett-knapp øverst til høyre */}
+                              <button
+                                type="button"
+                                onClick={() => removeShift(idx)}
+                                className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full text-danger/70 text-xl leading-none flex items-center justify-center active:bg-danger/10 active:text-danger transition-colors"
+                                aria-label="Fjern vakt"
+                              >
+                                ×
+                              </button>
+
+                              {/* Dato — egen rad */}
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Dato</label>
+                                <input
+                                  type="date"
+                                  value={s.shift_date}
+                                  onChange={e => updateShift(idx, { shift_date: e.target.value })}
+                                  className={`${dateTimeClass} text-sm`}
+                                />
+                              </div>
+
+                              {/* Fra–til på samme rad */}
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Fra</label>
+                                  <input
+                                    type="time"
+                                    value={s.start_time}
+                                    onChange={e => updateShift(idx, { start_time: e.target.value })}
+                                    className={`${dateTimeClass} text-sm`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Til</label>
+                                  <input
+                                    type="time"
+                                    value={s.end_time}
+                                    onChange={e => updateShift(idx, { end_time: e.target.value })}
+                                    className={`${dateTimeClass} text-sm`}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Rolle + antall */}
+                              <div className="grid grid-cols-[1fr_5rem] gap-2 items-end">
+                                <div className="min-w-0">
+                                  <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Rolle</label>
+                                  <select
+                                    value={s.role}
+                                    onChange={e => updateShift(idx, { role: e.target.value })}
+                                    className={`${inputClass} text-sm`}
+                                  >
+                                    <option value="">Velg rolle</option>
+                                    {roles.map(r => (
+                                      <option key={r} value={r}>{r}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Antall</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={s.capacity}
+                                    onChange={e => updateShift(idx, { capacity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                                    className={`${inputClass} text-sm text-center`}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Legg til + lagre */}
+                        <button
+                          type="button"
+                          onClick={addShift}
+                          className="flex items-center gap-1.5 text-xs text-accent font-medium px-3 py-2 rounded-full bg-accent/10 active:bg-accent/20 transition-colors"
+                        >
+                          <Plus size={13} />
+                          Legg til vakt
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={saveShifts}
+                          disabled={isSaving}
+                          className="w-full py-2.5 rounded-full bg-accent text-white text-sm font-medium active:bg-accent/80 disabled:opacity-50 transition-colors"
+                        >
+                          {isSaving ? 'Lagrer…' : 'Lagre vakter'}
+                        </button>
+
+                        <a
+                          href={`/api/admin/arrangement/${event.id}/export`}
+                          download
+                          className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors"
+                        >
+                          <Download size={14} />
+                          Last ned vaktliste (.csv)
+                        </a>
+
+                        <button
+                          onClick={() => triggerShiftReminders(event.id)}
+                          disabled={triggerReminders === event.id}
+                          className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors disabled:opacity-50"
+                        >
+                          <Bell size={14} />
+                          {triggerReminders === event.id ? 'Sender…' : 'Send 24t-påminnelser nå'}
+                        </button>
+                        {triggerReminderResult?.eventId === event.id && (
+                          <div className={`p-2 rounded-2xl text-xs text-center ${triggerReminderResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                            {triggerReminderResult.message}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Sonestatistikk — kun for sonebaserte dugnader, ikke arrangement (som bruker vakter) */}
+                  {event.type !== 'arrangement' && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-teal/10 rounded-2xl p-2 text-center">
+                        <p className="text-lg font-bold text-teal font-[var(--font-display)]">{event.zoneStats.available}</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-teal">Ledige</p>
+                      </div>
+                      <div className="bg-warning/10 rounded-2xl p-2 text-center">
+                        <p className="text-lg font-bold text-warning font-[var(--font-display)]">{event.zoneStats.claimed}</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-warning">Tatt</p>
+                      </div>
+                      <div className="bg-success/10 rounded-2xl p-2 text-center">
+                        <p className="text-lg font-bold text-success font-[var(--font-display)]">{event.zoneStats.completed}</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-success">Ferdig</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inline redigeringsskjema */}
+                  <AnimatePresence>
+                    {isEditing && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="bg-surface-low rounded-2xl p-4">
+                          {renderForm(
+                            editForm,
+                            (fn) => setEditForm(fn),
+                            handleEditSave,
+                            'Lagre endringer',
+                            editSaving,
+                            'edit',
+                            event.status,
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Avbryt — nullstill redigerings-state
+                              setEditForm({ ...emptyForm })
+                              setEditingId(null)
+                              setDesktopEditEventId(null)
+                              setErrorMsg(null)
+                            }}
+                            className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-surface-low rounded-full"
+                          >
+                            Avbryt
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Slettebekreftelse */}
+                  <AnimatePresence>
+                    {isDeleteConfirm && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="rounded-2xl overflow-hidden bg-danger/5">
+                          <div className="p-4 text-center">
+                            <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
+                            <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Slette hendelsen?</p>
+                            <p className="text-sm text-text-secondary">
+                              {event.type === 'arrangement'
+                                ? 'Hendelsen, alle vakter og påmeldinger blir permanent slettet.'
+                                : 'Hendelsen og alle sonetildelinger blir permanent slettet.'}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 px-4 pb-4">
+                            <button
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
+                            >
+                              Avbryt
+                            </button>
+                            <button
+                              onClick={() => handleDelete(event.id)}
+                              disabled={deleting}
+                              className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
+                            >
+                              {deleting ? 'Sletter...' : 'Slett'}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Deaktiverings-bekreftelse */}
+                  <AnimatePresence>
+                    {deactivateConfirmId === event.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="rounded-2xl overflow-hidden bg-warning/5">
+                          <div className="p-4 text-center">
+                            <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
+                            <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Deaktivere hendelsen?</p>
+                            <p className="text-sm text-text-secondary">
+                              {event.type === 'arrangement'
+                                ? `${event.zoneStats.claimed + event.zoneStats.completed} påmeldinger er registrert. De beholdes men skjules for brukerne.`
+                                : `${event.zoneStats.claimed + event.zoneStats.completed} soner er tatt av deltakere. Claims beholdes men skjules for brukerne.`}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 px-4 pb-4">
+                            <button
+                              onClick={() => setDeactivateConfirmId(null)}
+                              className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
+                            >
+                              Avbryt
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDeactivateConfirmId(null)
+                                handleStatusChange(event.id, 'upcoming')
+                              }}
+                              className="flex-1 py-3 text-sm font-medium text-warning rounded-full bg-warning/10 active:bg-warning/20"
+                            >
+                              Deaktiver
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Nullstill claims-bekreftelse */}
+                  <AnimatePresence>
+                    {resetConfirmId === event.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="rounded-2xl overflow-hidden bg-danger/5">
+                          <div className="p-4 text-center">
+                            <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
+                            <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Nullstille alle claims?</p>
+                            <p className="text-sm text-text-secondary">
+                              {event.type === 'arrangement'
+                                ? `Alle ${event.zoneStats.claimed + event.zoneStats.completed} påmeldinger slettes permanent. Deltakerne mister vaktene sine.`
+                                : `Alle ${event.zoneStats.claimed + event.zoneStats.completed} tatte soner slettes permanent. Deltakerne mister sine valgte soner.`}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 px-4 pb-4">
+                            <button
+                              onClick={() => setResetConfirmId(null)}
+                              className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
+                            >
+                              Avbryt
+                            </button>
+                            <button
+                              onClick={() => handleResetClaims(event.id)}
+                              disabled={resetting}
+                              className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
+                            >
+                              {resetting ? 'Nullstiller...' : 'Nullstill'}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Fullførings-dialog — innhold tilpasses event.type */}
+                  <AnimatePresence>
+                    {completeConfirmId === event.id && (() => {
+                      // Antall-felt vises kun for sone-baserte dugnader. Arrangement og diverse
+                      // har bare notatfelt siden tallet ikke gir mening der.
+                      const showCountField = event.type === 'plast' || event.type === 'bottle_collection' || event.type === 'lapper'
+                      const countLabel =
+                        event.type === 'plast' ? 'Hvor mange sekker ble levert?' :
+                        event.type === 'bottle_collection' ? 'Hvor mange flasker/panteenheter?' :
+                        event.type === 'lapper' ? 'Hvor mange lapper ble levert?' :
+                        ''
+                      const countPlaceholder =
+                        event.type === 'plast' ? 'F.eks. 45' :
+                        event.type === 'bottle_collection' ? 'F.eks. 1200' :
+                        event.type === 'lapper' ? 'F.eks. 350' :
+                        ''
+                      const heading =
+                        event.type === 'plast' ? 'Fullfør plastdugnad' :
+                        event.type === 'bottle_collection' ? 'Fullfør flaskeinnsamling' :
+                        event.type === 'lapper' ? 'Fullfør lappeutdeling' :
+                        event.type === 'arrangement' ? 'Fullfør arrangement' :
+                        'Fullfør hendelsen'
+                      return (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="rounded-2xl overflow-hidden bg-success/5">
+                          <div className="p-4">
+                            <CheckCircle size={32} className="text-success mx-auto mb-2" />
+                            <p className="text-[15px] font-medium mb-3 text-center font-[var(--font-display)]">{heading}</p>
+                            <div className="space-y-3">
+                              {showCountField && (
+                                <div>
+                                  <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">{countLabel}</label>
+                                  <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    value={completeBags}
+                                    onChange={e => setCompleteBags(e.target.value)}
+                                    placeholder={countPlaceholder}
+                                    className={inputClass}
+                                  />
+                                </div>
+                              )}
+                              <div>
+                                <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
+                                  {event.type === 'arrangement' ? 'Hvordan gikk det? (valgfritt)' : 'Annet å notere? (valgfritt)'}
+                                </label>
+                                <textarea
+                                  value={completeNotes}
+                                  onChange={e => setCompleteNotes(e.target.value)}
+                                  rows={2}
+                                  placeholder={event.type === 'arrangement' ? 'F.eks. Bra oppmøte, alle vakter dekket' : 'F.eks. Fantastisk oppmøte, ferdig på 1,5 time'}
+                                  className={`${inputClass} resize-none`}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 px-4 pb-4">
+                            <button
+                              onClick={() => setCompleteConfirmId(null)}
+                              className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
+                            >
+                              Avbryt
+                            </button>
+                            <button
+                              onClick={async () => {
+                                // Lagre sekker og notater før statusendring
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                await (supabaseRef.current.from('events') as any).update({
+                                  bags_collected: completeBags ? parseInt(completeBags, 10) : null,
+                                  completion_notes: completeNotes || null,
+                                }).eq('id', event.id)
+                                setCompleteConfirmId(null)
+                                handleStatusChange(event.id, 'completed')
+                              }}
+                              disabled={updatingId === event.id}
+                              className="flex-1 py-3 text-sm font-medium text-success rounded-full bg-success/10 active:bg-success/20"
+                            >
+                              {updatingId === event.id ? 'Fullføres...' : 'Fullfør'}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                      )
+                    })()}
+                  </AnimatePresence>
+
+                  {/* Handlingsknapper — rediger, slett, statusendring */}
+                  {!isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && completeConfirmId !== event.id && (
+                    <div className="space-y-3">
+                      {/* Lås påmelding / Åpne påmelding — kun for arrangement-events i upcoming/active */}
+                      {event.type === 'arrangement' && event.status !== 'completed' && (() => {
+                        const signupLocked = !!event.signup_deadline && new Date(event.signup_deadline) < new Date()
+                        return signupLocked ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="w-full rounded-full"
+                            loading={lockingId === event.id}
+                            onClick={() => handleToggleSignupLock(event.id, false)}
+                          >
+                            Åpne påmelding igjen
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="w-full rounded-full"
+                            loading={lockingId === event.id}
+                            onClick={() => handleToggleSignupLock(event.id, true)}
+                          >
+                            Lås påmelding nå
+                          </Button>
+                        )
+                      })()}
+
+                      {/* Statusknapper tilpasset gjeldende status */}
+                      {event.status === 'upcoming' && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="w-full rounded-full"
+                          loading={updatingId === event.id}
+                          onClick={() => handleStatusChange(event.id, 'active')}
+                        >
+                          <MapPin size={14} />
+                          Aktiver hendelse
+                        </Button>
+                      )}
+
+                      {event.status === 'active' && (
+                        <div className="space-y-3">
+                          {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="w-full bg-warning/10 text-warning rounded-full"
+                              onClick={() => handleSendHelp(event)}
+                            >
+                              <Bell size={14} />
+                              Send hjelp-varsel ({event.zoneStats.available} ledige)
+                            </Button>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="rounded-full"
+                              loading={updatingId === event.id}
+                              onClick={() => handleDeactivateClick(event)}
+                            >
+                              Deaktiver
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="bg-success/10 text-success hover:bg-success/20 rounded-full"
+                              loading={updatingId === event.id}
+                              onClick={() => {
+                                setCompleteConfirmId(event.id)
+                                setCompleteBags('')
+                                setCompleteNotes('')
+                              }}
+                            >
+                              Merk som fullført
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Nullstill claims — kun for sonebaserte dugnader */}
+                      {(event.zoneStats.claimed + event.zoneStats.completed) > 0 && event.type !== 'arrangement' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-full text-text-secondary rounded-full"
+                          onClick={() => {
+                            setResetConfirmId(event.id)
+                            setEditingId(null)
+                            setDeleteConfirmId(null)
+                          }}
+                        >
+                          Nullstill alle claims ({event.zoneStats.claimed + event.zoneStats.completed})
+                        </Button>
+                      )}
+
+                      {/* Eksporter CSV — kun for fullførte */}
+                      {event.status === 'completed' && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="w-full rounded-full"
+                          loading={exporting === event.id}
+                          onClick={() => handleExportCSV(event.id)}
+                        >
+                          <Download size={14} />
+                          Eksporter CSV
+                        </Button>
+                      )}
+
+                      {/* Rediger + Slett */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="rounded-full"
+                          onClick={() => startEditing(event)}
+                        >
+                          <Pencil size={14} />
+                          Rediger
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          className="rounded-full"
+                          onClick={() => {
+                            setDeleteConfirmId(event.id)
+                            setEditingId(null)
+                          }}
+                        >
+                          <Trash2 size={14} />
+                          Slett
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Desktop-actions: alltid synlige på lg+ for aktive hendelser i mobile-listen — droppes i modal */}
+          {!inModal && event.status === 'active' && !isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && completeConfirmId !== event.id && (
+            <div className="hidden lg:flex items-center gap-2 mt-4 pt-3 border-t border-text-tertiary/10 overflow-x-auto">
+              <Link
+                href={`/kart?event=${event.id}`}
+                className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+              >
+                <MapIcon size={13} />
+                Se kart
+              </Link>
+              {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
+                <button
+                  type="button"
+                  onClick={() => handleSendHelp(event)}
+                  className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
+                >
+                  <Bell size={13} />
+                  Send hjelp-varsel ({event.zoneStats.available})
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleDeactivateClick(event)}
+                className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-surface-low text-text-secondary hover:bg-text-tertiary/10 transition-colors"
+              >
+                <Power size={13} />
+                Deaktiver
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCompleteConfirmId(event.id)
+                  setCompleteBags('')
+                  setCompleteNotes('')
+                  setExpandedId(event.id)
+                }}
+                className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-success/10 text-success hover:bg-success/20 transition-colors"
+              >
+                <CheckCircle size={13} />
+                Marker fullført
+              </button>
+            </div>
+          )}
+        </Card>
+      </motion.div>
+    )
+  }
+
   return (
     <>
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card safe-top">
@@ -1858,6 +2765,7 @@ export default function EventsAdminPage() {
                   }}
                   onSendHelp={() => setDesktopConfirm({ kind: 'sendhelp', event })}
                   onExportCSV={() => handleExportCSV(event.id)}
+                  onShowDetails={() => setDesktopExpandedId(event.id)}
                   exporting={exporting === event.id}
                   updatingId={updatingId}
                 />
@@ -1920,903 +2828,7 @@ export default function EventsAdminPage() {
 
         return (
         <div className="lg:hidden space-y-3">
-          {filtered.map((event, i) => {
-            const isExpanded = expandedId === event.id
-            const isEditing = editingId === event.id
-            const isDeleteConfirm = deleteConfirmId === event.id
-            const progress = event.zoneStats.total > 0
-              ? ((event.zoneStats.claimed + event.zoneStats.completed) / event.zoneStats.total) * 100
-              : 0
-
-            return (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-              >
-                <Card animate={false} className="p-4 rounded-2xl">
-                  {/* Header — klikk for a ekspandere */}
-                  <button
-                    onClick={() => {
-                      setExpandedId(isExpanded ? null : event.id)
-                      setEditingId(null)
-                      setDeleteConfirmId(null)
-                    }}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[15px] truncate font-[var(--font-display)]">{event.title}</p>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          {formatDate(event.date, event.start_time, event.end_time)} · {typeLabels[event.type]}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-3">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[event.status]}`}>
-                          {statusLabels[event.status]}
-                        </span>
-                        {isExpanded ? <ChevronUp size={16} className="text-text-tertiary" /> : <ChevronDown size={16} className="text-text-tertiary" />}
-                      </div>
-                    </div>
-
-                    {/* Soneprogresjon — ikke for arrangement (har egen vakt-oversikt) */}
-                    {event.zoneStats.total > 0 && event.type !== 'arrangement' && (
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
-                          <span>{event.zoneStats.claimed + event.zoneStats.completed}/{event.zoneStats.total} soner tatt</span>
-                          <span>{Math.round(progress)}%</span>
-                        </div>
-                        {event.status === 'active' ? (
-                          <>
-                            <SegmentBar
-                              ferdig={event.zoneStats.completed}
-                              paagaar={event.zoneStats.claimed}
-                              ledige={event.zoneStats.available}
-                            />
-                            <div className="flex flex-wrap gap-3 mt-2">
-                              <LegendDot color="var(--color-accent)" label={`${event.zoneStats.completed} ferdig`} />
-                              <LegendDot color="rgba(162,74,51,0.38)" label={`${event.zoneStats.claimed} pågår`} />
-                              <LegendDot color="var(--color-surface-low)" label={`${event.zoneStats.available} ledige`} />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="h-1.5 bg-surface-low rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${progress}%`,
-                                background: event.zoneStats.completed === event.zoneStats.total && event.zoneStats.total > 0
-                                  ? 'var(--color-success, #34c759)'
-                                  : 'linear-gradient(to right, var(--color-accent), var(--color-primary-container, var(--color-accent)))',
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Ekspandert detaljer */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="mt-4 pt-4 space-y-3">
-                          {/* Beskrivelse */}
-                          {event.description && !isEditing && (
-                            <p className="text-sm text-text-secondary">{event.description}</p>
-                          )}
-
-                          {/* Fullføringsinfo */}
-                          {event.status === 'completed' && (event.bags_collected || event.completion_notes) && !isEditing && (
-                            <div className="p-3 bg-success/5 rounded-2xl text-sm space-y-1">
-                              {event.bags_collected && (
-                                <p><span className="font-medium">Sekker levert:</span> {event.bags_collected}</p>
-                              )}
-                              {event.completion_notes && (
-                                <p><span className="font-medium">Notat:</span> {event.completion_notes}</p>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Plastdugnad-import: KMZ-soner + Tutti-musikanter */}
-                          {event.type === 'plast' && !isEditing && (
-                            <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
-                              <div className="flex items-center gap-2">
-                                <Sparkles size={16} className="text-accent" />
-                                <p className="text-sm font-semibold font-[var(--font-display)]">Plastdugnad-import</p>
-                              </div>
-
-                              {/* Status */}
-                              {event.zoneStats.total === 0 && (
-                                <p className="text-xs text-text-secondary">
-                                  Ingen soner opprettet enda. Last opp KMZ fra Google Maps for å lage 6 ryddesoner og møteplass.
-                                </p>
-                              )}
-                              {event.zoneStats.total > 0 && (
-                                <p className="text-xs text-text-secondary">
-                                  {event.zoneStats.total} soner opprettet. Last opp Tutti-CSV for å fordele musikanter.
-                                </p>
-                              )}
-
-                              {/* KMZ-upload */}
-                              <label className="block">
-                                <input
-                                  type="file"
-                                  accept=".kmz,application/vnd.google-earth.kmz"
-                                  className="hidden"
-                                  disabled={plastImporting === event.id}
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0]
-                                    if (f) requestKmzUpload(event.id, f)
-                                    e.target.value = ''
-                                  }}
-                                />
-                                <span className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium cursor-pointer active:bg-accent/20 transition-colors">
-                                  <Upload size={14} />
-                                  {plastImporting === event.id ? 'Importerer…' : (event.zoneStats.total > 0 ? 'Last opp KMZ på nytt' : 'Last opp KMZ med soner')}
-                                </span>
-                              </label>
-
-                              {/* CSV-upload (kun når soner finnes) */}
-                              {event.zoneStats.total > 0 && (
-                                <label className="block">
-                                  <input
-                                    type="file"
-                                    accept=".csv,text/csv"
-                                    className="hidden"
-                                    disabled={plastImporting === event.id}
-                                    onChange={(e) => {
-                                      const f = e.target.files?.[0]
-                                      if (f) requestCsvUpload(event.id, f)
-                                      e.target.value = ''
-                                    }}
-                                  />
-                                  <span className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-success/10 text-success text-sm font-medium cursor-pointer active:bg-success/20 transition-colors">
-                                    <Users size={14} />
-                                    {plastImporting === event.id ? 'Importerer…' : 'Last opp Tutti-CSV med musikanter'}
-                                  </span>
-                                </label>
-                              )}
-
-                              {/* Resultat-melding */}
-                              {plastImportResult?.eventId === event.id && (
-                                <div className={`p-2 rounded-2xl text-xs ${plastImportResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
-                                  {plastImportResult.message}
-                                </div>
-                              )}
-
-                              {/* Møteplass-info */}
-                              {event.meeting_point && (
-                                <div className="p-2 rounded-2xl bg-card text-xs">
-                                  <div className="flex items-center gap-1.5 font-medium text-text-primary">
-                                    <MapPin size={12} className="text-accent" />
-                                    {event.meeting_point.name}
-                                  </div>
-                                  <div className="text-text-tertiary mt-0.5">
-                                    {event.meeting_point.lat.toFixed(5)}, {event.meeting_point.lng.toFixed(5)}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Vakt-administrasjon for arrangement-events */}
-                          {event.type === 'arrangement' && !isEditing && (() => {
-                            const shifts = shiftsByEvent.get(event.id) ?? []
-                            const isSaving = savingShifts.has(event.id)
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const roles = ((event as any).role_info as Array<{ role: string }> | null | undefined)?.map(r => r.role) ?? []
-
-                            // Oppdater én rad i state
-                            function updateShift(idx: number, patch: Partial<ShiftRow>) {
-                              setShiftsByEvent(prev => {
-                                const next = new Map(prev)
-                                const rows = [...(next.get(event.id) ?? [])]
-                                rows[idx] = { ...rows[idx], ...patch }
-                                next.set(event.id, rows)
-                                return next
-                              })
-                            }
-
-                            // Fjern én rad fra state — DB-sletting håndteres ved lagring
-                            function removeShift(idx: number) {
-                              setShiftsByEvent(prev => {
-                                const next = new Map(prev)
-                                const rows = [...(next.get(event.id) ?? [])]
-                                rows.splice(idx, 1)
-                                next.set(event.id, rows)
-                                return next
-                              })
-                            }
-
-                            // Legg til tom rad
-                            function addShift() {
-                              setShiftsByEvent(prev => {
-                                const next = new Map(prev)
-                                const rows = [...(next.get(event.id) ?? [])]
-                                rows.push({ clientId: newClientId(), shift_date: '', start_time: '', end_time: '', role: roles[0] ?? '', capacity: 1, notes: '' })
-                                next.set(event.id, rows)
-                                return next
-                              })
-                            }
-
-                            // Lagre — diff mot DB: INSERT nye, UPDATE eksisterende, DELETE fjernede
-                            async function saveShifts() {
-                              setSavingShifts(prev => new Set(prev).add(event.id))
-                              setErrorMsg(null)
-                              try {
-                                // Les ferskeste state — closure-versjonen kan være utdatert hvis Realtime har skutt inn rader
-                                const liveShifts = shiftsByEvent.get(event.id) ?? shifts
-
-                                // Hent gjeldende DB-IDer for å finne slettede
-                                const { data: dbRows, error: selectErr } = await supabaseRef.current
-                                  .from('event_shifts')
-                                  .select('id')
-                                  .eq('event_id', event.id) as unknown as { data: Array<{ id: string }> | null; error: { message?: string } | null }
-                                if (selectErr) {
-                                  setErrorMsg(`Kunne ikke hente eksisterende vakter: ${selectErr.message ?? 'ukjent feil'}`)
-                                  return
-                                }
-                                const dbIds = new Set((dbRows ?? []).map(r => r.id))
-                                const currentIds = new Set(liveShifts.filter(s => s.id).map(s => s.id as string))
-
-                                // Slett rader som er fjernet fra state
-                                const toDelete = [...dbIds].filter(id => !currentIds.has(id))
-                                if (toDelete.length > 0) {
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  const { error: delErr } = await (supabaseRef.current.from('event_shifts') as any).delete().in('id', toDelete)
-                                  if (delErr) {
-                                    setErrorMsg(`Kunne ikke slette gamle vakter: ${delErr.message ?? 'ukjent feil'}`)
-                                    return
-                                  }
-                                }
-
-                                // Filtrer ut rader uten påkrevde felt
-                                const valid = liveShifts.filter(s => s.shift_date && s.role && s.capacity > 0)
-                                const toInsert = valid.filter(s => !s.id)
-                                const toUpdate = valid.filter(s => !!s.id)
-
-                                if (toInsert.length > 0) {
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  const { error: insErr } = await (supabaseRef.current.from('event_shifts') as any).insert(
-                                    toInsert.map(s => ({
-                                      event_id: event.id,
-                                      role: s.role,
-                                      shift_date: s.shift_date,
-                                      start_time: s.start_time || '00:00',
-                                      end_time: s.end_time || '00:00',
-                                      capacity: s.capacity,
-                                      notes: s.notes || null,
-                                    }))
-                                  )
-                                  if (insErr) {
-                                    setErrorMsg(`Kunne ikke lagre nye vakter: ${insErr.message ?? 'ukjent feil'}`)
-                                    return
-                                  }
-                                }
-
-                                // Kjør alle UPDATE-er parallelt og fang første feil
-                                const updateResults = await Promise.all(toUpdate.map(s =>
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  (supabaseRef.current.from('event_shifts') as any).update({
-                                    role: s.role,
-                                    shift_date: s.shift_date,
-                                    start_time: s.start_time || '00:00',
-                                    end_time: s.end_time || '00:00',
-                                    capacity: s.capacity,
-                                    notes: s.notes || null,
-                                  }).eq('id', s.id)
-                                ))
-                                const updErr = updateResults.find((r: { error: unknown }) => r.error)
-                                if (updErr) {
-                                  const e = (updErr as { error: { message?: string } }).error
-                                  setErrorMsg(`Kunne ikke oppdatere vakter: ${e.message ?? 'ukjent feil'}`)
-                                  return
-                                }
-
-                                await reloadShifts(event.id)
-                              } finally {
-                                setSavingShifts(prev => { const next = new Set(prev); next.delete(event.id); return next })
-                              }
-                            }
-
-                            return (
-                              <div className="space-y-3 p-3 rounded-2xl bg-accent/5">
-                                <div className="flex items-center gap-2">
-                                  <Users size={16} className="text-accent" />
-                                  <p className="text-sm font-semibold font-[var(--font-display)]">Vakter</p>
-                                </div>
-
-                                {shifts.length === 0 && (
-                                  <p className="text-xs text-text-secondary">Ingen vakter lagt til ennå.</p>
-                                )}
-
-                                {/* Vaktliste */}
-                                <div className="space-y-2">
-                                  {shifts.map((s, idx) => (
-                                    <div key={s.clientId} className="relative p-3 pr-10 bg-card rounded-xl ring-1 ring-text-tertiary/10 space-y-2.5">
-                                      {/* Slett-knapp øverst til høyre */}
-                                      <button
-                                        type="button"
-                                        onClick={() => removeShift(idx)}
-                                        className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full text-danger/70 text-xl leading-none flex items-center justify-center active:bg-danger/10 active:text-danger transition-colors"
-                                        aria-label="Fjern vakt"
-                                      >
-                                        ×
-                                      </button>
-
-                                      {/* Dato — egen rad */}
-                                      <div>
-                                        <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Dato</label>
-                                        <input
-                                          type="date"
-                                          value={s.shift_date}
-                                          onChange={e => updateShift(idx, { shift_date: e.target.value })}
-                                          className={`${dateTimeClass} text-sm`}
-                                        />
-                                      </div>
-
-                                      {/* Fra–til på samme rad */}
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                          <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Fra</label>
-                                          <input
-                                            type="time"
-                                            value={s.start_time}
-                                            onChange={e => updateShift(idx, { start_time: e.target.value })}
-                                            className={`${dateTimeClass} text-sm`}
-                                          />
-                                        </div>
-                                        <div>
-                                          <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Til</label>
-                                          <input
-                                            type="time"
-                                            value={s.end_time}
-                                            onChange={e => updateShift(idx, { end_time: e.target.value })}
-                                            className={`${dateTimeClass} text-sm`}
-                                          />
-                                        </div>
-                                      </div>
-
-                                      {/* Rolle + antall */}
-                                      <div className="grid grid-cols-[1fr_5rem] gap-2 items-end">
-                                        <div className="min-w-0">
-                                          <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Rolle</label>
-                                          <select
-                                            value={s.role}
-                                            onChange={e => updateShift(idx, { role: e.target.value })}
-                                            className={`${inputClass} text-sm`}
-                                          >
-                                            <option value="">Velg rolle</option>
-                                            {roles.map(r => (
-                                              <option key={r} value={r}>{r}</option>
-                                            ))}
-                                          </select>
-                                        </div>
-                                        <div>
-                                          <label className="block text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-1">Antall</label>
-                                          <input
-                                            type="number"
-                                            min={1}
-                                            value={s.capacity}
-                                            onChange={e => updateShift(idx, { capacity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                                            className={`${inputClass} text-sm text-center`}
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-
-                                {/* Legg til + lagre */}
-                                <button
-                                  type="button"
-                                  onClick={addShift}
-                                  className="flex items-center gap-1.5 text-xs text-accent font-medium px-3 py-2 rounded-full bg-accent/10 active:bg-accent/20 transition-colors"
-                                >
-                                  <Plus size={13} />
-                                  Legg til vakt
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={saveShifts}
-                                  disabled={isSaving}
-                                  className="w-full py-2.5 rounded-full bg-accent text-white text-sm font-medium active:bg-accent/80 disabled:opacity-50 transition-colors"
-                                >
-                                  {isSaving ? 'Lagrer…' : 'Lagre vakter'}
-                                </button>
-
-                                <a
-                                  href={`/api/admin/arrangement/${event.id}/export`}
-                                  download
-                                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors"
-                                >
-                                  <Download size={14} />
-                                  Last ned vaktliste (.csv)
-                                </a>
-
-                                <button
-                                  onClick={() => triggerShiftReminders(event.id)}
-                                  disabled={triggerReminders === event.id}
-                                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-full bg-accent/10 text-accent text-sm font-medium active:bg-accent/20 transition-colors disabled:opacity-50"
-                                >
-                                  <Bell size={14} />
-                                  {triggerReminders === event.id ? 'Sender…' : 'Send 24t-påminnelser nå'}
-                                </button>
-                                {triggerReminderResult?.eventId === event.id && (
-                                  <div className={`p-2 rounded-2xl text-xs text-center ${triggerReminderResult.isError ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
-                                    {triggerReminderResult.message}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })()}
-
-                          {/* Sonestatistikk — kun for sonebaserte dugnader, ikke arrangement (som bruker vakter) */}
-                          {event.type !== 'arrangement' && (
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="bg-teal/10 rounded-2xl p-2 text-center">
-                                <p className="text-lg font-bold text-teal font-[var(--font-display)]">{event.zoneStats.available}</p>
-                                <p className="text-[11px] font-bold uppercase tracking-widest text-teal">Ledige</p>
-                              </div>
-                              <div className="bg-warning/10 rounded-2xl p-2 text-center">
-                                <p className="text-lg font-bold text-warning font-[var(--font-display)]">{event.zoneStats.claimed}</p>
-                                <p className="text-[11px] font-bold uppercase tracking-widest text-warning">Tatt</p>
-                              </div>
-                              <div className="bg-success/10 rounded-2xl p-2 text-center">
-                                <p className="text-lg font-bold text-success font-[var(--font-display)]">{event.zoneStats.completed}</p>
-                                <p className="text-[11px] font-bold uppercase tracking-widest text-success">Ferdig</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Inline redigeringsskjema */}
-                          <AnimatePresence>
-                            {isEditing && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="bg-surface-low rounded-2xl p-4">
-                                  {renderForm(
-                                    editForm,
-                                    (fn) => setEditForm(fn),
-                                    handleEditSave,
-                                    'Lagre endringer',
-                                    editSaving,
-                                    'edit',
-                                    event.status,
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      // Avbryt — nullstill redigerings-state
-                                      setEditForm({ ...emptyForm })
-                                      setEditingId(null)
-                                      setDesktopEditEventId(null)
-                                      setErrorMsg(null)
-                                    }}
-                                    className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-surface-low rounded-full"
-                                  >
-                                    Avbryt
-                                  </button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Slettebekreftelse */}
-                          <AnimatePresence>
-                            {isDeleteConfirm && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="rounded-2xl overflow-hidden bg-danger/5">
-                                  <div className="p-4 text-center">
-                                    <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Slette hendelsen?</p>
-                                    <p className="text-sm text-text-secondary">
-                                      {event.type === 'arrangement'
-                                        ? 'Hendelsen, alle vakter og påmeldinger blir permanent slettet.'
-                                        : 'Hendelsen og alle sonetildelinger blir permanent slettet.'}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2 px-4 pb-4">
-                                    <button
-                                      onClick={() => setDeleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
-                                    >
-                                      Avbryt
-                                    </button>
-                                    <button
-                                      onClick={() => handleDelete(event.id)}
-                                      disabled={deleting}
-                                      className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
-                                    >
-                                      {deleting ? 'Sletter...' : 'Slett'}
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Deaktiverings-bekreftelse */}
-                          <AnimatePresence>
-                            {deactivateConfirmId === event.id && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="rounded-2xl overflow-hidden bg-warning/5">
-                                  <div className="p-4 text-center">
-                                    <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Deaktivere hendelsen?</p>
-                                    <p className="text-sm text-text-secondary">
-                                      {event.type === 'arrangement'
-                                        ? `${event.zoneStats.claimed + event.zoneStats.completed} påmeldinger er registrert. De beholdes men skjules for brukerne.`
-                                        : `${event.zoneStats.claimed + event.zoneStats.completed} soner er tatt av deltakere. Claims beholdes men skjules for brukerne.`}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2 px-4 pb-4">
-                                    <button
-                                      onClick={() => setDeactivateConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
-                                    >
-                                      Avbryt
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setDeactivateConfirmId(null)
-                                        handleStatusChange(event.id, 'upcoming')
-                                      }}
-                                      className="flex-1 py-3 text-sm font-medium text-warning rounded-full bg-warning/10 active:bg-warning/20"
-                                    >
-                                      Deaktiver
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Nullstill claims-bekreftelse */}
-                          <AnimatePresence>
-                            {resetConfirmId === event.id && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="rounded-2xl overflow-hidden bg-danger/5">
-                                  <div className="p-4 text-center">
-                                    <AlertTriangle size={32} className="text-danger mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-1 font-[var(--font-display)]">Nullstille alle claims?</p>
-                                    <p className="text-sm text-text-secondary">
-                                      {event.type === 'arrangement'
-                                        ? `Alle ${event.zoneStats.claimed + event.zoneStats.completed} påmeldinger slettes permanent. Deltakerne mister vaktene sine.`
-                                        : `Alle ${event.zoneStats.claimed + event.zoneStats.completed} tatte soner slettes permanent. Deltakerne mister sine valgte soner.`}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2 px-4 pb-4">
-                                    <button
-                                      onClick={() => setResetConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
-                                    >
-                                      Avbryt
-                                    </button>
-                                    <button
-                                      onClick={() => handleResetClaims(event.id)}
-                                      disabled={resetting}
-                                      className="flex-1 py-3 text-sm font-medium text-danger rounded-full bg-danger/10 active:bg-danger/20"
-                                    >
-                                      {resetting ? 'Nullstiller...' : 'Nullstill'}
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Fullførings-dialog — innhold tilpasses event.type */}
-                          <AnimatePresence>
-                            {completeConfirmId === event.id && (() => {
-                              // Antall-felt vises kun for sone-baserte dugnader. Arrangement og diverse
-                              // har bare notatfelt siden tallet ikke gir mening der.
-                              const showCountField = event.type === 'plast' || event.type === 'bottle_collection' || event.type === 'lapper'
-                              const countLabel =
-                                event.type === 'plast' ? 'Hvor mange sekker ble levert?' :
-                                event.type === 'bottle_collection' ? 'Hvor mange flasker/panteenheter?' :
-                                event.type === 'lapper' ? 'Hvor mange lapper ble levert?' :
-                                ''
-                              const countPlaceholder =
-                                event.type === 'plast' ? 'F.eks. 45' :
-                                event.type === 'bottle_collection' ? 'F.eks. 1200' :
-                                event.type === 'lapper' ? 'F.eks. 350' :
-                                ''
-                              const heading =
-                                event.type === 'plast' ? 'Fullfør plastdugnad' :
-                                event.type === 'bottle_collection' ? 'Fullfør flaskeinnsamling' :
-                                event.type === 'lapper' ? 'Fullfør lappeutdeling' :
-                                event.type === 'arrangement' ? 'Fullfør arrangement' :
-                                'Fullfør hendelsen'
-                              return (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="rounded-2xl overflow-hidden bg-success/5">
-                                  <div className="p-4">
-                                    <CheckCircle size={32} className="text-success mx-auto mb-2" />
-                                    <p className="text-[15px] font-medium mb-3 text-center font-[var(--font-display)]">{heading}</p>
-                                    <div className="space-y-3">
-                                      {showCountField && (
-                                        <div>
-                                          <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">{countLabel}</label>
-                                          <input
-                                            type="number"
-                                            inputMode="numeric"
-                                            value={completeBags}
-                                            onChange={e => setCompleteBags(e.target.value)}
-                                            placeholder={countPlaceholder}
-                                            className={inputClass}
-                                          />
-                                        </div>
-                                      )}
-                                      <div>
-                                        <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">
-                                          {event.type === 'arrangement' ? 'Hvordan gikk det? (valgfritt)' : 'Annet å notere? (valgfritt)'}
-                                        </label>
-                                        <textarea
-                                          value={completeNotes}
-                                          onChange={e => setCompleteNotes(e.target.value)}
-                                          rows={2}
-                                          placeholder={event.type === 'arrangement' ? 'F.eks. Bra oppmøte, alle vakter dekket' : 'F.eks. Fantastisk oppmøte, ferdig på 1,5 time'}
-                                          className={`${inputClass} resize-none`}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2 px-4 pb-4">
-                                    <button
-                                      onClick={() => setCompleteConfirmId(null)}
-                                      className="flex-1 py-3 text-sm font-medium text-text-secondary rounded-full bg-surface-low active:bg-surface-low"
-                                    >
-                                      Avbryt
-                                    </button>
-                                    <button
-                                      onClick={async () => {
-                                        // Lagre sekker og notater før statusendring
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        await (supabaseRef.current.from('events') as any).update({
-                                          bags_collected: completeBags ? parseInt(completeBags, 10) : null,
-                                          completion_notes: completeNotes || null,
-                                        }).eq('id', event.id)
-                                        setCompleteConfirmId(null)
-                                        handleStatusChange(event.id, 'completed')
-                                      }}
-                                      disabled={updatingId === event.id}
-                                      className="flex-1 py-3 text-sm font-medium text-success rounded-full bg-success/10 active:bg-success/20"
-                                    >
-                                      {updatingId === event.id ? 'Fullføres...' : 'Fullfør'}
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                              )
-                            })()}
-                          </AnimatePresence>
-
-                          {/* Handlingsknapper — rediger, slett, statusendring */}
-                          {!isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && completeConfirmId !== event.id && (
-                            <div className="space-y-3">
-                              {/* Statusknapper tilpasset gjeldende status */}
-                              {event.status === 'upcoming' && (
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="w-full rounded-full"
-                                  loading={updatingId === event.id}
-                                  onClick={() => handleStatusChange(event.id, 'active')}
-                                >
-                                  <MapPin size={14} />
-                                  Aktiver hendelse
-                                </Button>
-                              )}
-
-                              {event.status === 'active' && (() => {
-                                const signupLocked = !!event.signup_deadline && new Date(event.signup_deadline) < new Date()
-                                return (
-                                  <div className="space-y-3">
-                                    {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
-                                      <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full bg-warning/10 text-warning rounded-full"
-                                        onClick={() => handleSendHelp(event)}
-                                      >
-                                        <Bell size={14} />
-                                        Send hjelp-varsel ({event.zoneStats.available} ledige)
-                                      </Button>
-                                    )}
-
-                                    {/* Lås / åpne påmelding — kun for arrangement-events */}
-                                    {event.type === 'arrangement' && !signupLocked && (
-                                      <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full rounded-full"
-                                        loading={lockingId === event.id}
-                                        onClick={() => handleToggleSignupLock(event.id, true)}
-                                      >
-                                        Lås påmelding nå
-                                      </Button>
-                                    )}
-                                    {event.type === 'arrangement' && signupLocked && (
-                                      <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full rounded-full"
-                                        loading={lockingId === event.id}
-                                        onClick={() => handleToggleSignupLock(event.id, false)}
-                                      >
-                                        Åpne påmelding igjen
-                                      </Button>
-                                    )}
-
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="rounded-full"
-                                        loading={updatingId === event.id}
-                                        onClick={() => handleDeactivateClick(event)}
-                                      >
-                                        Deaktiver
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="bg-success/10 text-success hover:bg-success/20 rounded-full"
-                                        loading={updatingId === event.id}
-                                        onClick={() => {
-                                          setCompleteConfirmId(event.id)
-                                          setCompleteBags('')
-                                          setCompleteNotes('')
-                                        }}
-                                      >
-                                        Merk som fullført
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )
-                              })()}
-
-                              {/* Nullstill claims — kun for sonebaserte dugnader */}
-                              {(event.zoneStats.claimed + event.zoneStats.completed) > 0 && event.type !== 'arrangement' && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="w-full text-text-secondary rounded-full"
-                                  onClick={() => {
-                                    setResetConfirmId(event.id)
-                                    setEditingId(null)
-                                    setDeleteConfirmId(null)
-                                  }}
-                                >
-                                  Nullstill alle claims ({event.zoneStats.claimed + event.zoneStats.completed})
-                                </Button>
-                              )}
-
-                              {/* Eksporter CSV — kun for fullførte */}
-                              {event.status === 'completed' && (
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="w-full rounded-full"
-                                  loading={exporting === event.id}
-                                  onClick={() => handleExportCSV(event.id)}
-                                >
-                                  <Download size={14} />
-                                  Eksporter CSV
-                                </Button>
-                              )}
-
-                              {/* Rediger + Slett */}
-                              <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="rounded-full"
-                                  onClick={() => startEditing(event)}
-                                >
-                                  <Pencil size={14} />
-                                  Rediger
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="danger"
-                                  className="rounded-full"
-                                  onClick={() => {
-                                    setDeleteConfirmId(event.id)
-                                    setEditingId(null)
-                                  }}
-                                >
-                                  <Trash2 size={14} />
-                                  Slett
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Desktop-actions: alltid synlige på lg+ for aktive hendelser */}
-                  {event.status === 'active' && !isEditing && !isDeleteConfirm && deactivateConfirmId !== event.id && resetConfirmId !== event.id && completeConfirmId !== event.id && (
-                    <div className="hidden lg:flex items-center gap-2 mt-4 pt-3 border-t border-text-tertiary/10 overflow-x-auto">
-                      <Link
-                        href={`/kart?event=${event.id}`}
-                        className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
-                      >
-                        <MapIcon size={13} />
-                        Se kart
-                      </Link>
-                      {event.zoneStats.available > 0 && event.type !== 'arrangement' && (
-                        <button
-                          type="button"
-                          onClick={() => handleSendHelp(event)}
-                          className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                        >
-                          <Bell size={13} />
-                          Send hjelp-varsel ({event.zoneStats.available})
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleDeactivateClick(event)}
-                        className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-surface-low text-text-secondary hover:bg-text-tertiary/10 transition-colors"
-                      >
-                        <Power size={13} />
-                        Deaktiver
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCompleteConfirmId(event.id)
-                          setCompleteBags('')
-                          setCompleteNotes('')
-                          setExpandedId(event.id)
-                        }}
-                        className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-success/10 text-success hover:bg-success/20 transition-colors"
-                      >
-                        <CheckCircle size={13} />
-                        Marker fullført
-                      </button>
-                    </div>
-                  )}
-                </Card>
-              </motion.div>
-            )
-          })}
+          {filtered.map((event, i) => renderMobileEventCard(event, i))}
         </div>
         )
       })()}
@@ -2853,6 +2865,43 @@ export default function EventsAdminPage() {
         }
       }}
     />
+
+    {/* Desktop expand-modal: viser full ekspandert mobile-rendering for ett event på lg+.
+        Gjenbruker renderMobileEventCard med inDesktopModal=true så vakter, plast-import,
+        fullføringsdialog, deaktiver-bekreftelse, nullstill-claims osv. blir tilgjengelig på desktop. */}
+    {desktopExpandedId && (() => {
+      const ev = events.find(e => e.id === desktopExpandedId)
+      if (!ev) return null
+      return (
+        <div
+          className="hidden lg:flex fixed inset-0 z-[55] items-start justify-center p-6 overflow-y-auto bg-black/40 backdrop-blur-sm"
+          onClick={() => setDesktopExpandedId(null)}
+        >
+          <div
+            className="bg-card rounded-3xl border border-text-primary/[0.09] shadow-2xl w-full max-w-[720px] my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-text-primary/[0.06]">
+              <div>
+                <h2 className="font-display text-xl font-extrabold text-text-primary">Detaljer</h2>
+                <p className="text-sm text-text-tertiary mt-0.5">{ev.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDesktopExpandedId(null)}
+                aria-label="Lukk"
+                className="w-9 h-9 rounded-full bg-surface-low hover:bg-surface-low/70 flex items-center justify-center text-text-secondary"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5">
+              {renderMobileEventCard(ev, 0, { inDesktopModal: true })}
+            </div>
+          </div>
+        </div>
+      )
+    })()}
 
     {/* Desktop-bekreftelse for Slett / Deaktiver / Marker fullført */}
     {/* Desktop edit-modal: vises kun på lg+ når brukeren klikker Rediger på desktop.
