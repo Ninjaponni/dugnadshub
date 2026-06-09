@@ -1,11 +1,17 @@
 import BottomNav from '@/components/layout/BottomNav'
+import DesktopShell from '@/components/layout/DesktopShell'
 
-// Layout for innloggede sider — bottom nav + innhold
+// Mobil-flyt under lg + desktop-shell over lg. Pages rendres i begge.
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-[430px] mx-auto min-h-dvh pb-20">
-      {children}
-      <BottomNav />
-    </div>
+    <>
+      <div className="lg:hidden max-w-[430px] mx-auto min-h-dvh pb-20">
+        {children}
+        <BottomNav />
+      </div>
+      <div className="hidden lg:block">
+        <DesktopShell>{children}</DesktopShell>
+      </div>
+    </>
   )
 }
