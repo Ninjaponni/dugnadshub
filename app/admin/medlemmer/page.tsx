@@ -14,6 +14,7 @@ import type { Child } from '@/lib/supabase/types'
 import type { Profile, Role, UserBadge, ZoneClaim, ChildGroup } from '@/lib/supabase/types'
 import { ROLE_LABELS } from '@/lib/roles'
 import MemberDetailOverlay from '@/components/admin/MemberDetailOverlay'
+import MemberDetailDesktop from '@/components/admin/MemberDetailDesktop'
 
 type SortMode = 'alpha' | 'badges' | 'least_active'
 type TypeFilter = 'alle' | 'foreldre' | 'musikanter'
@@ -256,8 +257,9 @@ export default function MembersAdminPage() {
       </header>
       <div className="pt-16 lg:pt-0 pb-28">
 
-      {/* Tilbake + tittel */}
-      <div className="flex items-center gap-3 mb-6">
+      {/* Tilbake + tittel. Skjules paa desktop naar et medlem er valgt
+          — MemberDetailDesktop har egen tilbake-lenke. */}
+      <div className={`${selectedProfile ? 'flex lg:hidden' : 'flex'} items-center gap-3 mb-6`}>
         <Link href="/admin/oversikt" className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low">
           <ArrowLeft size={20} className="text-accent" />
         </Link>
@@ -267,8 +269,27 @@ export default function MembersAdminPage() {
         </span>
       </div>
 
+      {/* Desktop: dedikert side-by-side merkeutdeling naar et medlem er valgt.
+          Skjuler hele lista + filterene saa fokus er paa medlemmet. */}
+      {selectedProfile && (
+        <div className="hidden lg:block">
+          <MemberDetailDesktop
+            profile={selectedProfile}
+            badgeCount={getBadgeCountForUser(selectedProfile.id)}
+            badgeCounts={getBadgeCountsForUser(selectedProfile.id)}
+            onBack={() => setSelectedId(null)}
+            onRoleChange={(role) => handleRoleChange(selectedProfile.id, role)}
+            onTypeChange={(isM, g) => handleTypeChange(selectedProfile.id, isM, g)}
+            onAwardBadge={(id) => handleAwardBadge(selectedProfile.id, id)}
+            onRemoveBadge={(id) => handleRemoveBadge(selectedProfile.id, id)}
+            onResetBadges={() => handleResetBadges(selectedProfile.id)}
+            onDeleteMember={() => handleDeleteMember(selectedProfile.id)}
+          />
+        </div>
+      )}
+
       {/* Desktop: filter-pills + søk + sort i samme rad */}
-      <div className="hidden lg:flex items-center gap-3 mb-5">
+      <div className={`${selectedProfile ? 'hidden' : 'hidden lg:flex'} items-center gap-3 mb-5`}>
         {/* Type-filter pills */}
         <div className="flex bg-card border border-text-primary/[0.06] rounded-full p-1 gap-1">
           {([
@@ -455,9 +476,10 @@ export default function MembersAdminPage() {
         </div>
       )}
 
-      {/* Desktop: tabell-stil radvisning */}
+      {/* Desktop: tabell-stil radvisning. Skjules naar medlem er valgt
+          (desktop viser MemberDetailDesktop i stedet). */}
       {!loading && sortedProfiles.length > 0 && (
-        <div className="hidden lg:block bg-card border border-text-primary/[0.09] rounded-3xl overflow-hidden shadow-sm">
+        <div className={`${selectedProfile ? 'hidden' : 'hidden lg:block'} bg-card border border-text-primary/[0.09] rounded-3xl overflow-hidden shadow-sm`}>
           {/* Tabell-hode med kolonne-labels */}
           <div className="grid grid-cols-[1fr_180px_120px_80px_24px] gap-4 px-6 py-3 bg-surface-low border-b border-text-primary/[0.06]">
             <span className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-text-tertiary">Medlem</span>
@@ -532,19 +554,23 @@ export default function MembersAdminPage() {
         </div>
       )}
 
-      <MemberDetailOverlay
-        profile={selectedProfile}
-        badgeCount={selectedProfile ? getBadgeCountForUser(selectedProfile.id) : 0}
-        zoneCount={selectedProfile ? getClaimCount(selectedProfile.id) : 0}
-        badgeCounts={selectedProfile ? getBadgeCountsForUser(selectedProfile.id) : new Map()}
-        onClose={() => setSelectedId(null)}
-        onRoleChange={(role) => { if (selectedProfile) handleRoleChange(selectedProfile.id, role) }}
-        onTypeChange={(isM, g) => { if (selectedProfile) handleTypeChange(selectedProfile.id, isM, g) }}
-        onAwardBadge={(id) => { if (selectedProfile) handleAwardBadge(selectedProfile.id, id) }}
-        onRemoveBadge={(id) => { if (selectedProfile) handleRemoveBadge(selectedProfile.id, id) }}
-        onResetBadges={() => { if (selectedProfile) handleResetBadges(selectedProfile.id) }}
-        onDeleteMember={() => { if (selectedProfile) handleDeleteMember(selectedProfile.id) }}
-      />
+      {/* Mobil-overlay: kun synlig under lg. Desktop bruker MemberDetailDesktop
+          som rendres oeverst i sideflyten i stedet. */}
+      <div className="lg:hidden">
+        <MemberDetailOverlay
+          profile={selectedProfile}
+          badgeCount={selectedProfile ? getBadgeCountForUser(selectedProfile.id) : 0}
+          zoneCount={selectedProfile ? getClaimCount(selectedProfile.id) : 0}
+          badgeCounts={selectedProfile ? getBadgeCountsForUser(selectedProfile.id) : new Map()}
+          onClose={() => setSelectedId(null)}
+          onRoleChange={(role) => { if (selectedProfile) handleRoleChange(selectedProfile.id, role) }}
+          onTypeChange={(isM, g) => { if (selectedProfile) handleTypeChange(selectedProfile.id, isM, g) }}
+          onAwardBadge={(id) => { if (selectedProfile) handleAwardBadge(selectedProfile.id, id) }}
+          onRemoveBadge={(id) => { if (selectedProfile) handleRemoveBadge(selectedProfile.id, id) }}
+          onResetBadges={() => { if (selectedProfile) handleResetBadges(selectedProfile.id) }}
+          onDeleteMember={() => { if (selectedProfile) handleDeleteMember(selectedProfile.id) }}
+        />
+      </div>
     </div>
     </>
   )
