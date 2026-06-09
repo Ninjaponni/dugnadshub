@@ -1174,6 +1174,7 @@ export default function EventsAdminPage() {
     submitLabel: string,
     isLoading: boolean,
     mode: 'create' | 'edit' = 'create',
+    eventStatus?: EventStatus,
   ) {
     // Hjelpere for arrangement-felter — rolle-repeater
     function addRole() {
@@ -1570,23 +1571,25 @@ export default function EventsAdminPage() {
           />
         </div>
 
-        {/* Push-toggle — kontrollerer om varsel sendes ved aktivering */}
-        <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-low">
-          <input
-            type="checkbox"
-            id="sendPushOnActivate"
-            checked={data.sendPushOnActivate}
-            onChange={e => setData(prev => ({ ...prev, sendPushOnActivate: e.target.checked }))}
-            className="mt-0.5 w-4 h-4 accent-accent"
-          />
-          <label htmlFor="sendPushOnActivate" className="text-sm text-text-secondary cursor-pointer leading-snug">
-            <span className="font-medium text-text-primary block">Send push-varsel når dugnaden aktiveres</span>
-            <span className="text-xs">Skru av ved testing for å unngå at alle 130 foreldre får beskjed.</span>
-          </label>
-        </div>
+        {/* Push-toggle — kun relevant ved create eller for kommende hendelser */}
+        {(mode === 'create' || eventStatus === 'upcoming') && (
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-low">
+            <input
+              type="checkbox"
+              id="sendPushOnActivate"
+              checked={data.sendPushOnActivate}
+              onChange={e => setData(prev => ({ ...prev, sendPushOnActivate: e.target.checked }))}
+              className="mt-0.5 w-4 h-4 accent-accent"
+            />
+            <label htmlFor="sendPushOnActivate" className="text-sm text-text-secondary cursor-pointer leading-snug">
+              <span className="font-medium text-text-primary block">Send push-varsel når dugnaden aktiveres</span>
+              <span className="text-xs">Skru av ved testing for å unngå at alle 130 foreldre får beskjed.</span>
+            </label>
+          </div>
+        )}
 
-        {/* Sekker og fullføringsnotat — kun i redigering */}
-        {submitLabel === 'Lagre endringer' && (
+        {/* Sekker og fullføringsnotat — kun ved redigering av fullført hendelse */}
+        {mode === 'edit' && eventStatus === 'completed' && (
           <>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary block mb-1.5">Sekker levert (valgfritt)</label>
@@ -2357,6 +2360,7 @@ export default function EventsAdminPage() {
                                     'Lagre endringer',
                                     editSaving,
                                     'edit',
+                                    event.status,
                                   )}
                                   <button
                                     type="button"
@@ -2847,6 +2851,7 @@ export default function EventsAdminPage() {
               'Lagre endringer',
               editSaving,
               'edit',
+              events.find(e => e.id === editingId)?.status,
             )}
             <button
               type="button"
