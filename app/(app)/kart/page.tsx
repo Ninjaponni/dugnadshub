@@ -222,7 +222,9 @@ function MapPageContent() {
   const pickedUpCount = assignedZones.filter((z) => z.status === 'picked_up').length
 
   return (
-    <div className="fixed inset-0 z-0">
+    // Mobil: fullskjerm (fixed). Desktop: fyller innholdsflaten ved siden av
+    // sidebaren (lg:absolute innenfor DesktopMains relative, fullBleed-main).
+    <div className="fixed inset-0 z-0 lg:absolute">
       <DugnadMap
         zones={zones}
         onZoneClick={(zone) => { setSelectedZone(zone); setSelectedBase(null); setSelectedMeetingPoint(null) }}
