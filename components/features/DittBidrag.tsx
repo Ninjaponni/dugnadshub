@@ -88,7 +88,7 @@ function StatTile({
       }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="relative overflow-hidden rounded-[18px] text-center cursor-default"
+      className="relative rounded-[18px] text-center cursor-default"
       style={{
         background: hover ? 'rgba(162,74,51,0.07)' : 'var(--color-surface-low)',
         padding: '22px 14px 18px',
@@ -97,21 +97,26 @@ function StatTile({
         transition: 'transform .3s cubic-bezier(.3,1.3,.5,1), box-shadow .3s, background .25s',
       }}
     >
-      {/* Sheen-sweep over kortet ved hover */}
+      {/* Sheen-sweep — egen klipp-wrapper så kortet selv kan beholde overflow:visible
+          (ellers klippes ikoner som strekker seg litt over kortets kant, f.eks. pølse-ikonet) */}
       <span
         aria-hidden
-        className="absolute top-0 left-0 h-full pointer-events-none"
-        style={{
-          width: '60%',
-          background: 'linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent)',
-          transform: hover ? 'translateX(320%)' : 'translateX(-120%)',
-          transition: 'transform .7s ease',
-        }}
-      />
+        className="absolute inset-0 overflow-hidden rounded-[18px] pointer-events-none"
+      >
+        <span
+          className="absolute top-0 left-0 h-full"
+          style={{
+            width: '60%',
+            background: 'linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent)',
+            transform: hover ? 'translateX(320%)' : 'translateX(-120%)',
+            transition: 'transform .7s ease',
+          }}
+        />
+      </span>
 
-      {/* Ikon — egen anim per motion-type */}
+      {/* Ikon — egen anim per motion-type, ingen clipping fra kortet */}
       <span
-        className="inline-flex text-accent"
+        className="inline-flex text-accent relative"
         style={{ transform: iconTransform, transition: 'transform .45s cubic-bezier(.3,1.4,.5,1)' }}
       >
         <Icon size={26} strokeWidth={1.8} />

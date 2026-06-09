@@ -662,8 +662,8 @@ export default function ProfilePage() {
 
                 {/* Versjon + Logg ut — inni venstre kolonne på desktop */}
                 <div className="hidden lg:block pt-2">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary/60 px-1 pb-3">
-                    Tillerbyen Skolekorps Dugnadshub v 10.26.8
+                  <p className="text-center text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary pb-3">
+                    Tillerbyen Skolekorps Dugnadshub v 10.26.9
                   </p>
                   <button
                     onClick={handleLogout}
@@ -771,7 +771,7 @@ export default function ProfilePage() {
             {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
             <div className="lg:hidden">
               <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-                Tillerbyen Skolekorps Dugnadshub v 10.26.8
+                Tillerbyen Skolekorps Dugnadshub v 10.26.9
               </p>
               <div className="flex justify-center pt-1 pb-4">
                 <button
