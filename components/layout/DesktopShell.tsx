@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import DesktopSidebar from './DesktopSidebar'
 import DesktopTopbar from './DesktopTopbar'
+import { getShiftEventsForNav } from '@/lib/layout/getShiftEvents'
 import type { Profile, Role } from '@/lib/supabase/types'
 
 type SidebarProfile = Pick<Profile, 'full_name' | 'role' | 'avatar_url'> & { type?: string }
@@ -59,9 +60,12 @@ export default async function DesktopShell({ children }: { children: React.React
     memberCount = count ?? undefined
   }
 
+  // Kommende arrangement-events til Vakter-undermenyen
+  const shiftEvents = await getShiftEventsForNav()
+
   return (
     <div className="hidden lg:flex lg:min-h-screen lg:bg-bg">
-      <DesktopSidebar profile={profile} memberCount={memberCount} />
+      <DesktopSidebar profile={profile} memberCount={memberCount} shiftEvents={shiftEvents} />
       <div className="flex-1 flex flex-col min-w-0">
         <DesktopTopbar />
         <main className="max-w-[1320px] w-full mx-auto px-9 py-8">

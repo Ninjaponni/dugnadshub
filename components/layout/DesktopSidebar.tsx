@@ -101,15 +101,20 @@ export default function DesktopSidebar({
         <div className="text-[10.5px] font-bold uppercase tracking-[0.15em] text-text-tertiary px-3.5 pb-2">
           Medlem
         </div>
-        {memberItems.map(it => (
-          <div key={it.href}>
-            <NavLink item={it} active={pathname.startsWith(it.href)} />
-            {/* Vakter-undermeny vises kun når man er på /vakter */}
-            {it.href === '/vakter' && pathname.startsWith('/vakter') && shiftEvents.length > 0 && (
-              <VakterSubNav events={shiftEvents} />
-            )}
-          </div>
-        ))}
+        {memberItems.map(it => {
+          // Vakter-gruppa er aktiv både på /vakter og når man ser et arrangement
+          const onVakter = pathname.startsWith('/vakter') || pathname.startsWith('/arrangement')
+          const active = it.href === '/vakter' ? onVakter : pathname.startsWith(it.href)
+          return (
+            <div key={it.href}>
+              <NavLink item={it} active={active} />
+              {/* Vakter-undermeny vises på /vakter og /arrangement/* */}
+              {it.href === '/vakter' && onVakter && shiftEvents.length > 0 && (
+                <VakterSubNav events={shiftEvents} />
+              )}
+            </div>
+          )
+        })}
       </nav>
 
       {/* ADMIN-navigasjon — vises kun for admin-rolle */}

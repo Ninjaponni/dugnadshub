@@ -10,6 +10,8 @@ import { ShiftClaimSheet } from '@/components/features/ShiftClaimSheet'
 import { MyShiftsCard } from '@/components/features/MyShiftsCard'
 import { RoleInfoCard } from '@/components/features/RoleInfoCard'
 import { GeneralInfoCard } from '@/components/features/GeneralInfoCard'
+import ArrangementDesktop from '@/components/vakter/ArrangementDesktop'
+import ShiftDetailModal from '@/components/vakter/ShiftDetailModal'
 import KorpsLogo from '@/components/ui/KorpsLogo'
 import { formatShiftDate, formatShiftDateShort, groupShiftsByDate, sortShifts, isDeadlinePassed } from '@/lib/shifts/utils'
 import type { ArrangementEvent, ShiftWithClaims } from '@/lib/types/shifts'
@@ -74,6 +76,8 @@ export default function ArrangementPage() {
         </div>
       </header>
 
+      {/* ── MOBIL — urørt original-flyt ── */}
+      <div className="lg:hidden">
       {!event || loading ? (
         <main className="pt-20 px-5 pb-28 space-y-4">
           <div className="h-10 w-3/4 bg-surface-low rounded animate-pulse" />
@@ -150,18 +154,55 @@ export default function ArrangementPage() {
           )}
         </main>
       )}
+      </div>
 
-      <ShiftClaimSheet
-        shift={selectedShift}
-        onClose={() => setSelectedShift(null)}
-        onChange={refetch}
-        currentUserId={userId}
-        signupDeadline={event?.signup_deadline ?? null}
-        adminPhone={event?.contact_phone ?? null}
-        roleInfo={event?.role_info ?? null}
-        matches={event?.matches ?? null}
-        arrangerName={event?.arranger_name ?? null}
-      />
+      {/* ── DESKTOP (lg+) — vaktplan-rutenett fra prototypen ── */}
+      <div className="hidden lg:block">
+        {!event || loading ? (
+          <div className="max-w-[1060px] space-y-6 animate-pulse">
+            <div className="h-9 w-1/2 bg-surface-low rounded" />
+            <div className="h-20 bg-surface-low rounded-2xl" />
+            <div className="h-80 bg-surface-low rounded-[20px]" />
+          </div>
+        ) : (
+          <ArrangementDesktop
+            event={event}
+            shifts={sorted}
+            currentUserId={userId}
+            onShiftClick={setSelectedShift}
+          />
+        )}
+      </div>
+
+      {/* Mobil — BottomSheet */}
+      <div className="lg:hidden">
+        <ShiftClaimSheet
+          shift={selectedShift}
+          onClose={() => setSelectedShift(null)}
+          onChange={refetch}
+          currentUserId={userId}
+          signupDeadline={event?.signup_deadline ?? null}
+          adminPhone={event?.contact_phone ?? null}
+          roleInfo={event?.role_info ?? null}
+          matches={event?.matches ?? null}
+          arrangerName={event?.arranger_name ?? null}
+        />
+      </div>
+
+      {/* Desktop — sentrert Modal */}
+      <div className="hidden lg:block">
+        <ShiftDetailModal
+          shift={selectedShift}
+          onClose={() => setSelectedShift(null)}
+          onChange={refetch}
+          currentUserId={userId}
+          signupDeadline={event?.signup_deadline ?? null}
+          adminPhone={event?.contact_phone ?? null}
+          roleInfo={event?.role_info ?? null}
+          matches={event?.matches ?? null}
+          arrangerName={event?.arranger_name ?? null}
+        />
+      </div>
     </>
   )
 }

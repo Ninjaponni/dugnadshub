@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { Clock, Users, Phone, Trophy } from 'lucide-react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import type { ShiftWithClaims, RoleInfo, Match } from '@/lib/types/shifts'
 import { formatShiftDate, formatShiftRange, shiftDurationHours, roleIcon, isDeadlinePassed, matchesDuringShift } from '@/lib/shifts/utils'
+import { useShiftClaim } from '@/lib/hooks/useShiftClaim'
 
 interface Props {
   shift: ShiftWithClaims | null
@@ -22,9 +22,8 @@ interface Props {
 export function ShiftClaimSheet({
   shift, onClose, onChange, currentUserId, signupDeadline, adminPhone, roleInfo, matches, arrangerName,
 }: Props) {
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
+  const { submitting, error, showUnclaimConfirm, setShowUnclaimConfirm, handleClaim, handleUnclaim, reset } =
+    useShiftClaim(shift, onChange, onClose)
 
   const meClaimed = !!(shift && currentUserId && shift.claims?.some(c => c.user_id === currentUserId))
   const claimed = shift?.claims?.length ?? 0
@@ -35,42 +34,8 @@ export function ShiftClaimSheet({
   const roleContact = role?.contact
   const shiftMatches = shift ? matchesDuringShift(matches, shift) : []
 
-  async function handleClaim() {
-    if (!shift) return
-    setSubmitting(true)
-    setError(null)
-    const res = await fetch(`/api/shifts/${shift.id}/claim`, { method: 'POST' })
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({ error: 'Ukjent feil' }))
-      setError(j.error)
-      setSubmitting(false)
-      return
-    }
-    setSubmitting(false)
-    onChange()
-    onClose()
-  }
-
-  async function handleUnclaim() {
-    if (!shift) return
-    setSubmitting(true)
-    setError(null)
-    const res = await fetch(`/api/shifts/${shift.id}/claim`, { method: 'DELETE' })
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({ error: 'Ukjent feil' }))
-      setError(j.error)
-      setSubmitting(false)
-      return
-    }
-    setSubmitting(false)
-    setShowUnclaimConfirm(false)
-    onChange()
-    onClose()
-  }
-
   function handleSheetClose() {
-    setShowUnclaimConfirm(false)
-    setError(null)
+    reset()
     onClose()
   }
 
