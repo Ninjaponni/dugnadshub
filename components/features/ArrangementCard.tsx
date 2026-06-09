@@ -79,13 +79,16 @@ export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity 
 
       {/* Se vakter-knapp */}
       <Link href={`/arrangement/${event.id}`} className="block relative">
-        <button
-          className="w-full py-4 px-6 rounded-full text-white font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform font-[var(--font-display)]"
+        <motion.button
+          whileHover={{ scale: 1.02, y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+          className="w-full py-4 px-6 rounded-full text-white font-bold flex items-center justify-center gap-2 shadow-lg font-[var(--font-display)]"
           style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
         >
           <Ticket size={18} />
           Se vakter
-        </button>
+        </motion.button>
       </Link>
 
       {/* Sub-info: antall vakter + signup deadline */}

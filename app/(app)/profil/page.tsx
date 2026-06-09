@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
-import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Trash2, Sun, Moon, Monitor, ArrowLeft, Pencil, PlusCircle, ChevronRight, Music, Users } from 'lucide-react'
+import { User, LogOut, Shield, Bell, RotateCcw, ClipboardList, Trash2, Sun, Moon, Monitor, ArrowLeft, Pencil, PlusCircle, ChevronRight, ChevronDown, Music, Users } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import BrandLink from '@/components/layout/BrandLink'
 import type { Child, ChildGroup } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
@@ -35,6 +36,8 @@ export default function ProfilePage() {
   // Mine dugnader — historikk over fullførte hendelser
   const [history, setHistory] = useState<Array<{ title: string; date: string; label: string }>>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
+  // Kollapsibel historikk-seksjon — lukket som default på desktop (lg+)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [dittBidrag, setDittBidrag] = useState<DittBidragData | null>(null)
   const [avatarId, setAvatarId] = useState<string>('')
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
@@ -661,28 +664,85 @@ export default function ProfilePage() {
                 {/* Ditt bidrag — korps-total */}
                 {dittBidrag && <DittBidrag data={dittBidrag} />}
 
-                {/* Gjennomførte dugnader */}
+                {/* Gjennomførte dugnader — alltid synlig på mobil, kollapsibel på desktop */}
                 {historyLoaded && history.length > 0 && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2.5 mb-4">
+                  <Card className="overflow-hidden">
+                    {/* Desktop-header: klikkbar med chevron + tellerboble */}
+                    <button
+                      type="button"
+                      onClick={() => setHistoryOpen(o => !o)}
+                      className="hidden lg:flex w-full items-center justify-between p-5 cursor-pointer hover:bg-surface-low/40 transition-colors rounded-[inherit]"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <ClipboardList size={20} className="text-accent" />
+                        <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-surface-low text-text-secondary text-xs font-bold px-2.5 py-1 rounded-full">
+                          {history.length}
+                        </span>
+                        <motion.div
+                          animate={{ rotate: historyOpen ? 180 : 0 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        >
+                          <ChevronDown size={18} className="text-text-tertiary" />
+                        </motion.div>
+                      </div>
+                    </button>
+
+                    {/* Mobil-header: alltid synlig, ikke klikkbar */}
+                    <div className="flex lg:hidden items-center gap-2.5 p-5 pb-3">
                       <ClipboardList size={20} className="text-accent" />
                       <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
                     </div>
-                    <div className="space-y-1">
-                      {history.map((h, i) => (
-                        <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
-                          <div>
-                            <p className="text-sm font-medium text-text-primary">{h.title}</p>
-                            <p className="text-xs text-text-secondary mt-0.5">
-                              {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            </p>
+
+                    {/* Innhold: alltid synlig på mobil, animert på desktop */}
+                    <div className="lg:hidden px-5 pb-5">
+                      <div className="space-y-1">
+                        {history.map((h, i) => (
+                          <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
+                            <div>
+                              <p className="text-sm font-medium text-text-primary">{h.title}</p>
+                              <p className="text-xs text-text-secondary mt-0.5">
+                                {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
+                              {h.label}
+                            </span>
                           </div>
-                          <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
-                            {h.label}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
+
+                    <AnimatePresence initial={false}>
+                      {historyOpen && (
+                        <motion.div
+                          key="history-desktop"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                          className="hidden lg:block overflow-hidden"
+                        >
+                          <div className="px-5 pb-5 space-y-1">
+                            {history.map((h, i) => (
+                              <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
+                                <div>
+                                  <p className="text-sm font-medium text-text-primary">{h.title}</p>
+                                  <p className="text-xs text-text-secondary mt-0.5">
+                                    {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </p>
+                                </div>
+                                <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
+                                  {h.label}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </Card>
                 )}
 
@@ -691,7 +751,7 @@ export default function ProfilePage() {
 
             {/* Versjon + logg ut — full bredde, alltid nederst */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-              Tillerbyen Skolekorps Dugnadshub v 10.26
+              Tillerbyen Skolekorps Dugnadshub v 10.26.1
             </p>
 
             {/* Logg ut */}

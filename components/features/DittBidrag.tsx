@@ -76,8 +76,14 @@ export default function DittBidrag({ data }: DittBidragProps) {
             key={key}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.08 }}
-            className="bg-surface-low rounded-[20px] p-4 text-center"
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{
+              default: { type: 'spring', stiffness: 400, damping: 22 },
+              opacity: { delay: i * 0.08, duration: 0.25 },
+              scale: { delay: i * 0.08, type: 'spring', stiffness: 300, damping: 25 },
+            }}
+            className="bg-surface-low rounded-[20px] p-4 text-center cursor-default"
           >
             <Icon size={20} className="text-accent mx-auto mb-2" strokeWidth={1.8} />
             <p className="text-2xl font-bold text-accent font-[var(--font-display)]">
