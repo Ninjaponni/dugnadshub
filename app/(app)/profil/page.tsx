@@ -482,7 +482,7 @@ export default function ProfilePage() {
       ) : (
         <>
           {/* Dugnadshub header */}
-          <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+          <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card safe-top">
             <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
               <BrandLink />
               <div className="w-9" />
@@ -677,7 +677,7 @@ export default function ProfilePage() {
 
             {/* Versjon */}
             <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.25.3
+              Tillerbyen Skolekorps Dugnadshub v 10.25.4
             </p>
 
             {/* Logg ut */}

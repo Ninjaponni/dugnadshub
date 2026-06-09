@@ -180,7 +180,7 @@ export default function BadgesPage() {
   return (
     <>
       {/* Dugnadshub-header — samme som hjem */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-card safe-top">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card safe-top">
         <div className="flex justify-between items-center px-5 h-14 max-w-[430px] mx-auto">
           <BrandLink />
           <div className="w-9" />
