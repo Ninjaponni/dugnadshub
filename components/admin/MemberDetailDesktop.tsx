@@ -7,8 +7,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, Pencil, Music, Trash2, Mail, Phone, Baby, Calendar } from 'lucide-react'
-import type { Profile, Child, Role, ChildGroup } from '@/lib/supabase/types'
+import { ChevronLeft, Pencil, Trash2, Award } from 'lucide-react'
+import type { Profile, Role, ChildGroup } from '@/lib/supabase/types'
 import { badgeDefinitions } from '@/lib/badges/definitions'
 import { ROLE_LABELS } from '@/lib/roles'
 import { getAvatarUrl } from '@/components/features/AvatarPicker'
@@ -35,37 +35,23 @@ interface Props {
 
 type Filter = 'alle' | 'opptjent' | 'mangler'
 
-// Rolle-chip fargeklasse (matcher tabellens roller)
-function roleChipClass(role: Role): string {
-  switch (role) {
-    case 'admin': return 'bg-purple/10 text-purple'
-    case 'driver': return 'bg-teal/10 text-teal'
-    case 'strapper': return 'bg-warning/10 text-warning'
-    case 'host': return 'bg-accent/10 text-accent'
-    default: return 'bg-surface-low text-text-secondary'
-  }
-}
-
-// Rad i kontaktinfo-listen. Stoetter klikkbar accent-verdi for e-post/telefon.
-function InfoRow({ icon, label, value, href }: {
-  icon: React.ReactNode
+// Rad i kontaktinfo-listen. Label venstre, verdi hoeyrejustert.
+// Accent-farge for e-post/telefon-lenker.
+function InfoRow({ label, value, accent, href }: {
   label: string
   value: string
+  accent?: boolean
   href?: string
 }) {
+  const valueClass = `font-semibold text-right flex-1 min-w-0 break-words ${accent ? 'text-accent' : 'text-text-secondary'}`
   return (
-    <div className="flex items-start gap-3 py-2">
-      <span className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center text-text-tertiary shrink-0">
-        {icon}
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-tertiary">{label}</div>
-        {href ? (
-          <a href={href} className="text-[13.5px] text-accent font-semibold break-words">{value}</a>
-        ) : (
-          <div className="text-[13.5px] text-text-secondary break-words">{value}</div>
-        )}
-      </div>
+    <div className="flex justify-between gap-3.5 text-[13.5px]">
+      <span className="text-text-tertiary shrink-0">{label}</span>
+      {href ? (
+        <a href={href} className={valueClass}>{value}</a>
+      ) : (
+        <span className={valueClass}>{value}</span>
+      )}
     </div>
   )
 }
@@ -161,89 +147,86 @@ export default function MemberDetailDesktop({
         <ChevronLeft size={16} /> Alle medlemmer
       </button>
 
-      <div className="grid grid-cols-[380px_1fr] gap-8 items-start">
+      <div className="grid grid-cols-[340px_1fr] gap-7 items-start">
         {/* VENSTRE: profil-kort */}
-        <div className="bg-card border border-text-primary/[0.09] rounded-3xl p-6 shadow-sm space-y-5">
+        <div className="bg-card border border-text-primary/[0.09] rounded-3xl p-7 shadow-sm">
           {/* Avatar + navn + merke-telling */}
-          <div className="flex flex-col items-center pt-2">
+          <div className="flex flex-col items-center text-center">
             {avatarUrl ? (
               <Image
                 src={avatarUrl}
                 alt=""
-                width={120}
-                height={120}
-                className="rounded-full w-[120px] h-[120px] object-cover"
+                width={80}
+                height={80}
+                className="rounded-full w-20 h-20 object-cover"
               />
             ) : (
-              <div className="w-[120px] h-[120px] rounded-full bg-surface-low flex items-center justify-center">
-                <span className="font-[var(--font-display)] text-5xl font-bold text-accent">
+              <div className="w-20 h-20 rounded-full bg-surface-low flex items-center justify-center">
+                <span className="font-[var(--font-display)] text-3xl font-bold text-accent">
                   {initial}
                 </span>
               </div>
             )}
-            <h2 className="font-[var(--font-display)] text-2xl font-extrabold mt-4 text-text-primary text-center text-balance">
+            <h2 className="font-[var(--font-display)] text-[23px] font-extrabold mt-3.5 text-text-primary text-balance">
               {profile.full_name || 'Ukjent'}
             </h2>
-            <div className="text-accent font-bold mt-1">
-              {badgeCount} {badgeCount === 1 ? 'merke' : 'merker'}
+            <div className="text-[13.5px] text-text-secondary mt-1">
+              <b className="text-accent font-bold">{badgeCount} merker</b>
+            </div>
+
+            {/* Rolle- og type-chips (neutral) */}
+            <div className="flex flex-wrap gap-1.5 justify-center mt-4">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-surface-low text-text-secondary">
+                <Award size={11} /> {ROLE_LABELS[profile.role]}
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-surface-low text-text-secondary">
+                {profile.is_musician
+                  ? `Musikant${profile.musician_group ? ` · ${profile.musician_group}` : ''}`
+                  : 'Forelder'}
+              </span>
+            </div>
+
+            {/* Endre roller — kompakt */}
+            <div className="flex justify-center mt-3.5">
+              <button
+                type="button"
+                onClick={() => setRoleEditorOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-text-primary/15 text-xs font-bold hover:bg-surface-low transition-colors"
+              >
+                <Pencil size={13} /> Endre roller
+              </button>
             </div>
           </div>
 
-          {/* Rolle- og type-chips */}
-          <div className="flex flex-wrap gap-2 justify-center">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${roleChipClass(profile.role as Role)}`}>
-              {ROLE_LABELS[profile.role]}
-            </span>
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border border-text-primary/15 text-text-secondary">
-              {profile.is_musician ? (
-                <><Music size={11} /> Musikant{profile.musician_group ? ` · ${profile.musician_group}` : ''}</>
-              ) : 'Forelder'}
-            </span>
-          </div>
-
-          {/* Endre roller */}
-          <button
-            type="button"
-            onClick={() => setRoleEditorOpen(true)}
-            className="w-full py-2.5 rounded-full border border-text-primary/15 text-sm font-bold flex items-center justify-center gap-2 hover:bg-surface-low transition-colors"
-          >
-            <Pencil size={14} /> Endre roller
-          </button>
-
           {/* Kontaktinfo */}
-          <div className="pt-4 border-t border-text-primary/[0.06]">
+          <div className="pt-4.5 mt-5 border-t border-text-primary/[0.07] flex flex-col gap-3">
             {profile.email && (
               <InfoRow
-                icon={<Mail size={14} />}
                 label="E-post"
                 value={profile.email}
                 href={`mailto:${profile.email}`}
+                accent
               />
             )}
             {profile.phone && (
               <InfoRow
-                icon={<Phone size={14} />}
                 label="Telefon"
                 value={profile.phone}
                 href={`tel:${profile.phone}`}
               />
             )}
-            {!profile.is_musician && profile.children && profile.children.length > 0 && (
-              <InfoRow
-                icon={<Baby size={14} />}
-                label="Barn"
-                value={profile.children.map((c: Child) => `${c.name}${c.group ? ` (${c.group})` : ''}`).join(', ')}
-              />
-            )}
             <InfoRow
-              icon={<Calendar size={14} />}
+              label="Barn"
+              value={profile.children?.length ? profile.children.map(c => `${c.name} (${c.group})`).join(', ') : '—'}
+            />
+            <InfoRow
               label="Registrert"
               value={new Date(profile.created_at).toLocaleDateString('nb-NO')}
             />
           </div>
 
           {/* Faresone */}
-          <div className="flex gap-2 pt-4 border-t border-text-primary/[0.06]">
+          <div className="flex gap-2.5 pt-4.5 mt-5 border-t border-text-primary/[0.07]">
             <button
               type="button"
               onClick={() => setShowResetConfirm(true)}
@@ -254,17 +237,17 @@ export default function MemberDetailDesktop({
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex-1 py-2.5 rounded-full text-danger text-sm font-bold border border-danger/20 hover:bg-danger/5 flex items-center justify-center gap-1.5 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-danger text-sm font-bold hover:bg-danger/5 transition-colors"
             >
-              <Trash2 size={14} /> Slett
+              <Trash2 size={15} /> Slett
             </button>
           </div>
         </div>
 
         {/* HOEYRE: merke-panel */}
-        <div className="bg-card border border-text-primary/[0.09] rounded-3xl p-6 shadow-sm">
-          {/* Tabs + telling */}
-          <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+        <div>
+          {/* Tabs + telling — sticky */}
+          <div className="sticky top-[88px] z-10 bg-bg py-2 -mt-2 flex items-center justify-between flex-wrap gap-4 mb-4">
             <div className="inline-flex bg-surface-low rounded-full p-1 gap-0.5">
               {([
                 ['alle', 'Alle'],
@@ -275,20 +258,22 @@ export default function MemberDetailDesktop({
                   key={k}
                   type="button"
                   onClick={() => setFilter(k)}
-                  className={`font-display text-sm font-bold px-4 py-1.5 rounded-full transition ${
-                    filter === k ? 'bg-card text-accent shadow-sm' : 'text-text-secondary'
+                  className={`font-display text-sm font-bold px-5 py-2 rounded-full transition ${
+                    filter === k
+                      ? 'bg-card text-accent shadow-[0_1px_4px_rgba(57,56,43,0.1)]'
+                      : 'text-text-secondary'
                   }`}
                 >
                   {l}
                 </button>
               ))}
             </div>
-            <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-text-tertiary">
+            <span className="text-[12.5px] font-bold text-text-tertiary">
               {earnedTotal} opptjent · {badges.length} totalt
             </span>
           </div>
 
-          {/* Badge-rutenett: 6 kolonner, 7 paa xl */}
+          {/* Badge-rutenett: auto-fill 120px minimum */}
           {visibleBadges.length === 0 ? (
             <div className="py-16 text-center text-text-tertiary text-sm">
               {filter === 'opptjent'
@@ -296,7 +281,10 @@ export default function MemberDetailDesktop({
                 : 'Ingen merker som mangler.'}
             </div>
           ) : (
-            <div className="grid grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-6">
+            <div
+              className="grid gap-x-1.5 gap-y-6"
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}
+            >
               {visibleBadges.map(b => (
                 <BadgeTile
                   key={b.id}

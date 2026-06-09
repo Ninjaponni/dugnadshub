@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card'
 import BrandLink from '@/components/layout/BrandLink'
 import Image from 'next/image'
 import { getAvatarUrl } from '@/components/features/AvatarPicker'
-import { Users, Search, ChevronRight, X, ArrowLeft, ArrowUpDown, Music, Shield } from 'lucide-react'
+import { Users, Search, ChevronRight, X, ArrowLeft, ArrowUpDown, ChevronDown, Music } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { badgeDefinitions, STACKABLE_BADGE_CATEGORIES } from '@/lib/badges/definitions'
@@ -20,9 +20,9 @@ type SortMode = 'alpha' | 'badges' | 'least_active'
 type TypeFilter = 'alle' | 'foreldre' | 'musikanter'
 
 const sortLabels: Record<SortMode, string> = {
-  alpha: 'A–Å',
-  badges: 'Flest merker',
-  least_active: 'Minst aktiv',
+  badges: 'Mest aktive',
+  least_active: 'Minst aktive',
+  alpha: 'A til Å',
 }
 
 // Rolle-chip fargeklasse — matcher rolle med tonet pille-design
@@ -37,12 +37,15 @@ function roleChipClass(role: Role): string {
 }
 
 // Rund avatar med bilde eller initial-fallback
-function MemberAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
+function MemberAvatar({ name, avatarUrl, size = 42 }: { name: string | null; avatarUrl: string | null; size?: number }) {
   const initial = ((name || '?')[0] || '?').toUpperCase()
   const url = avatarUrl ? getAvatarUrl(avatarUrl) : null
   if (!url) {
     return (
-      <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center text-accent font-bold shrink-0">
+      <div
+        className="rounded-full bg-surface-low flex items-center justify-center text-accent font-bold shrink-0"
+        style={{ width: size, height: size }}
+      >
         {initial}
       </div>
     )
@@ -51,9 +54,10 @@ function MemberAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: str
     <Image
       src={url}
       alt=""
-      width={40}
-      height={40}
-      className="rounded-full w-10 h-10 object-cover shrink-0"
+      width={size}
+      height={size}
+      className="rounded-full object-cover shrink-0"
+      style={{ width: size, height: size }}
     />
   )
 }
@@ -66,7 +70,7 @@ export default function MembersAdminPage() {
   const [allShiftClaims, setAllShiftClaims] = useState<Array<{ user_id: string }>>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortMode, setSortMode] = useState<SortMode>('alpha')
+  const [sortMode, setSortMode] = useState<SortMode>('badges')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('alle')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
@@ -288,72 +292,6 @@ export default function MembersAdminPage() {
         </div>
       )}
 
-      {/* Desktop: filter-pills + søk + sort i samme rad */}
-      <div className={`${selectedProfile ? 'hidden' : 'hidden lg:flex'} items-center gap-3 mb-5`}>
-        {/* Type-filter pills */}
-        <div className="flex bg-card border border-text-primary/[0.06] rounded-full p-1 gap-1">
-          {([
-            ['alle', 'Alle'],
-            ['foreldre', 'Foreldre'],
-            ['musikanter', 'Musikanter'],
-          ] as const).map(([k, l]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTypeFilter(k)}
-              className={`font-display text-sm font-bold px-4 py-1.5 rounded-full transition-colors ${
-                typeFilter === k ? 'bg-accent text-white' : 'text-text-secondary hover:bg-surface-low'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-
-        {/* Elastisk mellomrom */}
-        <div className="flex-1" />
-
-        {/* Sort-knapper */}
-        {!loading && profiles.length > 1 && (
-          <div className="flex items-center gap-2">
-            <ArrowUpDown size={14} className="text-text-tertiary shrink-0" />
-            {(Object.keys(sortLabels) as SortMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setSortMode(mode)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  sortMode === mode
-                    ? 'bg-accent text-white'
-                    : 'bg-surface-low text-text-secondary hover:bg-surface-low/70'
-                }`}
-              >
-                {sortLabels[mode]}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Søk på desktop */}
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Søk..."
-            className="pl-9 pr-9 py-2 rounded-full bg-card ring-1 ring-text-tertiary/20 text-[14px] outline-none focus:ring-2 focus:ring-accent/30 w-52"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              <X size={16} className="text-text-tertiary" />
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Mobil: søkefelt + sort-pills */}
       <div className="lg:hidden">
         <div className="relative mb-4">
@@ -410,9 +348,9 @@ export default function MembersAdminPage() {
         </div>
       )}
 
-      {/* Ingen resultater */}
+      {/* Mobil: ingen resultater (desktop viser tom-tilstand inne i Card-en) */}
       {!loading && sortedProfiles.length === 0 && (
-        <Card className="p-6 text-center rounded-2xl">
+        <Card className="lg:hidden p-6 text-center rounded-2xl">
           <Users size={32} className="text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary font-[var(--font-display)]">
             {searchQuery ? 'Ingen treff på søket' : 'Ingen medlemmer registrert ennå'}
@@ -438,7 +376,7 @@ export default function MembersAdminPage() {
                     className="w-full text-left p-4 flex items-center gap-3"
                   >
                     {/* Avatar */}
-                    <MemberAvatar name={profile.full_name} avatarUrl={profile.avatar_url} />
+                    <MemberAvatar name={profile.full_name} avatarUrl={profile.avatar_url} size={40} />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 min-w-0">
@@ -476,27 +414,88 @@ export default function MembersAdminPage() {
         </div>
       )}
 
-      {/* Desktop: tabell-stil radvisning. Skjules naar medlem er valgt
+      {/* Desktop: én Card med toolbar + tabell. Skjules naar medlem er valgt
           (desktop viser MemberDetailDesktop i stedet). */}
-      {!loading && sortedProfiles.length > 0 && (
-        <div className={`${selectedProfile ? 'hidden' : 'hidden lg:block'} bg-card border border-text-primary/[0.09] rounded-3xl overflow-hidden shadow-sm`}>
-          {/* Tabell-hode med kolonne-labels */}
-          <div className="grid grid-cols-[1fr_180px_120px_80px_24px] gap-4 px-6 py-3 bg-surface-low border-b border-text-primary/[0.06]">
-            <span className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-text-tertiary">Medlem</span>
-            <span className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-text-tertiary">Rolle</span>
-            <span className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-text-tertiary">Type</span>
-            <span className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-text-tertiary text-right">Merker</span>
+      {!loading && (
+        <div className={`${selectedProfile ? 'hidden' : 'hidden lg:block'} bg-card rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(57,56,43,0.06)]`}>
+          {/* Toolbar-rad: filter-pills + sort-dropdown + søk */}
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-text-primary/[0.06] flex-wrap">
+            {/* Type-filter pills */}
+            <div className="flex bg-surface-low rounded-full p-1 gap-1">
+              {([
+                ['alle', 'Alle'],
+                ['foreldre', 'Foreldre'],
+                ['musikanter', 'Musikanter'],
+              ] as const).map(([k, l]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setTypeFilter(k)}
+                  className={`font-display text-sm font-bold px-4 py-2 rounded-full transition ${
+                    typeFilter === k
+                      ? 'bg-card text-accent shadow-[0_1px_4px_rgba(57,56,43,0.1)]'
+                      : 'text-text-secondary'
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Sort-dropdown */}
+            <label className="inline-flex items-center gap-2 bg-surface-low rounded-full px-4 py-2 cursor-pointer">
+              <ArrowUpDown size={15} className="text-text-tertiary" />
+              <select
+                value={sortMode}
+                onChange={e => setSortMode(e.target.value as SortMode)}
+                className="bg-transparent outline-none text-[13.5px] font-bold text-text-secondary cursor-pointer appearance-none pr-1"
+              >
+                <option value="badges">Mest aktive</option>
+                <option value="least_active">Minst aktive</option>
+                <option value="alpha">A til Å</option>
+              </select>
+              <ChevronDown size={14} className="text-text-tertiary" />
+            </label>
+
+            {/* Søk */}
+            <label className="flex items-center gap-2 bg-surface-low rounded-full px-4 py-2 w-[200px]">
+              <Search size={16} className="text-text-tertiary" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Søk medlem…"
+                className="bg-transparent outline-none text-sm w-full"
+              />
+            </label>
+          </div>
+
+          {/* Tabell-hode */}
+          <div className="grid grid-cols-[2.4fr_1.5fr_1fr_0.7fr_40px] gap-4 px-7 py-3 border-b border-text-primary/[0.05]">
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">Medlem</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">Rolle</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">Type</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">Merker</span>
             <span />
           </div>
 
+          {/* Tom-tilstand */}
+          {sortedProfiles.length === 0 && (
+            <div className="py-10 text-center text-text-tertiary text-sm">
+              {searchQuery ? 'Ingen treff på søket' : 'Ingen medlemmer registrert ennå'}
+            </div>
+          )}
+
           {/* Rader */}
-          {sortedProfiles.map(profile => {
+          {sortedProfiles.map((profile, i) => {
             const badgeCount = getBadgeCountForUser(profile.id)
-            // Sub-linje: musikant viser gruppe, forelder viser barn eller e-post
+            // Sub-linje: musikant viser gruppe, forelder viser første barn eller e-post
             const subLine = profile.is_musician
               ? (profile.musician_group || 'Musikant')
               : (profile.children && profile.children.length > 0
-                  ? profile.children.map((c: Child) => `${c.name} (${c.group})`).join(', ')
+                  ? `${profile.children[0].name} · ${profile.children[0].group}`
                   : profile.email)
 
             return (
@@ -504,49 +503,39 @@ export default function MembersAdminPage() {
                 key={profile.id}
                 type="button"
                 onClick={() => setSelectedId(profile.id)}
-                className="w-full grid grid-cols-[1fr_180px_120px_80px_24px] gap-4 px-6 py-4 border-b border-text-primary/[0.06] last:border-b-0 hover:bg-surface-low/40 transition-colors text-left"
+                className={`w-full grid grid-cols-[2.4fr_1.5fr_1fr_0.7fr_40px] gap-4 items-center px-7 py-3.5 hover:bg-surface-low/50 transition-colors text-left ${
+                  i > 0 ? 'border-t border-text-primary/[0.05]' : ''
+                }`}
               >
                 {/* Kolonne 1: avatar + navn + sub-linje */}
                 <div className="flex items-center gap-3 min-w-0">
                   <MemberAvatar name={profile.full_name} avatarUrl={profile.avatar_url} />
                   <div className="min-w-0">
-                    <div className="font-bold text-text-primary truncate">{profile.full_name || 'Ukjent'}</div>
-                    <div className="text-xs text-text-tertiary truncate">{subLine}</div>
+                    <div className="text-[14.5px] font-bold text-text-primary truncate">{profile.full_name || 'Ukjent'}</div>
+                    <div className="text-[12.5px] text-text-tertiary truncate">{subLine}</div>
                   </div>
                 </div>
 
-                {/* Kolonne 2: rolle-chip */}
+                {/* Kolonne 2: rolle-pill (neutral) */}
                 <div className="flex items-center">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${roleChipClass(profile.role as Role)}`}>
+                  <span className="bg-surface-low text-text-secondary px-2.5 py-1 rounded-full text-xs font-bold">
                     {ROLE_LABELS[profile.role]}
                   </span>
                 </div>
 
-                {/* Kolonne 3: type (Forelder / Musikant) */}
-                <div className="flex items-center text-sm text-text-secondary">
-                  {profile.is_musician ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Music size={13} className="text-accent" />
-                      Musikant
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1">
-                      <Shield size={13} className="text-text-tertiary" />
-                      Forelder
-                    </span>
-                  )}
+                {/* Kolonne 3: type (Forelder / Musikant) — bare tekst */}
+                <div className="text-[13.5px] font-semibold text-text-secondary">
+                  {profile.is_musician ? 'Musikant' : 'Forelder'}
                 </div>
 
-                {/* Kolonne 4: merke-antall høyrejustert */}
-                <div className="flex items-center justify-end font-bold text-accent">
-                  {badgeCount > 0 ? badgeCount : (
-                    <span className="text-text-tertiary font-normal">0</span>
-                  )}
+                {/* Kolonne 4: merke-antall */}
+                <div className="font-display text-[16px] font-extrabold text-accent">
+                  {badgeCount}
                 </div>
 
                 {/* Kolonne 5: chevron */}
                 <div className="flex items-center justify-end text-text-tertiary">
-                  <ChevronRight size={16} />
+                  <ChevronRight size={17} />
                 </div>
               </button>
             )
