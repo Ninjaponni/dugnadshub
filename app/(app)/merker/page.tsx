@@ -8,6 +8,7 @@ import { Check, Lock, X, Sparkles } from 'lucide-react'
 import BrandLink from '@/components/layout/BrandLink'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockBadgeCounts } from '@/lib/mock/data'
+import MerkerDesktop from '@/components/merker/MerkerDesktop'
 
 const categoryLabels: Record<string, string> = {
   starter: 'Startermerker',
@@ -187,7 +188,19 @@ export default function BadgesPage() {
         </div>
       </header>
 
-      <main className="pt-20 pb-28 px-5 space-y-6">
+      <main className="pt-20 pb-28 px-5 lg:pt-8 lg:pb-12 lg:px-8 xl:px-12">
+        {/* ── DESKTOP (lg+) — egen rik visning fra prototypen ── */}
+        <div className="hidden lg:block">
+          <MerkerDesktop
+            loading={loading}
+            badgeCounts={badgeCounts}
+            earnedBadgeIds={earnedBadgeIds}
+            newBadgeIds={newBadgeIds}
+          />
+        </div>
+
+        {/* ── MOBIL — urørt original-flyt ── */}
+        <div className="lg:hidden space-y-6">
         {/* Gradient merker-kort med nivåinfo */}
         {loading ? (
           <div className="rounded-2xl p-8 animate-pulse" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}>
@@ -501,6 +514,7 @@ export default function BadgesPage() {
           </>
         )}
       </AnimatePresence>
+      </div>
       </main>
     </>
   )

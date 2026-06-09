@@ -8,6 +8,8 @@
   --color-bg: #fbf6f0;
   --color-card: #ffffff;
   --color-surface-low: #f5f0ea;
+  /* Merke-coin: lys bakgrunn bak PNG-ene (multiply-blend). Holdes lys også i mørk modus. */
+  --color-badge-coin: #ffffff;
 
   /* Tekst — matcher Stitch on-surface */
   --color-text-primary: #39382b;
@@ -57,6 +59,7 @@ body {
   --color-bg: #1a1816;
   --color-card: #2a2622;
   --color-surface-low: #232019;
+  --color-badge-coin: #efe7dd;
 
   --color-text-primary: #ede8e1;
   --color-text-secondary: #a09c97;
@@ -86,6 +89,7 @@ body {
     --color-bg: #1a1816;
     --color-card: #2a2622;
     --color-surface-low: #232019;
+    --color-badge-coin: #efe7dd;
 
     --color-text-primary: #ede8e1;
     --color-text-secondary: #a09c97;
@@ -202,4 +206,12 @@ input[type="time"] {
 @keyframes subItemIn {
   from { opacity: 0; transform: translateX(-6px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+/* Merker-desktop: pulserende glød på neste nivå i journey-track + drivende blob i hero */
+@keyframes nextBeacon { 0% { transform: scale(.6); opacity: .5; } 70%, 100% { transform: scale(2.9); opacity: 0; } }
+@keyframes blobDrift { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-16px, 14px); } }
+@media (prefers-reduced-motion: no-preference) {
+  .next-beacon { animation: nextBeacon 2.3s ease-out infinite; }
+  .blob-drift { animation: blobDrift 10s ease-in-out infinite; }
 }
