@@ -660,20 +660,20 @@ export default function ProfilePage() {
                   </div>
                 </Card>
 
-                {/* Versjon + Logg ut — inni venstre kolonne på desktop */}
-                <div className="hidden lg:block pt-2">
-                  <p className="text-center text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary pb-3">
-                    Tillerbyen Skolekorps Dugnadshub v 10.26.9
-                  </p>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-white font-bold text-base tracking-wide hover:brightness-105 active:scale-[0.98] transition-all shadow-[0_6px_18px_rgba(162,74,51,0.25)]"
-                    style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
-                  >
-                    <LogOut size={18} />
-                    <span>Logg ut</span>
-                  </button>
-                </div>
+                {/* Versjon — separat søsken så lik 20px-avstand fra både kort over og knapp under */}
+                <p className="hidden lg:block text-center text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+                  Tillerbyen Skolekorps Dugnadshub v 10.27.0
+                </p>
+
+                {/* Logg ut — separat søsken for samme grunn */}
+                <button
+                  onClick={handleLogout}
+                  className="hidden lg:flex w-full items-center justify-center gap-2 py-3.5 rounded-full text-white font-bold text-base tracking-wide hover:brightness-105 active:scale-[0.98] transition-all shadow-[0_6px_18px_rgba(162,74,51,0.25)]"
+                  style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+                >
+                  <LogOut size={18} />
+                  <span>Logg ut</span>
+                </button>
 
               </div>
 
@@ -771,7 +771,7 @@ export default function ProfilePage() {
             {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
             <div className="lg:hidden">
               <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-                Tillerbyen Skolekorps Dugnadshub v 10.26.9
+                Tillerbyen Skolekorps Dugnadshub v 10.27.0
               </p>
               <div className="flex justify-center pt-1 pb-4">
                 <button
