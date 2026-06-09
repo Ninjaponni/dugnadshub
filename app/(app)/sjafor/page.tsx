@@ -471,7 +471,7 @@ export default function DriverPage() {
         </div>
       </header>
 
-      <main className="pt-20 pb-28 px-5 space-y-6">
+      <main className="pt-20 lg:pt-0 pb-28 px-5 space-y-6">
         {/* Sidetittel */}
         <section className="pt-2">
           <h1 className="text-3xl font-extrabold tracking-tight font-[var(--font-display)] text-text-primary">
@@ -535,12 +535,15 @@ export default function DriverPage() {
 
         {/* Tom tilstand — skjules hvis plast-sjåfør-kortet allerede dekker bruker */}
         {!loading && zones.length === 0 && trailerGroups.length === 0 && !plastDriverInfo && (
-          <div className="card rounded-[2.5rem] p-8 text-center">
-            <Package size={32} className="text-text-tertiary mx-auto mb-3" />
-            <p className="text-text-secondary">
-              {events.length === 0
-                ? 'Ingen aktive hendelser akkurat nå.'
-                : 'Ingen soner er ferdigplukket ennå.'}
+          <div className="lg:max-w-md lg:mx-auto bg-card border border-text-primary/[0.09] rounded-3xl p-8 shadow-sm text-center mt-12 lg:mt-24">
+            <div className="w-[66px] h-[66px] mx-auto rounded-full bg-surface-low flex items-center justify-center mb-4">
+              <Truck size={28} className="text-text-secondary" strokeWidth={1.8} />
+            </div>
+            <h2 className="font-display text-lg font-bold text-text-primary mb-2">
+              Ingen aktive hentinger akkurat nå
+            </h2>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Når neste plastdugnad eller flaskeinnsamling åpner, ser du sonene dine her.
             </p>
           </div>
         )}
