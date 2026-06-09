@@ -11,7 +11,7 @@ export const ROUTE_META: Record<string, RouteMeta> = {
   '/sjafor': { title: 'Henting', sub: 'Sjåfør-oversikt og rute' },
   '/vakter': { title: 'Vakter' },
   '/merker': { title: 'Merker' },
-  '/profil': { title: 'Profil' },
+  '/profil': { title: 'Min profil', sub: 'Tillerbyen Skolekorps' },
   '/admin/hendelser': { title: 'Hendelser', sub: 'Opprett og styr dugnader og arrangementer' },
   '/admin/medlemmer': { title: 'Medlemmer' },
   '/admin/varsler': { title: 'Varsler', sub: 'Send push til medlemmer' },
