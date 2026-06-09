@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Home, Map, Truck, Ticket, Award, User, Calendar, Users, Bell } from 'lucide-react'
 import SidebarUserCard from './SidebarUserCard'
 import VakterSubNav from './VakterSubNav'
+import KorpsLogo from '@/components/ui/KorpsLogo'
 import type { Profile } from '@/lib/supabase/types'
 
 type NavItem = {
@@ -76,14 +77,12 @@ export default function DesktopSidebar({
     <aside className="hidden lg:flex w-[264px] shrink-0 h-screen sticky top-0 flex-col bg-card border-r border-text-primary/[0.06] px-[18px] pt-[26px] pb-[18px]">
       {/* Merkevareblokk */}
       <div className="flex items-center gap-3 px-2 mb-[30px]">
-        <div className="w-[34px] h-[34px] rounded-full bg-accent text-white flex items-center justify-center font-display font-extrabold text-sm">
-          TS
-        </div>
-        <div>
-          <div className="font-display text-[19px] font-extrabold text-accent leading-none -tracking-[0.01em]">
+        <KorpsLogo size={36} className="shrink-0" />
+        <div className="min-w-0">
+          <div className="font-display text-[19px] font-extrabold text-accent leading-none tracking-tight">
             Dugnadshub
           </div>
-          <div className="text-[10.5px] font-semibold text-text-tertiary mt-[3px]">
+          <div className="text-[10.5px] font-semibold text-text-tertiary mt-[3px] truncate">
             Tillerbyen Skolekorps
           </div>
         </div>
