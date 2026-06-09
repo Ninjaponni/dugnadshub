@@ -660,7 +660,7 @@ export default function ProfilePage() {
                 {/* Versjon + Logg ut — inni venstre kolonne på desktop */}
                 <div className="hidden lg:block pt-4">
                   <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pb-2">
-                    Tillerbyen Skolekorps Dugnadshub v 10.26.6
+                    Tillerbyen Skolekorps Dugnadshub v 10.26.7
                   </p>
                   <div className="flex justify-center">
                     <button
@@ -770,7 +770,7 @@ export default function ProfilePage() {
             {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
             <div className="lg:hidden">
               <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-                Tillerbyen Skolekorps Dugnadshub v 10.26.6
+                Tillerbyen Skolekorps Dugnadshub v 10.26.7
               </p>
               <div className="flex justify-center pt-1 pb-4">
                 <button
