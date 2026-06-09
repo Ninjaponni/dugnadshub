@@ -1790,6 +1790,12 @@ export default function EventsAdminPage() {
                     startEditing(event)
                     setExpandedId(event.id)
                     setDesktopEditEventId(event.id)
+                    // Scroll redigeringskortet til toppen av viewport så brukeren
+                    // ikke må scrolle ned for å finne det.
+                    requestAnimationFrame(() => {
+                      const node = document.getElementById(`event-edit-${event.id}`)
+                      if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    })
                   }}
                   onSendHelp={() => handleSendHelp(event)}
                   onExportCSV={() => handleExportCSV(event.id)}
@@ -1870,10 +1876,11 @@ export default function EventsAdminPage() {
             return (
               <motion.div
                 key={event.id}
+                id={`event-edit-${event.id}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className={`lg:transition-transform lg:duration-200 lg:hover:-translate-y-1 ${hideOnDesktop ? 'lg:hidden' : ''}`}
+                className={`scroll-mt-24 lg:transition-transform lg:duration-200 lg:hover:-translate-y-1 ${hideOnDesktop ? 'lg:hidden' : ''}`}
               >
                 <Card animate={false} className="p-4 rounded-2xl">
                   {/* Header — klikk for a ekspandere */}
