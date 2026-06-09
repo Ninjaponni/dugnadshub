@@ -69,8 +69,8 @@ export default function DittBidrag({ data }: DittBidragProps) {
         <h3 className="font-semibold text-[15px] font-[var(--font-display)]">Sammen har vi i {new Date().getFullYear()}</h3>
       </div>
 
-      {/* 2x3 grid */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* 2 kolonner på mobil, 4 kolonner på desktop */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map(({ key, label, icon: Icon }, i) => (
           <motion.div
             key={key}

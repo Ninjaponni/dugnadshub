@@ -493,8 +493,8 @@ export default function ProfilePage() {
           </header>
 
           <main className="pt-20 pb-28 px-5 lg:pt-8 lg:pb-12 lg:px-8 xl:px-12">
-            {/* Sidetittel — full bredde */}
-            <h2 className="text-3xl font-extrabold text-text-primary tracking-tight font-[var(--font-display)] mb-5">Profil</h2>
+            {/* Sidetittel — kun synlig på mobil, topbaren viser tittelen på desktop */}
+            <h2 className="lg:hidden text-3xl font-extrabold text-text-primary tracking-tight font-[var(--font-display)] mb-5">Profil</h2>
 
             {/* To-kolonne på lg+: venstre = profilinfo + innstillinger, høyre = bidrag + historikk */}
             <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
@@ -545,8 +545,9 @@ export default function ProfilePage() {
                       </div>
                     ) : null}
 
-                    {/* Rediger-knapp */}
+                    {/* Rediger-knapp — ghost/outline-stil */}
                     <button
+                      type="button"
                       onClick={() => {
                         setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
                         setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
@@ -554,24 +555,27 @@ export default function ProfilePage() {
                         if (profile?.musician_group) setMusicianGroup(profile.musician_group)
                         setEditing(true)
                       }}
-                      className="px-6 py-2.5 rounded-full border-2 border-accent text-accent font-bold text-sm tracking-wide active:scale-95 transition-all"
+                      className="mx-auto flex items-center gap-2 px-6 py-2.5 rounded-full border border-text-primary/15 text-accent text-sm font-bold hover:bg-surface-low transition-colors"
                     >
+                      <Pencil size={14} />
                       Rediger profil
                     </button>
                   </div>
                 </Card>
 
-                {/* Admin-lenke (kun for admins) */}
+                {/* Admin-lenke — kun på mobil (sidebar har admin-menyer på desktop) */}
                 {profile?.role === 'admin' && (
-                  <Link href="/admin/oversikt" className="block">
-                    <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
-                      <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-                        <Shield size={20} className="text-accent" />
-                      </div>
-                      <span className="font-bold text-sm flex-1">Administrasjon</span>
-                      <ChevronRight size={18} className="text-text-tertiary" />
-                    </Card>
-                  </Link>
+                  <div className="lg:hidden">
+                    <Link href="/admin/oversikt" className="block">
+                      <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
+                        <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                          <Shield size={20} className="text-accent" />
+                        </div>
+                        <span className="font-bold text-sm flex-1">Administrasjon</span>
+                        <ChevronRight size={18} className="text-text-tertiary" />
+                      </Card>
+                    </Link>
+                  </div>
                 )}
 
                 {/* Push-varsel toggle */}
@@ -582,9 +586,6 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-bold text-sm">Push-varsler</p>
-                      <p className="text-xs text-text-secondary">
-                        {pushEnabled ? 'Aktivert' : 'Deaktivert'}
-                      </p>
                     </div>
                     <button
                       onClick={togglePush}
@@ -633,12 +634,12 @@ export default function ProfilePage() {
                   </div>
                 </Card>
 
-                {/* Vis onboarding på nytt */}
+                {/* Vis onboarding */}
                 <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
                   <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
                     <RotateCcw size={20} className="text-accent" />
                   </div>
-                  <p className="font-bold text-sm flex-1">Vis velkomstguiden på nytt</p>
+                  <p className="font-bold text-sm flex-1">Vis velkomstguiden</p>
                   <button
                     onClick={async () => {
                       if (!profile?.id) return
@@ -655,6 +656,23 @@ export default function ProfilePage() {
                     Vis
                   </button>
                 </Card>
+
+                {/* Versjon + Logg ut — inni venstre kolonne på desktop */}
+                <div className="hidden lg:block pt-4">
+                  <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pb-2">
+                    Tillerbyen Skolekorps Dugnadshub v 10.26.5
+                  </p>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-bold text-sm tracking-wide active:scale-95 transition-all"
+                      style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+                    >
+                      <LogOut size={16} />
+                      <span>Logg ut</span>
+                    </button>
+                  </div>
+                </div>
 
               </div>
 
@@ -749,21 +767,21 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Versjon + logg ut — full bredde, alltid nederst */}
-            <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-              Tillerbyen Skolekorps Dugnadshub v 10.26.4
-            </p>
-
-            {/* Logg ut */}
-            <div className="flex justify-center pt-1 pb-4">
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-bold text-sm tracking-wide active:scale-95 transition-all"
-                style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
-              >
-                <LogOut size={16} />
-                <span>Logg ut</span>
-              </button>
+            {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
+            <div className="lg:hidden">
+              <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
+                Tillerbyen Skolekorps Dugnadshub v 10.26.5
+              </p>
+              <div className="flex justify-center pt-1 pb-4">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-bold text-sm tracking-wide active:scale-95 transition-all"
+                  style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+                >
+                  <LogOut size={16} />
+                  <span>Logg ut</span>
+                </button>
+              </div>
             </div>
           </main>
         </>
