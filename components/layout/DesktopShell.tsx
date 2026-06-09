@@ -25,6 +25,9 @@ export default async function DesktopShell({ children }: { children: React.React
     type: 'Forelder',
   }
 
+  let memberCount: number | undefined
+  let isAdmin = false
+
   if (user) {
     const { data } = await supabase
       .from('profiles')
@@ -44,12 +47,21 @@ export default async function DesktopShell({ children }: { children: React.React
         avatar_url: d.avatar_url,
         type: d.is_musician ? 'Musikant' : 'Forelder',
       }
+      isAdmin = d.role === 'admin'
     }
+  }
+
+  // Antall medlemmer i sidebaren — kun for admin (count vises bare i ADMIN-gruppen)
+  if (isAdmin) {
+    const { count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+    memberCount = count ?? undefined
   }
 
   return (
     <div className="hidden lg:flex lg:min-h-screen lg:bg-bg">
-      <DesktopSidebar profile={profile} />
+      <DesktopSidebar profile={profile} memberCount={memberCount} />
       <div className="flex-1 flex flex-col min-w-0">
         <DesktopTopbar />
         <main className="max-w-[1320px] w-full mx-auto px-9 py-8">
