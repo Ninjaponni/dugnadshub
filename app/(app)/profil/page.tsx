@@ -489,195 +489,209 @@ export default function ProfilePage() {
             </div>
           </header>
 
-          <main className="pt-20 pb-28 px-5 space-y-5">
-            {/* Sidetittel */}
-            <h2 className="text-3xl font-extrabold text-text-primary tracking-tight font-[var(--font-display)]">Profil</h2>
+          <main className="pt-20 pb-28 px-5 lg:pt-8 lg:pb-12 lg:px-8 xl:px-12">
+            {/* Sidetittel — full bredde */}
+            <h2 className="text-3xl font-extrabold text-text-primary tracking-tight font-[var(--font-display)] mb-5">Profil</h2>
 
-            {/* Profilkort — sentrert layout */}
-            <Card className="p-6">
-              <div className="flex flex-col items-center">
-                {/* Avatar */}
-                <button
-                  onClick={() => setShowAvatarPicker(true)}
-                  className="relative group mb-3"
-                >
-                  <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-accent/20 group-active:ring-accent transition-all">
-                    {avatarId ? (
-                      <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-accent/10 flex items-center justify-center">
-                        <User size={32} className="text-accent" />
+            {/* To-kolonne på lg+: venstre = profilinfo + innstillinger, høyre = bidrag + historikk */}
+            <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
+
+              {/* VENSTRE KOLONNE: Profilkort + innstillinger */}
+              <div className="space-y-5">
+
+                {/* Profilkort — sentrert layout */}
+                <Card className="p-6">
+                  <div className="flex flex-col items-center">
+                    {/* Avatar */}
+                    <button
+                      onClick={() => setShowAvatarPicker(true)}
+                      className="relative group mb-3"
+                    >
+                      <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-accent/20 group-active:ring-accent transition-all">
+                        {avatarId ? (
+                          <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-accent/10 flex items-center justify-center">
+                            <User size={32} className="text-accent" />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="absolute bottom-0 right-0 w-7 h-7 bg-accent rounded-full flex items-center justify-center border-2 border-card shadow-lg">
-                    <Pencil size={13} className="text-white" />
-                  </div>
-                </button>
-
-                {/* Navn + e-post */}
-                <h3 className="text-lg font-bold font-[var(--font-display)] text-text-primary">{profile?.full_name}</h3>
-                <p className="text-sm text-text-secondary mb-3">{profile?.email}</p>
-
-                {/* Musikant-chip eller barn-liste */}
-                {profile?.is_musician ? (
-                  <div className="flex items-center gap-2 mt-3 mb-4 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium">
-                    <Music size={14} />
-                    <span>Musikant{profile.musician_group ? ` — ${profile.musician_group}` : ''}</span>
-                  </div>
-                ) : profile?.children && profile.children.length > 0 ? (
-                  <div className="flex flex-col items-center gap-1 mt-3 mb-4">
-                    {profile.children.map((c, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm text-accent font-medium">
-                        <span className="text-base">🎵</span>
-                        <span>{c.name}{c.group ? ` — ${c.group}` : ''}</span>
+                      <div className="absolute bottom-0 right-0 w-7 h-7 bg-accent rounded-full flex items-center justify-center border-2 border-card shadow-lg">
+                        <Pencil size={13} className="text-white" />
                       </div>
+                    </button>
+
+                    {/* Navn + e-post */}
+                    <h3 className="text-lg font-bold font-[var(--font-display)] text-text-primary">{profile?.full_name}</h3>
+                    <p className="text-sm text-text-secondary mb-3">{profile?.email}</p>
+
+                    {/* Musikant-chip eller barn-liste */}
+                    {profile?.is_musician ? (
+                      <div className="flex items-center gap-2 mt-3 mb-4 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium">
+                        <Music size={14} />
+                        <span>Musikant{profile.musician_group ? ` — ${profile.musician_group}` : ''}</span>
+                      </div>
+                    ) : profile?.children && profile.children.length > 0 ? (
+                      <div className="flex flex-col items-center gap-1 mt-3 mb-4">
+                        {profile.children.map((c, i) => (
+                          <div key={i} className="flex items-center gap-2 text-sm text-accent font-medium">
+                            <span className="text-base">🎵</span>
+                            <span>{c.name}{c.group ? ` — ${c.group}` : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {/* Rediger-knapp */}
+                    <button
+                      onClick={() => {
+                        setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
+                        setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
+                        setIsMusician(!!profile?.is_musician)
+                        if (profile?.musician_group) setMusicianGroup(profile.musician_group)
+                        setEditing(true)
+                      }}
+                      className="px-6 py-2.5 rounded-full border-2 border-accent text-accent font-bold text-sm tracking-wide active:scale-95 transition-all"
+                    >
+                      Rediger profil
+                    </button>
+                  </div>
+                </Card>
+
+                {/* Admin-lenke (kun for admins) */}
+                {profile?.role === 'admin' && (
+                  <Link href="/admin/oversikt" className="block">
+                    <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
+                      <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                        <Shield size={20} className="text-accent" />
+                      </div>
+                      <span className="font-bold text-sm flex-1">Administrasjon</span>
+                      <ChevronRight size={18} className="text-text-tertiary" />
+                    </Card>
+                  </Link>
+                )}
+
+                {/* Push-varsel toggle */}
+                {pushSupported && (
+                  <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
+                    <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                      <Bell size={20} className="text-accent" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm">Push-varsler</p>
+                      <p className="text-xs text-text-secondary">
+                        {pushEnabled ? 'Aktivert' : 'Deaktivert'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={togglePush}
+                      disabled={pushLoading}
+                      className={`w-12 h-7 rounded-full transition-colors relative ${
+                        pushEnabled ? 'bg-accent' : 'bg-surface-low'
+                      }`}
+                    >
+                      <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                        pushEnabled ? 'left-[22px]' : 'left-0.5'
+                      }`} />
+                    </button>
+                  </Card>
+                )}
+
+                {/* Tema-velger — System / Lys / Mørk */}
+                <Card animate={false} className="p-4 rounded-2xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
+                      {theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                        ? <Moon size={20} className="text-accent" />
+                        : <Sun size={20} className="text-accent" />
+                      }
+                    </div>
+                    <p className="font-bold text-sm">Utseende</p>
+                  </div>
+                  <div className="flex rounded-full bg-surface-low p-1 gap-1 ml-[52px]">
+                    {([
+                      { value: 'system' as const, label: 'System', icon: Monitor },
+                      { value: 'light' as const, label: 'Lys', icon: Sun },
+                      { value: 'dark' as const, label: 'Mørk', icon: Moon },
+                    ]).map(({ value, label, icon: Icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => setTheme(value)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-medium transition-colors ${
+                          theme === value
+                            ? 'bg-card text-text-primary shadow-sm'
+                            : 'text-text-secondary'
+                        }`}
+                      >
+                        <Icon size={14} />
+                        {label}
+                      </button>
                     ))}
                   </div>
-                ) : null}
+                </Card>
 
-                {/* Rediger-knapp */}
-                <button
-                  onClick={() => {
-                    setForm({ full_name: profile?.full_name || '', phone: profile?.phone || '' })
-                    setChildren(profile?.children?.length ? profile.children : [{ name: '', group: 'Aspirant' as const }])
-                    setIsMusician(!!profile?.is_musician)
-                    if (profile?.musician_group) setMusicianGroup(profile.musician_group)
-                    setEditing(true)
-                  }}
-                  className="px-6 py-2.5 rounded-full border-2 border-accent text-accent font-bold text-sm tracking-wide active:scale-95 transition-all"
-                >
-                  Rediger profil
-                </button>
-              </div>
-            </Card>
-
-            {/* Ditt bidrag — korps-total */}
-            {dittBidrag && <DittBidrag data={dittBidrag} />}
-
-            {/* Gjennomførte dugnader */}
-            {historyLoaded && history.length > 0 && (
-              <Card className="p-5">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <ClipboardList size={20} className="text-accent" />
-                  <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
-                </div>
-                <div className="space-y-1">
-                  {history.map((h, i) => (
-                    <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">{h.title}</p>
-                        <p className="text-xs text-text-secondary mt-0.5">
-                          {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </p>
-                      </div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
-                        {h.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {/* Admin-lenke (kun for admins) */}
-            {profile?.role === 'admin' && (
-              <Link href="/admin/oversikt" className="block mb-5">
+                {/* Vis onboarding på nytt */}
                 <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
                   <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-                    <Shield size={20} className="text-accent" />
+                    <RotateCcw size={20} className="text-accent" />
                   </div>
-                  <span className="font-bold text-sm flex-1">Administrasjon</span>
-                  <ChevronRight size={18} className="text-text-tertiary" />
-                </Card>
-              </Link>
-            )}
-
-            {/* Push-varsel toggle */}
-            {pushSupported && (
-              <Card animate={false} className="p-4 mb-5 flex items-center gap-3 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-                  <Bell size={20} className="text-accent" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-sm">Push-varsler</p>
-                  <p className="text-xs text-text-secondary">
-                    {pushEnabled ? 'Aktivert' : 'Deaktivert'}
-                  </p>
-                </div>
-                <button
-                  onClick={togglePush}
-                  disabled={pushLoading}
-                  className={`w-12 h-7 rounded-full transition-colors relative ${
-                    pushEnabled ? 'bg-accent' : 'bg-surface-low'
-                  }`}
-                >
-                  <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
-                    pushEnabled ? 'left-[22px]' : 'left-0.5'
-                  }`} />
-                </button>
-              </Card>
-            )}
-
-            {/* Tema-velger — System / Lys / Mørk */}
-            <Card animate={false} className="p-4 rounded-2xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-                  {theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-                    ? <Moon size={20} className="text-accent" />
-                    : <Sun size={20} className="text-accent" />
-                  }
-                </div>
-                <p className="font-bold text-sm">Utseende</p>
-              </div>
-              <div className="flex rounded-full bg-surface-low p-1 gap-1 ml-[52px]">
-                {([
-                  { value: 'system' as const, label: 'System', icon: Monitor },
-                  { value: 'light' as const, label: 'Lys', icon: Sun },
-                  { value: 'dark' as const, label: 'Mørk', icon: Moon },
-                ]).map(({ value, label, icon: Icon }) => (
+                  <p className="font-bold text-sm flex-1">Vis velkomstguiden på nytt</p>
                   <button
-                    key={value}
-                    onClick={() => setTheme(value)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-medium transition-colors ${
-                      theme === value
-                        ? 'bg-card text-text-primary shadow-sm'
-                        : 'text-text-secondary'
-                    }`}
+                    onClick={async () => {
+                      if (!profile?.id) return
+                      // Nullstill både DB og localStorage så onboarding trigges på nytt
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      await (supabaseRef.current.from('profiles') as any)
+                        .update({ onboarding_completed_at: null })
+                        .eq('id', profile.id)
+                      localStorage.removeItem(`onboarding_complete_${profile.id}`)
+                      router.push('/hjem')
+                    }}
+                    className="text-accent text-sm font-medium"
                   >
-                    <Icon size={14} />
-                    {label}
+                    Vis
                   </button>
-                ))}
-              </div>
-            </Card>
+                </Card>
 
-            {/* Vis onboarding på nytt */}
-            <Card animate={false} className="p-4 flex items-center gap-3 rounded-2xl">
-              <div className="w-10 h-10 rounded-full bg-surface-low flex items-center justify-center shrink-0">
-                <RotateCcw size={20} className="text-accent" />
               </div>
-              <p className="font-bold text-sm flex-1">Vis velkomstguiden på nytt</p>
-              <button
-                onClick={async () => {
-                  if (!profile?.id) return
-                  // Nullstill både DB og localStorage så onboarding trigges på nytt
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  await (supabaseRef.current.from('profiles') as any)
-                    .update({ onboarding_completed_at: null })
-                    .eq('id', profile.id)
-                  localStorage.removeItem(`onboarding_complete_${profile.id}`)
-                  router.push('/hjem')
-                }}
-                className="text-accent text-sm font-medium"
-              >
-                Vis
-              </button>
-            </Card>
 
-            {/* Versjon */}
-            <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-6">
-              Tillerbyen Skolekorps Dugnadshub v 10.25.4
+              {/* HØYRE KOLONNE: Bidrag + historikk */}
+              <div className="space-y-5 mt-5 lg:mt-0">
+
+                {/* Ditt bidrag — korps-total */}
+                {dittBidrag && <DittBidrag data={dittBidrag} />}
+
+                {/* Gjennomførte dugnader */}
+                {historyLoaded && history.length > 0 && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <ClipboardList size={20} className="text-accent" />
+                      <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
+                    </div>
+                    <div className="space-y-1">
+                      {history.map((h, i) => (
+                        <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">{h.title}</p>
+                            <p className="text-xs text-text-secondary mt-0.5">
+                              {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
+                            {h.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+              </div>
+            </div>
+
+            {/* Versjon + logg ut — full bredde, alltid nederst */}
+            <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
+              Tillerbyen Skolekorps Dugnadshub v 10.25.5
             </p>
 
             {/* Logg ut */}
