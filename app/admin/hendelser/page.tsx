@@ -297,9 +297,10 @@ function DesktopEventCard({
   updatingId: string | null
 }) {
   const [hov, setHov] = useState(false)
-  // Aktive kort viser alltid action-footer (viktigste å se på). Andre har den synlig fast også, men
-  // ekspansjon med detaljer (vakter, plast-import, fullføringsdialog osv) skjer i desktop-modal.
+  // Aktive kort er alltid ekspandert (man bør se hva som må gjøres). Andre starter
+  // kollapset med kun overskrift + progress, action-footer vises kun ved klikk.
   const featured = event.status === 'active'
+  const [expanded, setExpanded] = useState(featured)
   const isDone = event.status === 'completed'
   const updating = updatingId === event.id
 
@@ -316,8 +317,11 @@ function DesktopEventCard({
       }}
     >
       <div style={{ padding: featured ? '26px 28px 24px' : '20px 22px 18px', flex: 1 }}>
-        {/* Header — klikkbar åpner desktop-modal med full ekspandert visning */}
-        <div className="flex items-start gap-[15px] cursor-pointer select-none" onClick={onShowDetails}>
+        {/* Header — klikkbar toggler action-footer (kun for ikke-aktive kort) */}
+        <div
+          className={`flex items-start gap-[15px] ${!featured ? 'cursor-pointer select-none' : ''}`}
+          onClick={!featured ? () => setExpanded(e => !e) : undefined}
+        >
           <DesktopMedallion type={event.type} size={featured ? 54 : 46} hovered={hov} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2.5">
@@ -329,10 +333,13 @@ function DesktopEventCard({
               </span>
               <div className="flex items-center gap-2 shrink-0">
                 <DesktopStatusPill status={event.status} />
-                <ChevronDown
-                  size={16}
-                  className="text-text-tertiary"
-                />
+                {!featured && (
+                  <ChevronDown
+                    size={16}
+                    className="text-text-tertiary transition-transform"
+                    style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  />
+                )}
               </div>
             </div>
             <div
@@ -431,15 +438,24 @@ function DesktopEventCard({
         )}
       </div>
 
-      {/* Actions — alltid synlig. Brukeren får full ekspandert visning via "Detaljer" eller header-klikk. */}
-      <div
-        className="flex flex-wrap items-center gap-[9px]"
-        style={{
-          padding: '14px 22px',
-          background: 'var(--color-surface-low)',
-          borderTop: '1px solid rgba(57,56,43,0.05)',
-        }}
-      >
+      {/* Actions — kun synlig når kortet er ekspandert. Aktive er alltid ekspandert. */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="flex flex-wrap items-center gap-[9px]"
+              style={{
+                padding: '14px 22px',
+                background: 'var(--color-surface-low)',
+                borderTop: '1px solid rgba(57,56,43,0.05)',
+              }}
+            >
         {event.status === 'upcoming' && (
           <>
             <EventActionButton variant="primaryGhost" icon={<Zap size={15} />} onClick={onActivate} disabled={updating}>
@@ -506,7 +522,10 @@ function DesktopEventCard({
             </EventActionButton>
           </>
         )}
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
