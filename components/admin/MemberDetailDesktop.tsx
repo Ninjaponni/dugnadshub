@@ -148,8 +148,8 @@ export default function MemberDetailDesktop({
       </button>
 
       <div className="grid grid-cols-[340px_1fr] gap-7 items-start">
-        {/* VENSTRE: profil-kort */}
-        <div className="bg-card border border-text-primary/[0.09] rounded-3xl p-7 shadow-sm">
+        {/* VENSTRE: profil-kort — sticky så det blir stående mens man scroller gjennom merker */}
+        <div className="bg-card border border-text-primary/[0.09] rounded-3xl p-7 shadow-sm sticky top-[88px]">
           {/* Avatar + navn + merke-telling */}
           <div className="flex flex-col items-center text-center">
             {avatarUrl ? (
