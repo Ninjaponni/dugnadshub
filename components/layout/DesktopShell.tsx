@@ -11,9 +11,10 @@ export default async function DesktopShell({ children }: { children: React.React
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fallback: 'host' er valgt fordi 'member' ikke finnes i Role-unionen
-  // (Role = 'admin' | 'collector' | 'driver' | 'strapper' | 'host')
-  const fallbackRole: Role = 'host'
+  // Fallback til 'collector' (Samler) — den vanlige medlemsrollen i Role-unionen
+  // (Role = 'admin' | 'collector' | 'driver' | 'strapper' | 'host'). Brukes kun hvis vi
+  // mangler profilrad, hvilket er svært sjeldent siden (app)/* krever innlogging.
+  const fallbackRole: Role = 'collector'
 
   let profile: SidebarProfile = {
     full_name: 'Bruker',
