@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import BrandLink from '@/components/layout/BrandLink'
-import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Users, Sparkles, Map as MapIcon, Power } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Users, Sparkles, Map as MapIcon, Power, Recycle, FileText, Music, Ticket, Cake, Zap, Check } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone, MeetingPoint } from '@/lib/supabase/types'
@@ -113,6 +113,373 @@ const inputClass = 'w-full min-w-0 px-3 py-2 rounded-[12px] bg-card ring-1 ring-
 // Dato/tid-felt trenger ekstra styling for iOS Safari
 const dateTimeClass = `${inputClass} appearance-none max-w-full`
 
+// ──────────────────────────────────────────────────────────────
+// Desktop-komponenter (kun synlig på lg+). Matcher prototypens
+// views-admin-hendelser.jsx 1:1. Mobile-flyten under er urørt.
+// ──────────────────────────────────────────────────────────────
+
+// Per-type ikon, dempet behandling
+const TYPE_ICON: Record<EventType, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+  bottle_collection: Recycle,
+  lapper: FileText,
+  plast: Trash2,
+  arrangement: Music,
+  lottery: Ticket,
+  baking: Cake,
+  other: Calendar,
+}
+
+// Medallion — 46px rounded square med per-type ikon
+function DesktopMedallion({ type, size = 46, hovered }: { type: EventType; size?: number; hovered: boolean }) {
+  const Icon = TYPE_ICON[type] || Calendar
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.3,
+        flexShrink: 0,
+        background: hovered ? 'rgba(162,74,51,0.10)' : 'var(--color-surface-low)',
+        color: hovered ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+        transform: hovered ? 'scale(1.08) rotate(-4deg)' : 'none',
+        transition: 'background .22s, color .22s, transform .28s cubic-bezier(.34,1.56,.64,1)',
+      }}
+      className="flex items-center justify-center"
+    >
+      <Icon size={Math.round(size * 0.44)} strokeWidth={1.8} />
+    </div>
+  )
+}
+
+// Progress-bar med grow-in animasjon. mode='segmented' for aktive
+// sone-baserte (accent for ferdig, accent@38% for pågår). Ellers
+// solid fill.
+function DesktopProgressBar({
+  pct,
+  completed,
+  claimed,
+  mode,
+  color,
+  height = 8,
+}: {
+  pct: number
+  completed: number
+  claimed: number
+  mode: 'segmented' | 'fill'
+  color: string
+  height?: number
+}) {
+  const [grown, setGrown] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setGrown(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+  const filled = grown ? pct : 0
+  return (
+    <div style={{ height, background: 'var(--color-surface-low)', borderRadius: 9999, overflow: 'hidden' }}>
+      <div
+        style={{
+          width: `${filled}%`,
+          height: '100%',
+          display: 'flex',
+          borderRadius: 9999,
+          overflow: 'hidden',
+          transition: 'width 1s cubic-bezier(.2,.8,.2,1)',
+        }}
+      >
+        {mode === 'segmented' && claimed > 0 ? (
+          <>
+            <div style={{ width: `${(completed / claimed) * 100}%`, background: 'var(--color-accent)' }} />
+            <div style={{ flex: 1, background: 'rgba(162,74,51,0.38)' }} />
+          </>
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: color }} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Knapp-stiler matcher prototypens Btn(variant). Vi reimplementerer
+// dem her i Tailwind for ikke å rote til eksisterende Button-komp.
+type ActionVariant = 'primaryGhost' | 'ghost' | 'confirmGhost' | 'secondary'
+function EventActionButton({
+  variant,
+  icon,
+  onClick,
+  disabled,
+  children,
+  tone = 'secondary',
+}: {
+  variant: ActionVariant
+  icon?: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  children: React.ReactNode
+  tone?: 'secondary' | 'tertiary'
+}) {
+  const base = 'inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed'
+  let cls = ''
+  if (variant === 'primaryGhost') {
+    cls = 'bg-transparent text-accent ring-1 ring-inset ring-accent hover:bg-accent hover:text-white'
+  } else if (variant === 'confirmGhost') {
+    cls = 'bg-transparent text-success ring-1 ring-inset ring-success hover:bg-success hover:text-white'
+  } else if (variant === 'secondary') {
+    cls = 'bg-surface-low text-text-secondary hover:bg-surface-low/70'
+  } else {
+    // ghost
+    const toneCls = tone === 'tertiary' ? 'text-text-tertiary' : 'text-text-secondary'
+    cls = `bg-transparent ${toneCls} hover:bg-surface-low`
+  }
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={`${base} ${cls}`}>
+      {icon}
+      {children}
+    </button>
+  )
+}
+
+// Desktop-status-pill med valgfri live-dot
+function DesktopStatusPill({ status }: { status: EventStatus }) {
+  const label = status === 'active' ? 'Aktiv' : status === 'upcoming' ? 'Kommende' : 'Fullført'
+  const bg = status === 'active' ? 'bg-success/10 text-success' : 'bg-text-primary/[0.08] text-text-secondary'
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] ${bg}`}>
+      {status === 'active' && (
+        <span
+          className="w-[7px] h-[7px] rounded-full bg-success"
+          style={{ animation: 'pulse 1.6s ease-in-out infinite' }}
+        />
+      )}
+      {label}
+    </span>
+  )
+}
+
+// Hovedkortet for desktop. Matcher prototypens EventCard.
+function DesktopEventCard({
+  event,
+  zoneBased,
+  total,
+  claimed,
+  completed,
+  available,
+  pct,
+  unit,
+  onActivate,
+  onDeactivate,
+  onComplete,
+  onDelete,
+  onEdit,
+  onSendHelp,
+  onExportCSV,
+  exporting,
+  updatingId,
+}: {
+  event: EventWithZones
+  zoneBased: boolean
+  total: number
+  claimed: number
+  completed: number
+  available: number
+  pct: number
+  unit: 'soner' | 'vakter'
+  onActivate: () => void
+  onDeactivate: () => void
+  onComplete: () => void
+  onDelete: () => void
+  onEdit: () => void
+  onSendHelp: () => void
+  onExportCSV: () => void
+  exporting: boolean
+  updatingId: string | null
+}) {
+  const [hov, setHov] = useState(false)
+  const featured = event.status === 'active'
+  const isDone = event.status === 'completed'
+  const updating = updatingId === event.id
+
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      className="bg-card border border-text-primary/[0.09] overflow-hidden flex flex-col h-full"
+      style={{
+        borderRadius: featured ? 26 : 22,
+        transition: 'box-shadow .22s, transform .22s cubic-bezier(.34,1.56,.64,1)',
+        transform: hov && !featured ? 'translateY(-3px)' : 'none',
+        boxShadow: hov ? '0 16px 38px rgba(160,120,80,.2)' : '0 10px 34px rgba(160,120,80,0.16)',
+      }}
+    >
+      <div style={{ padding: featured ? '26px 28px 24px' : '20px 22px 18px', flex: 1 }}>
+        {/* Header */}
+        <div className="flex items-start gap-[15px]">
+          <DesktopMedallion type={event.type} size={featured ? 54 : 46} hovered={hov} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2.5">
+              <span
+                className="text-[11px] font-bold uppercase whitespace-nowrap text-text-tertiary"
+                style={{ letterSpacing: '0.11em' }}
+              >
+                {typeLabels[event.type]}
+              </span>
+              <DesktopStatusPill status={event.status} />
+            </div>
+            <div
+              className="font-[var(--font-display)] font-extrabold mt-1"
+              style={{
+                fontSize: featured ? 22 : 18,
+                letterSpacing: '-0.015em',
+                lineHeight: 1.15,
+              }}
+            >
+              {event.title}
+            </div>
+            <div className="flex items-center gap-3 text-[13px] text-text-secondary mt-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <Calendar size={13} className="text-text-tertiary" />
+                {event.date}
+              </span>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap text-text-tertiary">
+                <MapPin size={12} />
+                {areaLabels[event.area]}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress */}
+        {total > 0 && (
+          <div style={{ marginTop: featured ? 22 : 16 }}>
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="text-[13px] font-bold text-text-secondary whitespace-nowrap">
+                {claimed + completed}/{total} {unit} {zoneBased ? 'tatt' : 'fylt'}
+              </span>
+              <span
+                className="font-[var(--font-display)] font-extrabold"
+                style={{
+                  fontSize: featured ? 17 : 15,
+                  color: isDone ? 'var(--color-success)' : 'var(--color-accent)',
+                }}
+              >
+                {pct}%
+              </span>
+            </div>
+            <DesktopProgressBar
+              pct={pct}
+              completed={completed}
+              claimed={claimed + completed}
+              mode={featured && zoneBased ? 'segmented' : 'fill'}
+              color={isDone ? 'var(--color-success)' : 'var(--color-accent)'}
+              height={featured ? 12 : 8}
+            />
+            {featured && zoneBased && (
+              <div className="flex gap-[18px] flex-wrap mt-3">
+                {completed > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-text-secondary">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-accent)' }} />
+                    {completed} ferdig
+                  </span>
+                )}
+                {claimed > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-text-secondary">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'rgba(162,74,51,0.38)' }} />
+                    {claimed} pågår
+                  </span>
+                )}
+                {available > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-text-secondary">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'rgba(57,56,43,0.18)' }} />
+                    {available} ledige
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Resultat for fullført */}
+        {isDone && (
+          <div className="mt-4 text-[13.5px] text-text-secondary">
+            {zoneBased && event.bags_collected ? (
+              <>
+                <b className="font-[var(--font-display)] text-base text-text-primary">{event.bags_collected}</b>{' '}
+                sekker samlet inn
+              </>
+            ) : total > 0 ? (
+              <>
+                <b className="font-[var(--font-display)] text-base text-text-primary">Alle {total}</b> {unit} fullført
+              </>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div
+        className="flex flex-wrap items-center gap-[9px] mt-auto"
+        style={{
+          padding: '14px 22px',
+          background: 'var(--color-surface-low)',
+          borderTop: '1px solid rgba(57,56,43,0.05)',
+        }}
+      >
+        {event.status === 'upcoming' && (
+          <>
+            <EventActionButton variant="primaryGhost" icon={<Zap size={15} />} onClick={onActivate} disabled={updating}>
+              Aktiver
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+              Rediger
+            </EventActionButton>
+            <span className="flex-1" />
+            <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
+              Slett
+            </EventActionButton>
+          </>
+        )}
+        {event.status === 'active' && (
+          <>
+            {/* Skjul "Se kart" for arrangement-events */}
+            {event.type !== 'arrangement' && (
+              <Link
+                href={`/kart?event=${event.id}`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full text-text-secondary hover:bg-card transition-colors whitespace-nowrap"
+              >
+                <MapIcon size={14} />
+                Se kart
+              </Link>
+            )}
+            {available > 0 && (
+              <EventActionButton variant="ghost" icon={<Bell size={14} />} onClick={onSendHelp}>
+                Send hjelp-varsel ({available})
+              </EventActionButton>
+            )}
+            <EventActionButton variant="ghost" icon={<Power size={14} />} onClick={onDeactivate} disabled={updating}>
+              Deaktiver
+            </EventActionButton>
+            <span className="flex-1" />
+            <EventActionButton variant="confirmGhost" icon={<Check size={15} strokeWidth={3} />} onClick={onComplete} disabled={updating}>
+              Marker fullført
+            </EventActionButton>
+          </>
+        )}
+        {event.status === 'completed' && (
+          <>
+            <EventActionButton variant="secondary" icon={<Download size={14} />} onClick={onExportCSV} disabled={exporting}>
+              {exporting ? 'Eksporterer...' : 'Eksporter CSV'}
+            </EventActionButton>
+            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+              Rediger
+            </EventActionButton>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
 // Hendelsesadministrasjon — opprett, rediger og slett dugnader
 export default function EventsAdminPage() {
   const supabaseRef = useRef(createClient())
@@ -175,6 +542,17 @@ export default function EventsAdminPage() {
   // Trigger shift-reminders
   const [triggerReminders, setTriggerReminders] = useState<string | null>(null)
   const [triggerReminderResult, setTriggerReminderResult] = useState<{ eventId: string; message: string; isError: boolean } | null>(null)
+
+  // Desktop-confirm — egen ConfirmDialog-instans for desktop-kortene
+  // siden mobile-flyten har inline-bekreftelser inne i ekspandert kort
+  // (som er skjult på desktop).
+  const [desktopConfirm, setDesktopConfirm] = useState<{
+    kind: 'delete' | 'deactivate' | 'complete'
+    event: EventWithZones
+  } | null>(null)
+  // Når brukeren klikker "Rediger" på desktop, vis det inline-redigeringsskjemaet
+  // for dette ene kortet ved å overstyre lg:hidden.
+  const [desktopEditEventId, setDesktopEditEventId] = useState<string | null>(null)
 
   // Last alle hendelser med sonestatus
   const loadEvents = useCallback(async () => {
@@ -420,6 +798,7 @@ export default function EventsAdminPage() {
     }
 
     setEditingId(null)
+    setDesktopEditEventId(null)
     setEditSaving(false)
     await loadEvents()
   }
@@ -1215,8 +1594,8 @@ export default function EventsAdminPage() {
       </header>
       <div className="pt-16 lg:pt-0 pb-28">
 
-      {/* Tilbake + tittel + ny-knapp */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* Tilbake + tittel + ny-knapp (kun mobil — desktop får egen toolbar nedenfor) */}
+      <div className="lg:hidden flex items-center gap-3 mb-4">
         <Link href="/admin/oversikt" className="w-8 h-8 rounded-full flex items-center justify-center active:bg-surface-low shrink-0">
           <ArrowLeft size={20} className="text-accent" />
         </Link>
@@ -1233,6 +1612,61 @@ export default function EventsAdminPage() {
           {showForm ? 'Avbryt' : 'Ny hendelse'}
         </Button>
       </div>
+
+      {/* Desktop-toolbar — tabs (med count-chips) + Opprett-knapp. Matcher prototypen. */}
+      {!loading && events.length > 0 && (
+        <div className="hidden lg:flex items-center justify-between gap-4 flex-wrap mb-6">
+          <div className="inline-flex bg-surface-low rounded-full p-1 gap-0.5">
+            {([
+              ['active', 'Aktive', events.filter(e => e.status === 'active').length],
+              ['upcoming', 'Kommende', events.filter(e => e.status === 'upcoming').length],
+              ['completed', 'Fullførte', events.filter(e => e.status === 'completed').length],
+            ] as const).map(([tab, label, count]) => {
+              const isActive = activeTab === tab
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab as Tab)}
+                  className={`inline-flex items-center gap-[7px] px-[18px] py-2 rounded-full font-[var(--font-display)] text-[13.5px] font-bold transition-all ${
+                    isActive
+                      ? 'bg-card text-accent shadow-[0_2px_8px_rgba(160,120,80,0.16)]'
+                      : 'bg-transparent text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {label}
+                  <span
+                    className={`inline-flex items-center justify-center text-[11px] font-extrabold rounded-full ${
+                      isActive ? 'bg-accent/[0.12] text-accent' : 'bg-text-primary/[0.08] text-text-tertiary'
+                    }`}
+                    style={{ minWidth: 18, height: 18, padding: '0 5px' }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (showForm) {
+                setForm({ ...emptyForm })
+                setErrorMsg(null)
+              }
+              setShowForm(!showForm)
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-[var(--font-display)] font-bold text-[14px] transition-transform hover:scale-[1.02]"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container, var(--color-accent)))',
+              boxShadow: '0 6px 18px rgba(162,74,51,0.25)',
+            }}
+          >
+            {showForm ? <X size={17} strokeWidth={2.5} /> : <Plus size={17} strokeWidth={2.5} />}
+            {showForm ? 'Avbryt' : 'Opprett hendelse'}
+          </button>
+        </div>
+      )}
 
       {/* Feilmelding */}
       {errorMsg && (
@@ -1267,9 +1701,9 @@ export default function EventsAdminPage() {
         )}
       </AnimatePresence>
 
-      {/* Tab-navigasjon */}
+      {/* Tab-navigasjon — kun mobil. Desktop har egen toolbar lenger oppe. */}
       {!loading && events.length > 0 && (
-        <div className="flex gap-1 bg-surface-low rounded-full p-1 mb-4">
+        <div className="lg:hidden flex gap-1 bg-surface-low rounded-full p-1 mb-4">
           {([
             ['active', 'Aktive', events.filter(e => e.status === 'active').length],
             ['upcoming', 'Kommende', events.filter(e => e.status === 'upcoming').length],
@@ -1289,6 +1723,84 @@ export default function EventsAdminPage() {
           ))}
         </div>
       )}
+
+      {/* Desktop-grid med DesktopEventCard. Matcher prototypen. */}
+      {!loading && events.length > 0 && (() => {
+        const filtered = events.filter(e => {
+          if (activeTab === 'active') return e.status === 'active'
+          if (activeTab === 'upcoming') return e.status === 'upcoming'
+          return e.status === 'completed'
+        })
+
+        if (filtered.length === 0) {
+          const emptyMessages: Record<Tab, string> = {
+            active: 'Ingen aktive hendelser',
+            upcoming: 'Ingen kommende hendelser',
+            completed: 'Ingen fullførte hendelser ennå',
+          }
+          return (
+            <div className="hidden lg:block">
+              <Card className="p-11 rounded-3xl text-center">
+                <div className="w-[52px] h-[52px] rounded-full bg-surface-low flex items-center justify-center mx-auto mb-3.5 text-text-tertiary">
+                  <Calendar size={24} />
+                </div>
+                <p className="text-text-secondary text-[15px] m-0">{emptyMessages[activeTab]}</p>
+              </Card>
+            </div>
+          )
+        }
+
+        // Aktiv tab => én kolonne (full bredde). Andre => auto-fit grid.
+        const gridStyle: React.CSSProperties = activeTab === 'active'
+          ? { gridTemplateColumns: '1fr' }
+          : { gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }
+
+        return (
+          <div className="hidden lg:grid gap-4 items-stretch" style={gridStyle}>
+            {filtered.map(event => {
+              const zoneBased = event.type !== 'arrangement'
+              const total = event.zoneStats.total
+              const claimed = event.zoneStats.claimed
+              const completed = event.zoneStats.completed
+              const available = event.zoneStats.available
+              const pct = total > 0 ? Math.round(((claimed + completed) / total) * 100) : 0
+              return (
+                <DesktopEventCard
+                  key={event.id}
+                  event={event}
+                  zoneBased={zoneBased}
+                  total={total}
+                  claimed={claimed}
+                  completed={completed}
+                  available={available}
+                  pct={pct}
+                  unit={zoneBased ? 'soner' : 'vakter'}
+                  onActivate={() => handleStatusChange(event.id, 'active')}
+                  onDeactivate={() => {
+                    const hasClaims = event.zoneStats.claimed + event.zoneStats.completed > 0
+                    if (hasClaims) {
+                      setDesktopConfirm({ kind: 'deactivate', event })
+                    } else {
+                      handleStatusChange(event.id, 'upcoming')
+                    }
+                  }}
+                  onComplete={() => setDesktopConfirm({ kind: 'complete', event })}
+                  onDelete={() => setDesktopConfirm({ kind: 'delete', event })}
+                  onEdit={() => {
+                    startEditing(event)
+                    setExpandedId(event.id)
+                    setDesktopEditEventId(event.id)
+                  }}
+                  onSendHelp={() => handleSendHelp(event)}
+                  onExportCSV={() => handleExportCSV(event.id)}
+                  exporting={exporting === event.id}
+                  updatingId={updatingId}
+                />
+              )
+            })}
+          </div>
+        )
+      })()}
 
       {/* Skeleton loading */}
       {loading && (
@@ -1329,18 +1841,20 @@ export default function EventsAdminPage() {
             completed: 'Ingen fullførte hendelser ennå',
           }
           return (
-            <Card className="p-6 text-center rounded-2xl">
-              {activeTab === 'completed'
-                ? <CheckCircle size={32} className="text-text-tertiary mx-auto mb-3" />
-                : <Calendar size={32} className="text-text-tertiary mx-auto mb-3" />
-              }
-              <p className="text-text-secondary">{emptyMessages[activeTab]}</p>
-            </Card>
+            <div className="lg:hidden">
+              <Card className="p-6 text-center rounded-2xl">
+                {activeTab === 'completed'
+                  ? <CheckCircle size={32} className="text-text-tertiary mx-auto mb-3" />
+                  : <Calendar size={32} className="text-text-tertiary mx-auto mb-3" />
+                }
+                <p className="text-text-secondary">{emptyMessages[activeTab]}</p>
+              </Card>
+            </div>
           )
         }
 
         return (
-        <div className="space-y-3">
+        <div className={`space-y-3 ${desktopEditEventId ? '' : 'lg:hidden'}`}>
           {filtered.map((event, i) => {
             const isExpanded = expandedId === event.id
             const isEditing = editingId === event.id
@@ -1349,13 +1863,17 @@ export default function EventsAdminPage() {
               ? ((event.zoneStats.claimed + event.zoneStats.completed) / event.zoneStats.total) * 100
               : 0
 
+            const desktopEditMode = desktopEditEventId === event.id
+            // På desktop: hvis et annet kort er i edit-modus, skjul dette.
+            // Hvis ingen kort er i edit-modus, hele containeren er allerede lg:hidden.
+            const hideOnDesktop = !!desktopEditEventId && !desktopEditMode
             return (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="lg:transition-transform lg:duration-200 lg:hover:-translate-y-1"
+                className={`lg:transition-transform lg:duration-200 lg:hover:-translate-y-1 ${hideOnDesktop ? 'lg:hidden' : ''}`}
               >
                 <Card animate={false} className="p-4 rounded-2xl">
                   {/* Header — klikk for a ekspandere */}
@@ -1823,6 +2341,7 @@ export default function EventsAdminPage() {
                                       // Avbryt — nullstill redigerings-state
                                       setEditForm({ ...emptyForm })
                                       setEditingId(null)
+                                      setDesktopEditEventId(null)
                                       setErrorMsg(null)
                                     }}
                                     className="w-full mt-2 py-2 text-sm font-medium text-text-secondary active:bg-surface-low rounded-full"
@@ -2270,6 +2789,60 @@ export default function EventsAdminPage() {
         if (pendingCsv) {
           handleCsvUpload(pendingCsv.eventId, pendingCsv.file)
           setPendingCsv(null)
+        }
+      }}
+    />
+
+    {/* Desktop-bekreftelse for Slett / Deaktiver / Marker fullført */}
+    <ConfirmDialog
+      open={!!desktopConfirm}
+      title={
+        desktopConfirm?.kind === 'delete' ? 'Slette hendelsen?' :
+        desktopConfirm?.kind === 'deactivate' ? 'Deaktivere hendelsen?' :
+        desktopConfirm?.kind === 'complete' ? 'Markere som fullført?' :
+        ''
+      }
+      message={
+        desktopConfirm?.kind === 'delete'
+          ? (desktopConfirm.event.type === 'arrangement'
+              ? 'Hendelsen, alle vakter og påmeldinger blir permanent slettet.'
+              : 'Hendelsen og alle sonetildelinger blir permanent slettet.')
+          : desktopConfirm?.kind === 'deactivate'
+          ? `${desktopConfirm.event.zoneStats.claimed + desktopConfirm.event.zoneStats.completed} ${desktopConfirm.event.type === 'arrangement' ? 'påmeldinger' : 'soner'} er registrert. De beholdes men skjules for brukerne.`
+          : desktopConfirm?.kind === 'complete'
+          ? `«${desktopConfirm.event.title}» markeres som fullført. Merker deles ut til alle deltakere.`
+          : ''
+      }
+      confirmLabel={
+        desktopConfirm?.kind === 'delete' ? 'Slett' :
+        desktopConfirm?.kind === 'deactivate' ? 'Deaktiver' :
+        desktopConfirm?.kind === 'complete' ? 'Fullfør' : 'Bekreft'
+      }
+      variant={
+        desktopConfirm?.kind === 'delete' ? 'danger' :
+        desktopConfirm?.kind === 'deactivate' ? 'warning' :
+        'success'
+      }
+      loading={
+        (desktopConfirm?.kind === 'delete' && deleting) ||
+        (desktopConfirm?.kind === 'complete' && updatingId === desktopConfirm?.event.id) ||
+        (desktopConfirm?.kind === 'deactivate' && updatingId === desktopConfirm?.event.id) ||
+        false
+      }
+      onCancel={() => setDesktopConfirm(null)}
+      onConfirm={() => {
+        if (!desktopConfirm) return
+        const ev = desktopConfirm.event
+        const kind = desktopConfirm.kind
+        if (kind === 'delete') {
+          handleDelete(ev.id)
+          setDesktopConfirm(null)
+        } else if (kind === 'deactivate') {
+          setDesktopConfirm(null)
+          handleStatusChange(ev.id, 'upcoming')
+        } else if (kind === 'complete') {
+          setDesktopConfirm(null)
+          handleStatusChange(ev.id, 'completed')
         }
       }}
     />
