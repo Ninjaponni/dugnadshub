@@ -496,46 +496,49 @@ export default function ProfilePage() {
             {/* Sidetittel — kun synlig på mobil, topbaren viser tittelen på desktop */}
             <h2 className="lg:hidden text-3xl font-extrabold text-text-primary tracking-tight font-[var(--font-display)] mb-5">Profil</h2>
 
-            {/* To-kolonne på lg+: venstre = profilinfo + innstillinger, høyre = bidrag + historikk */}
-            <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
+            {/* To-kolonne på lg+: 360px profil-spalte + flex-1 stat-spalte. Matcher prototypen. */}
+            <div className="lg:grid lg:grid-cols-[360px_1fr] lg:gap-7 lg:items-start">
 
               {/* VENSTRE KOLONNE: Profilkort + innstillinger */}
               <div className="space-y-5">
 
-                {/* Profilkort — sentrert layout */}
-                <Card className="p-6">
+                {/* Profilkort — sentrert layout, romslig padding (matcher prototype pad=32) */}
+                <Card className="p-6 lg:p-8">
                   <div className="flex flex-col items-center">
-                    {/* Avatar */}
+                    {/* Avatar — 120px på desktop, 80px på mobil */}
                     <button
                       onClick={() => setShowAvatarPicker(true)}
-                      className="relative group mb-3"
+                      className="relative group mb-4"
+                      aria-label="Bytt avatar"
                     >
-                      <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-accent/20 group-active:ring-accent transition-all">
+                      <div className="w-20 h-20 lg:w-[120px] lg:h-[120px] rounded-full overflow-hidden ring-2 ring-accent/20 group-active:ring-accent transition-all">
                         {avatarId ? (
                           <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-accent/10 flex items-center justify-center">
-                            <User size={32} className="text-accent" />
+                            <User size={48} className="text-accent" />
                           </div>
                         )}
                       </div>
-                      <div className="absolute bottom-0 right-0 w-7 h-7 bg-accent rounded-full flex items-center justify-center border-2 border-card shadow-lg">
-                        <Pencil size={13} className="text-white" />
+                      <div className="absolute bottom-0 right-0 w-7 h-7 lg:w-9 lg:h-9 bg-accent rounded-full flex items-center justify-center border-2 border-card shadow-lg">
+                        <Pencil size={14} className="text-white" />
                       </div>
                     </button>
 
-                    {/* Navn + e-post */}
-                    <h3 className="text-lg font-bold font-[var(--font-display)] text-text-primary">{profile?.full_name}</h3>
-                    <p className="text-sm text-text-secondary mb-3">{profile?.email}</p>
+                    {/* Navn — stor display-font på desktop */}
+                    <h3 className="text-lg lg:text-2xl font-bold lg:font-extrabold font-[var(--font-display)] text-text-primary tracking-tight">
+                      {profile?.full_name}
+                    </h3>
+                    <p className="text-sm text-text-secondary mb-3 mt-1">{profile?.email}</p>
 
                     {/* Musikant-chip eller barn-liste */}
                     {profile?.is_musician ? (
-                      <div className="flex items-center gap-2 mt-3 mb-4 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium">
+                      <div className="flex items-center gap-2 mt-3 mb-5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium">
                         <Music size={14} />
                         <span>Musikant{profile.musician_group ? ` — ${profile.musician_group}` : ''}</span>
                       </div>
                     ) : profile?.children && profile.children.length > 0 ? (
-                      <div className="flex flex-col items-center gap-1 mt-3 mb-4">
+                      <div className="flex flex-col items-center gap-1 mt-3 mb-5">
                         {profile.children.map((c, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm text-accent font-medium">
                             <span className="text-base">🎵</span>
@@ -545,7 +548,7 @@ export default function ProfilePage() {
                       </div>
                     ) : null}
 
-                    {/* Rediger-knapp — bred ghost/outline-stil */}
+                    {/* Rediger-knapp — full bredde av kortets indre */}
                     <button
                       type="button"
                       onClick={() => {
@@ -555,7 +558,7 @@ export default function ProfilePage() {
                         if (profile?.musician_group) setMusicianGroup(profile.musician_group)
                         setEditing(true)
                       }}
-                      className="w-full max-w-[360px] flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-text-primary/15 text-accent text-sm font-bold hover:bg-surface-low transition-colors"
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-text-primary/15 text-accent text-sm font-bold hover:bg-surface-low transition-colors"
                     >
                       <Pencil size={14} />
                       Rediger profil
@@ -658,20 +661,18 @@ export default function ProfilePage() {
                 </Card>
 
                 {/* Versjon + Logg ut — inni venstre kolonne på desktop */}
-                <div className="hidden lg:block pt-4">
-                  <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pb-2">
-                    Tillerbyen Skolekorps Dugnadshub v 10.26.7
+                <div className="hidden lg:block pt-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary/60 px-1 pb-3">
+                    Tillerbyen Skolekorps Dugnadshub v 10.26.8
                   </p>
-                  <div className="flex justify-center">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-bold text-sm tracking-wide active:scale-95 transition-all"
-                      style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
-                    >
-                      <LogOut size={16} />
-                      <span>Logg ut</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-white font-bold text-base tracking-wide hover:brightness-105 active:scale-[0.98] transition-all shadow-[0_6px_18px_rgba(162,74,51,0.25)]"
+                    style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
+                  >
+                    <LogOut size={18} />
+                    <span>Logg ut</span>
+                  </button>
                 </div>
 
               </div>
@@ -770,7 +771,7 @@ export default function ProfilePage() {
             {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
             <div className="lg:hidden">
               <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-                Tillerbyen Skolekorps Dugnadshub v 10.26.7
+                Tillerbyen Skolekorps Dugnadshub v 10.26.8
               </p>
               <div className="flex justify-center pt-1 pb-4">
                 <button
