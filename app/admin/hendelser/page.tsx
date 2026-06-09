@@ -295,9 +295,12 @@ function DesktopEventCard({
   updatingId: string | null
 }) {
   const [hov, setHov] = useState(false)
+  // Aktive kort er alltid ekspandert (de er det viktigste å se på), andre kollapses
+  const [expanded, setExpanded] = useState(event.status === 'active')
   const featured = event.status === 'active'
   const isDone = event.status === 'completed'
   const updating = updatingId === event.id
+  const toggle = () => setExpanded(e => !e)
 
   return (
     <div
@@ -312,8 +315,8 @@ function DesktopEventCard({
       }}
     >
       <div style={{ padding: featured ? '26px 28px 24px' : '20px 22px 18px', flex: 1 }}>
-        {/* Header */}
-        <div className="flex items-start gap-[15px]">
+        {/* Header — klikkbar for å toggle expanded (kun for ikke-aktive) */}
+        <div className={`flex items-start gap-[15px] ${!featured ? 'cursor-pointer select-none' : ''}`} onClick={!featured ? toggle : undefined}>
           <DesktopMedallion type={event.type} size={featured ? 54 : 46} hovered={hov} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2.5">
@@ -323,7 +326,16 @@ function DesktopEventCard({
               >
                 {typeLabels[event.type]}
               </span>
-              <DesktopStatusPill status={event.status} />
+              <div className="flex items-center gap-2 shrink-0">
+                <DesktopStatusPill status={event.status} />
+                {!featured && (
+                  <ChevronDown
+                    size={16}
+                    className="text-text-tertiary transition-transform"
+                    style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  />
+                )}
+              </div>
             </div>
             <div
               className="font-[var(--font-display)] font-extrabold mt-1"
@@ -415,69 +427,85 @@ function DesktopEventCard({
         )}
       </div>
 
-      {/* Actions */}
-      <div
-        className="flex flex-wrap items-center gap-[9px] mt-auto"
-        style={{
-          padding: '14px 22px',
-          background: 'var(--color-surface-low)',
-          borderTop: '1px solid rgba(57,56,43,0.05)',
-        }}
-      >
-        {event.status === 'upcoming' && (
-          <>
-            <EventActionButton variant="primaryGhost" icon={<Zap size={15} />} onClick={onActivate} disabled={updating}>
-              Aktiver
-            </EventActionButton>
-            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
-              Rediger
-            </EventActionButton>
-            <span className="flex-1" />
-            <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
-              Slett
-            </EventActionButton>
-          </>
+      {/* Actions — kun synlig når kortet er ekspandert. Aktive kort er alltid ekspandert. */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="flex flex-wrap items-center gap-[9px]"
+              style={{
+                padding: '14px 22px',
+                background: 'var(--color-surface-low)',
+                borderTop: '1px solid rgba(57,56,43,0.05)',
+              }}
+            >
+              {event.status === 'upcoming' && (
+                <>
+                  <EventActionButton variant="primaryGhost" icon={<Zap size={15} />} onClick={onActivate} disabled={updating}>
+                    Aktiver
+                  </EventActionButton>
+                  <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+                    Rediger
+                  </EventActionButton>
+                  <span className="flex-1" />
+                  <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
+                    Slett
+                  </EventActionButton>
+                </>
+              )}
+              {event.status === 'active' && (
+                <>
+                  {/* Skjul "Se kart" for arrangement-events */}
+                  {event.type !== 'arrangement' && (
+                    <Link
+                      href={`/kart?event=${event.id}`}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full text-text-secondary hover:bg-card transition-colors whitespace-nowrap"
+                    >
+                      <MapIcon size={14} />
+                      Se kart
+                    </Link>
+                  )}
+                  {available > 0 && (
+                    <EventActionButton variant="ghost" icon={<Bell size={14} />} onClick={onSendHelp}>
+                      Send hjelp-varsel ({available})
+                    </EventActionButton>
+                  )}
+                  <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+                    Rediger
+                  </EventActionButton>
+                  <EventActionButton variant="ghost" icon={<Power size={14} />} onClick={onDeactivate} disabled={updating}>
+                    Deaktiver
+                  </EventActionButton>
+                  <span className="flex-1" />
+                  <EventActionButton variant="confirmGhost" icon={<Check size={15} strokeWidth={3} />} onClick={onComplete} disabled={updating}>
+                    Marker fullført
+                  </EventActionButton>
+                </>
+              )}
+              {event.status === 'completed' && (
+                <>
+                  <EventActionButton variant="secondary" icon={<Download size={14} />} onClick={onExportCSV} disabled={exporting}>
+                    {exporting ? 'Eksporterer...' : 'Eksporter CSV'}
+                  </EventActionButton>
+                  <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
+                    Rediger
+                  </EventActionButton>
+                  <span className="flex-1" />
+                  <EventActionButton variant="ghost" tone="tertiary" icon={<Trash2 size={14} />} onClick={onDelete}>
+                    Slett
+                  </EventActionButton>
+                </>
+              )}
+            </div>
+          </motion.div>
         )}
-        {event.status === 'active' && (
-          <>
-            {/* Skjul "Se kart" for arrangement-events */}
-            {event.type !== 'arrangement' && (
-              <Link
-                href={`/kart?event=${event.id}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full text-text-secondary hover:bg-card transition-colors whitespace-nowrap"
-              >
-                <MapIcon size={14} />
-                Se kart
-              </Link>
-            )}
-            {available > 0 && (
-              <EventActionButton variant="ghost" icon={<Bell size={14} />} onClick={onSendHelp}>
-                Send hjelp-varsel ({available})
-              </EventActionButton>
-            )}
-            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
-              Rediger
-            </EventActionButton>
-            <EventActionButton variant="ghost" icon={<Power size={14} />} onClick={onDeactivate} disabled={updating}>
-              Deaktiver
-            </EventActionButton>
-            <span className="flex-1" />
-            <EventActionButton variant="confirmGhost" icon={<Check size={15} strokeWidth={3} />} onClick={onComplete} disabled={updating}>
-              Marker fullført
-            </EventActionButton>
-          </>
-        )}
-        {event.status === 'completed' && (
-          <>
-            <EventActionButton variant="secondary" icon={<Download size={14} />} onClick={onExportCSV} disabled={exporting}>
-              {exporting ? 'Eksporterer...' : 'Eksporter CSV'}
-            </EventActionButton>
-            <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
-              Rediger
-            </EventActionButton>
-          </>
-        )}
-      </div>
+      </AnimatePresence>
     </div>
   )
 }
