@@ -197,3 +197,9 @@ input[type="time"] {
     scroll-behavior: smooth;
   }
 }
+
+/* Sub-nav-elementer fader inn med liten forskyvning */
+@keyframes subItemIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
