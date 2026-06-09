@@ -41,16 +41,22 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose }: Ava
         onClick={onClose}
       />
       <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-bg rounded-t-[28px] max-h-[85dvh] flex flex-col safe-bottom"
+        className="
+          fixed z-50 bg-bg flex flex-col safe-bottom
+          bottom-0 left-0 right-0 rounded-t-[28px] max-h-[85dvh]
+          lg:bottom-auto lg:left-1/2 lg:right-auto lg:top-1/2
+          lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl
+          lg:w-[640px] lg:max-h-[80vh] lg:shadow-2xl lg:border lg:border-text-primary/[0.09]
+        "
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h2 className="text-xl font-bold font-[var(--font-display)]">Velg avatar</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 lg:px-7 lg:pt-7">
+          <h2 className="text-xl font-bold font-[var(--font-display)] lg:text-2xl">Velg avatar</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center hover:bg-surface-low/70 transition-colors">
             <X size={16} className="text-text-secondary" />
           </button>
         </div>
@@ -62,9 +68,9 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose }: Ava
           </div>
         </div>
 
-        {/* Grid */}
-        <div className="overflow-auto flex-1 overscroll-contain px-5 pb-24">
-          <div className="grid grid-cols-4 gap-3 py-3">
+        {/* Grid — 4 kolonner på mobil, 8 på desktop for å holde ikonene moderate */}
+        <div className="overflow-auto flex-1 overscroll-contain px-5 pb-24 lg:px-7 lg:pb-7">
+          <div className="grid grid-cols-4 gap-3 py-3 lg:grid-cols-8 lg:gap-3.5">
             {avatarIds.map((id) => {
               const isSelected = id === selected
               return (
@@ -91,10 +97,10 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose }: Ava
         </div>
 
         {/* Bekreft-knapp */}
-        <div className="px-5 py-4 shrink-0">
+        <div className="px-5 py-4 shrink-0 lg:px-7 lg:pb-7 lg:pt-3">
           <button
             onClick={() => onSelect(selected)}
-            className="w-full py-4 rounded-full text-white font-bold text-base active:scale-[0.98] transition-all font-[var(--font-display)]"
+            className="w-full py-4 rounded-full text-white font-bold text-base hover:brightness-105 active:scale-[0.98] transition-all font-[var(--font-display)] shadow-[0_6px_18px_rgba(162,74,51,0.25)]"
             style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
           >
             Bruk denne avataren
