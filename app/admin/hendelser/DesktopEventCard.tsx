@@ -395,7 +395,7 @@ export function DesktopEventCard({
             )}
             {available > 0 && (
               <EventActionButton variant="ghost" icon={<Bell size={14} />} onClick={onSendHelp}>
-                Send hjelp-varsel ({available})
+                Send hjelp-varsel · {available} ledige
               </EventActionButton>
             )}
             <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>

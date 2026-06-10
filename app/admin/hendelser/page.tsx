@@ -2093,7 +2093,7 @@ export default function EventsAdminPage() {
                   className="flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-2 rounded-full bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
                 >
                   <Bell size={13} />
-                  Send hjelp-varsel ({event.zoneStats.available})
+                  Send hjelp-varsel ({event.zoneStats.available} ledige)
                 </button>
               )}
               <button
