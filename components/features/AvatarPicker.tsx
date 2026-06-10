@@ -16,8 +16,11 @@ export function getRandomAvatarId(): string {
   return avatarIds[Math.floor(Math.random() * avatarIds.length)]
 }
 
-// Hent URL fra avatar-id
+// Hent URL fra avatar-id. Godtar KUN gyldige ider (avatar01–avatar56) —
+// alt annet (eksterne URL-er, søppeldata) gir tom streng så visningene
+// faller tilbake til initial-sirkelen i stedet for et knekt bilde.
 export function getAvatarUrl(avatarId: string): string {
+  if (!/^avatar\d{2}$/.test(avatarId)) return ''
   return `/avatars/${avatarId}.png`
 }
 
