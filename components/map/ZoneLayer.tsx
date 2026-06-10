@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
+import { ZONE_COLORS } from '@/lib/map/zone-colors'
 
 // GeoJSON-feature struktur for soner — beholder samme form som combined-zones-data
 type ZoneFeature = {
@@ -12,16 +13,15 @@ type ZoneFeature = {
   geometry: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
 }
 
-// Fargekoder for sonestatus — speiler tokens i app/globals.css
-// Rød=ledig, Gul=delvis tatt, Blå=fullt bemannet, Grønn=ferdigplukket, Lilla=hentet
-// Mapbox krever rene hex-verdier, derfor hardkodet her
+// Fargekoder for sonestatus — delt kilde i lib/map/zone-colors.ts
+// (Mapbox krever rene hex-verdier, ikke CSS-variabler)
 const COLORS = {
-  empty: '#E57373',      // --color-zone-available
-  partial: '#FFD54F',    // --color-zone-partial
-  full: '#5C9CE6',       // --color-zone-full — alle plasser fylt
-  completed: '#6B8F71',  // --color-zone-complete — ferdigplukket
-  picked_up: '#9C7DB8',  // --color-zone-picked-up
-  mine_border: '#6B8F71',
+  empty: ZONE_COLORS.available,
+  partial: ZONE_COLORS.partial,
+  full: ZONE_COLORS.full,
+  completed: ZONE_COLORS.completed,
+  picked_up: ZONE_COLORS.pickedUp,
+  mine_border: ZONE_COLORS.completed,
 }
 
 interface ZoneLayerProps {

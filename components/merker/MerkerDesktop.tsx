@@ -257,7 +257,10 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
 
           {/* samlings-emblem — ring = hele samlingens progresjon */}
-          <Ring size={132} stroke={10} pct={total ? earnedCount / total : 0}>
+          {/* Ringen måler samlingens DEKNING (distinkte merker av totalen) —
+              tallet i midten teller totalt inkl. duplikater (×2 osv.), som mobil.
+              Uten distinkt-telleren kunne ringen passert 100 %. */}
+          <Ring size={132} stroke={10} pct={total ? earned.length / total : 0}>
             <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: '.18em', opacity: .8 }}>SAMLET</span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 800, lineHeight: 1, marginTop: 1 }}>{countMerker}</span>
             <span style={{ fontSize: 12, fontWeight: 600, opacity: .82 }}>av {total}</span>

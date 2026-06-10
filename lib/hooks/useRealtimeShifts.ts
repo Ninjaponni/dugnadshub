@@ -12,8 +12,12 @@ export function useRealtimeShifts(eventId: string) {
 
   // Holder vakt-IDene tilgjengelig for realtime-callback uten å trigge re-subscription
   const shiftIdsRef = useRef<Set<string>>(new Set())
+  // Sekvensvakt: to samtidige fetches kan resolves i feil rekkefølge —
+  // bare den nyeste får lov å skrive state
+  const fetchSeqRef = useRef(0)
 
   const fetchShifts = useCallback(async () => {
+    const seq = ++fetchSeqRef.current
     const { data, error: fetchError } = await supabaseRef.current
       .from('event_shifts')
       .select(`
@@ -26,6 +30,8 @@ export function useRealtimeShifts(eventId: string) {
       .eq('event_id', eventId)
       .order('shift_date', { ascending: true })
       .order('start_time', { ascending: true })
+
+    if (seq !== fetchSeqRef.current) return // en nyere fetch er underveis/ferdig
 
     if (fetchError) {
       setError(fetchError.message)
@@ -49,14 +55,25 @@ export function useRealtimeShifts(eventId: string) {
       )
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'shift_claims' },
-        (payload) => {
+        async (payload) => {
           // Filtrer i klient: bare refetch hvis endringen gjelder en vakt i dette arrangementet
           const newRow = payload.new as { shift_id?: string } | null
           const oldRow = payload.old as { shift_id?: string } | null
           const affected = newRow?.shift_id ?? oldRow?.shift_id
-          if (affected && shiftIdsRef.current.has(affected)) {
+          if (!affected) return
+          if (shiftIdsRef.current.has(affected)) {
             fetchShifts()
+            return
           }
+          // Ukjent vakt-id: kan være en NYLIG opprettet vakt i dette arrangementet
+          // som vi ikke har rukket å hente enda. Sjekk med et billig oppslag i
+          // stedet for å ignorere claimet til neste refetch.
+          const { data } = await supabaseRef.current
+            .from('event_shifts')
+            .select('event_id')
+            .eq('id', affected)
+            .maybeSingle() as { data: { event_id: string } | null }
+          if (data?.event_id === eventId) fetchShifts()
         }
       )
       .subscribe()

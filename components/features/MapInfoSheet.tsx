@@ -3,28 +3,29 @@
 import BottomSheet from '@/components/ui/BottomSheet'
 import { Phone } from 'lucide-react'
 import type { EventType } from '@/lib/supabase/types'
+import { ZONE_COLORS } from '@/lib/map/zone-colors'
 
 // Fargekoder per hendelsestype
 const bottleColors = [
-  { color: '#E57373', label: 'Ledig — ta denne sonen' },
-  { color: '#FFD54F', label: 'Delvis tatt — trenger flere' },
-  { color: '#5C9CE6', label: 'Fullt bemannet' },
-  { color: '#6B8F71', label: 'Ferdigplukket' },
-  { color: '#9C7DB8', label: 'Hentet' },
+  { color: ZONE_COLORS.available, label: 'Ledig — ta denne sonen' },
+  { color: ZONE_COLORS.partial, label: 'Delvis tatt — trenger flere' },
+  { color: ZONE_COLORS.full, label: 'Fullt bemannet' },
+  { color: ZONE_COLORS.completed, label: 'Ferdigplukket' },
+  { color: ZONE_COLORS.pickedUp, label: 'Hentet' },
 ]
 
 const flyerColors = [
-  { color: '#E57373', label: 'Ledig — ta denne sonen' },
-  { color: '#FFD54F', label: 'Delvis tatt — trenger flere' },
-  { color: '#5C9CE6', label: 'Fullt bemannet' },
-  { color: '#6B8F71', label: 'Ferdig levert' },
+  { color: ZONE_COLORS.available, label: 'Ledig — ta denne sonen' },
+  { color: ZONE_COLORS.partial, label: 'Delvis tatt — trenger flere' },
+  { color: ZONE_COLORS.full, label: 'Fullt bemannet' },
+  { color: ZONE_COLORS.completed, label: 'Ferdig levert' },
 ]
 
 const plastColors = [
-  { color: '#E57373', label: 'Ledig — meld deg som voksen ansvarlig' },
-  { color: '#FFD54F', label: 'Trenger flere voksne' },
-  { color: '#5C9CE6', label: 'Voksne meldt' },
-  { color: '#6B8F71', label: 'Ferdig ryddet' },
+  { color: ZONE_COLORS.available, label: 'Ledig — meld deg som voksen ansvarlig' },
+  { color: ZONE_COLORS.partial, label: 'Trenger flere voksne' },
+  { color: ZONE_COLORS.full, label: 'Voksne meldt' },
+  { color: ZONE_COLORS.completed, label: 'Ferdig ryddet' },
 ]
 
 interface MapInfoSheetProps {

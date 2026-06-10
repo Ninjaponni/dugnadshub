@@ -9,13 +9,12 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, Pencil, Trash2, Award } from 'lucide-react'
 import type { Profile, Role, ChildGroup } from '@/lib/supabase/types'
-import { badgeDefinitions } from '@/lib/badges/definitions'
 import { ROLE_LABELS } from '@/lib/roles'
 import { getAvatarUrl } from '@/components/features/AvatarPicker'
-import { useToast } from '@/lib/hooks/useToast'
 import BadgeTile from './BadgeTile'
 import RoleEditorSheet from './RoleEditorSheet'
 import BadgeDetailSheet from './BadgeDetailSheet'
+import { useMemberDetail } from './useMemberDetail'
 import MemberToast from './MemberToast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
@@ -68,73 +67,19 @@ export default function MemberDetailDesktop({
   onResetBadges,
   onDeleteMember,
 }: Props) {
-  const [filter, setFilter] = useState<Filter>('alle')
-  const [roleEditorOpen, setRoleEditorOpen] = useState(false)
-  const [selectedBadgeId, setSelectedBadgeId] = useState<number | null>(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  // Delt detalj-logikk — samme hook som mobil-overlayet
+  const {
+    filter, setFilter,
+    roleEditorOpen, setRoleEditorOpen,
+    selectedBadgeId, setSelectedBadgeId, selectedBadge, selectedBadgeCount,
+    showDeleteConfirm, setShowDeleteConfirm,
+    awardedBadgeId, bumpedBadgeId,
+    toast, showToast,
+    handleAward, handleRemove, handleRoleChangeWrapped, handleTypeChangeWrapped,
+    badges, visibleBadges, earnedTotal,
+  } = useMemberDetail({ badgeCounts, onAwardBadge, onRemoveBadge, onRoleChange, onTypeChange })
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
-  // Animasjons-state for ny-tildelt og bumpet merke (samme som i overlayet)
-  const [awardedBadgeId, setAwardedBadgeId] = useState<number | null>(null)
-  const [bumpedBadgeId, setBumpedBadgeId] = useState<number | null>(null)
-
-  const { message: toast, showToast } = useToast()
-
-  const selectedBadge = badgeDefinitions.find(b => b.id === selectedBadgeId) ?? null
-  const selectedBadgeCount = selectedBadgeId ? (badgeCounts.get(selectedBadgeId) ?? 0) : 0
-
-  // Wrappere med toast-bekreftelse (samme moenster som overlayet).
-  // Venter paa DB-resultatet foer suksess-toast — skal ikke lyve ved feil.
-  const handleAward = async (badgeId: number) => {
-    const b = badgeDefinitions.find(bb => bb.id === badgeId)
-    const c = badgeCounts.get(badgeId) ?? 0
-    const ok = await onAwardBadge(badgeId)
-    if (!ok) { showToast('Kunne ikke lagre merket — prøv igjen'); return }
-    if (b) {
-      if (c > 0) {
-        setBumpedBadgeId(badgeId)
-        setTimeout(() => setBumpedBadgeId(null), 520)
-        showToast(`«${b.name}» gitt på nytt, nå ×${c + 1}`)
-      } else {
-        setAwardedBadgeId(badgeId)
-        setTimeout(() => setAwardedBadgeId(null), 650)
-        showToast(`«${b.name}» tildelt`)
-      }
-    }
-  }
-
-  const handleRemove = async (badgeId: number) => {
-    const b = badgeDefinitions.find(bb => bb.id === badgeId)
-    const c = badgeCounts.get(badgeId) ?? 0
-    const ok = await onRemoveBadge(badgeId)
-    if (!ok) { showToast('Kunne ikke fjerne merket — prøv igjen'); return }
-    if (b) {
-      if (c > 1) showToast(`«${b.name}» redusert til ×${c - 1}`)
-      else showToast(`«${b.name}» fjernet`)
-    }
-  }
-
-  const handleRoleChangeWrapped = async (role: Role) => {
-    const ok = await onRoleChange(role)
-    showToast(ok ? `Rolle oppdatert: ${ROLE_LABELS[role]}` : 'Kunne ikke lagre rollen — prøv igjen')
-  }
-
-  const handleTypeChangeWrapped = async (isM: boolean, g: ChildGroup | null) => {
-    const ok = await onTypeChange(isM, g)
-    showToast(ok ? (isM ? `Type: Musikant${g ? ` · ${g}` : ''}` : 'Type: Forelder') : 'Kunne ikke lagre — prøv igjen')
-  }
-
-  // Slaa sammen definisjoner med antall
-  const badges = badgeDefinitions.map(def => ({
-    ...def,
-    count: badgeCounts.get(def.id) ?? 0,
-    earned: (badgeCounts.get(def.id) ?? 0) > 0,
-  }))
-
-  const visibleBadges = badges.filter(b =>
-    filter === 'alle' ? true : filter === 'opptjent' ? b.earned : !b.earned
-  )
-  const earnedTotal = badges.reduce((s, b) => s + b.count, 0)
 
   const avatarUrl = profile.avatar_url ? getAvatarUrl(profile.avatar_url) : null
   const initial = ((profile.full_name || profile.email || '?')[0] || '?').toUpperCase()
