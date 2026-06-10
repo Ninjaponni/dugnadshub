@@ -216,9 +216,11 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
 
   const total = all.length
   const earned = all.filter(b => b.earned)
-  const earnedCount = earned.length
+  // Teller totalt antall opptjente merker INKL. duplikater (f.eks. Solpanter ×2
+  // teller som 2) — samme tall som mobil-siden viser. Distinkte merker = earned.length.
+  const earnedCount = all.reduce((n, b) => n + b.count, 0)
 
-  // Nivå-matematikk — basert på antall unike opptjente merker
+  // Nivå-matematikk — basert på totalt antall opptjente merker (inkl. duplikater)
   const curIdx = LEVELS.reduce((acc, lv, i) => (earnedCount >= lv.at ? i : acc), 0)
   const cur = LEVELS[curIdx]
   const next = LEVELS[curIdx + 1]

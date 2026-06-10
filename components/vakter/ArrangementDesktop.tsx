@@ -47,8 +47,10 @@ type Props = {
 export default function ArrangementDesktop({ event, shifts, currentUserId, onShiftClick }: Props) {
   const sorted = sortShifts(shifts)
   const roles = Array.from(new Set(sorted.map(s => s.role)))
-  const totalCount = sorted.length
-  const openCount = sorted.filter(s => s.capacity - (s.claims?.length ?? 0) > 0).length
+  // Tell PLASSER (sum kapasitet), ikke vakt-rader — en vakt kan trenge flere personer.
+  // 16 rader à ulik kapasitet = 44 plasser. Det er plasser folk teller.
+  const totalSeats = sorted.reduce((n, s) => n + s.capacity, 0)
+  const openSeats = sorted.reduce((n, s) => n + Math.max(0, s.capacity - (s.claims?.length ?? 0)), 0)
   const deadlinePassed = isDeadlinePassed(event.signup_deadline ?? null)
 
   const mineShifts = sorted.filter(s => (s.claims ?? []).some(c => c.user_id === currentUserId))
@@ -59,8 +61,8 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
 
   const stats: [string, string][] = [
     ['Periode', dateRange],
-    ['Vakter', String(totalCount)],
-    ['Ledige', String(openCount)],
+    ['Vakter', String(totalSeats)],
+    ['Ledige', String(openSeats)],
   ]
 
   return (
@@ -135,8 +137,8 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
           shifts={sorted}
           roles={roles}
           currentUserId={currentUserId}
-          totalCount={totalCount}
-          openCount={openCount}
+          totalCount={totalSeats}
+          openCount={openSeats}
           onShiftClick={onShiftClick}
         />
       ) : (
