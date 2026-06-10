@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone, MeetingPoint } from '@/lib/supabase/types'
 import { evaluateBadges } from '@/lib/badges/evaluator'
+import { localInputToISO, isoToLocalInput } from '@/lib/utils/date'
 import { parseKmz } from '@/lib/plast/kmz-parser'
 import { importPlastZones, importMusicians, type TuttiCsvRow } from '@/lib/plast/admin-actions'
 import Papa from 'papaparse'
@@ -786,7 +787,8 @@ export default function EventsAdminPage() {
       created_by: user.id,
       send_push_on_activate: form.sendPushOnActivate,
       ...(form.type === 'arrangement' && {
-        signup_deadline: form.signupDeadline || null,
+        // datetime-local er lokal tid — konverter til ISO så timestamptz blir riktig
+        signup_deadline: localInputToISO(form.signupDeadline),
         arranger_name: form.arrangerName || null,
         role_info: form.roleInfo
           .filter(r => r.role.trim())
@@ -866,7 +868,8 @@ export default function EventsAdminPage() {
       completion_notes: editForm.completionNotes || null,
       send_push_on_activate: editForm.sendPushOnActivate,
       ...(editForm.type === 'arrangement' && {
-        signup_deadline: editForm.signupDeadline || null,
+        // datetime-local er lokal tid — konverter til ISO så timestamptz blir riktig
+        signup_deadline: localInputToISO(editForm.signupDeadline),
         arranger_name: editForm.arrangerName || null,
         role_info: editForm.roleInfo
           .filter(r => r.role.trim())
@@ -910,7 +913,8 @@ export default function EventsAdminPage() {
       bagsCollected: event.bags_collected ? String(event.bags_collected) : '',
       completionNotes: event.completion_notes || '',
       sendPushOnActivate: event.send_push_on_activate ?? true,
-      signupDeadline: anyEvent.signup_deadline ?? '',
+      // timestamptz fra DB → lokal datetime-local-verdi (ellers vises feltet tomt)
+      signupDeadline: isoToLocalInput(anyEvent.signup_deadline ?? null),
       arrangerName: anyEvent.arranger_name ?? '',
       roleInfo: (anyEvent.role_info ?? []).map((r: { role: string; contact?: string; tasks?: string[] }) => ({
         role: r.role,

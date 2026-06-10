@@ -154,7 +154,7 @@ function BigBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
             transition: 'box-shadow .25s',
           }}
         >
-          <img src={b.src} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(0.8)', mixBlendMode: 'multiply' }} />
+          <img src={b.src} alt={b.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(0.8)', mixBlendMode: 'multiply' }} />
         </div>
         {b.count > 1
           ? <span style={{ position: 'absolute', bottom: -3, right: -3, minWidth: 24, height: 24, padding: '0 6px', background: GRADIENT_BRAND, color: '#fff', borderRadius: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2.5px solid var(--color-card)', fontSize: 11, fontWeight: 800 }}>×{b.count}</span>
@@ -178,7 +178,7 @@ function MiniBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
       style={{ position: 'relative', width: 56, height: 56, borderRadius: '50%', border: 0, padding: 0, cursor: 'pointer', background: 'var(--color-badge-coin)', flexShrink: 0, boxShadow: b.earned ? (h ? '0 6px 15px rgba(160,120,80,.28)' : '0 2px 9px rgba(160,120,80,.18)') : 'inset 0 0 0 1.5px rgba(57,56,43,.07)', transition: 'box-shadow .2s, transform .16s', transform: h ? 'translateY(-3px) scale(1.09)' : 'none', zIndex: h ? 5 : 1 }}
     >
       <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden', isolation: 'isolate', background: 'var(--color-badge-coin)' }}>
-        <img src={b.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(0.8)', mixBlendMode: 'multiply', filter: b.earned ? 'none' : 'grayscale(1)', opacity: b.earned ? 1 : 0.32 }} />
+        <img src={b.src} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(0.8)', mixBlendMode: 'multiply', filter: b.earned ? 'none' : 'grayscale(1)', opacity: b.earned ? 1 : 0.32 }} />
       </span>
       {b.earned && b.count > 1 && (
         <span style={{ position: 'absolute', bottom: -3, right: -3, minWidth: 19, height: 19, padding: '0 5px', background: 'var(--color-accent)', color: '#fff', borderRadius: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--color-card)', fontSize: 9.5, fontWeight: 700 }}>×{b.count}</span>

@@ -21,3 +21,21 @@ export function daysUntilLabel(dateStr: string): string {
   if (d === 1) return 'I morgen'
   return `om ${d} dager`
 }
+
+// datetime-local-verdi ('YYYY-MM-DDTHH:MM', lokal tid) → ISO med tidssone.
+// new Date() tolker strenger uten sone som LOKAL tid, så toISOString gir riktig instant.
+export function localInputToISO(local: string): string | null {
+  if (!local) return null
+  const d = new Date(local)
+  return isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+// ISO/timestamptz fra DB → datetime-local-format i LOKAL tid.
+// datetime-local-inputs avviser verdier med tidssone-suffiks, så vi må formatere selv.
+export function isoToLocalInput(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
