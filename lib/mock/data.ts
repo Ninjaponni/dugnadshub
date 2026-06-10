@@ -320,32 +320,7 @@ export const mockHistory = [
 ]
 
 // --- Ditt bidrag (korps-total for året) ---
-export interface DittBidragData {
-  sekkerPant: number
-  lapperDeltUt: number
-  kakerBakt: number
-  premierSkaffet: number
-  loddbokerSolgt: number
-  dugnader: number
-  polserSolgt: number
-  isSolgt: number
-  kakestykkerSolgt: number
-  brusSolgt: number
-  literSoppel: number
-  kronerOpptjent: number
-}
-
-export const mockDittBidrag: DittBidragData = {
-  sekkerPant: 126,
-  lapperDeltUt: 3400,
-  kakerBakt: 125,
-  premierSkaffet: 42,
-  loddbokerSolgt: 58,
-  dugnader: 6,
-  polserSolgt: 668,
-  isSolgt: 755,
-  kakestykkerSolgt: 1255,
-  brusSolgt: 938,
-  literSoppel: 300,
-  kronerOpptjent: 232385,
-}
+// EKTE fellestall bor i lib/data/korps-bidrag.ts (de er ikke mock-data).
+// Re-eksporteres her for mock-stier som bruker samme shape.
+export type { KorpsBidragData as DittBidragData } from '@/lib/data/korps-bidrag'
+export { korpsBidrag as mockDittBidrag } from '@/lib/data/korps-bidrag'

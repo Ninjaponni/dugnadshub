@@ -172,58 +172,68 @@ export default function MembersAdminPage() {
     })
 
   // Endre rolle
-  async function handleRoleChange(userId: string, newRole: Role) {
+  // Handlerne returnerer true/false så detail-komponentene kan toaste
+  // riktig utfall — lokal state oppdateres KUN når DB-skrivingen lyktes.
+  async function handleRoleChange(userId: string, newRole: Role): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('profiles') as any).update({ role: newRole }).eq('id', userId)
+    const { error } = await (supabaseRef.current.from('profiles') as any).update({ role: newRole }).eq('id', userId)
+    if (error) { console.error('Rollebytte feilet:', error); return false }
     setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p))
+    return true
   }
 
   // Bytt mellom forelder og musikant, eller endre musikant-gruppe
-  async function handleTypeChange(userId: string, isMusician: boolean, group: ChildGroup | null) {
+  async function handleTypeChange(userId: string, isMusician: boolean, group: ChildGroup | null): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('profiles') as any)
+    const { error } = await (supabaseRef.current.from('profiles') as any)
       .update({ is_musician: isMusician, musician_group: isMusician ? group : null })
       .eq('id', userId)
+    if (error) { console.error('Typebytte feilet:', error); return false }
     setProfiles(prev => prev.map(p => p.id === userId ? { ...p, is_musician: isMusician, musician_group: isMusician ? group : null } : p))
+    return true
   }
 
   // Tildel merke — stable-bare kategorier kan gis flere ganger
-  async function handleAwardBadge(userId: string, badgeId: number) {
+  async function handleAwardBadge(userId: string, badgeId: number): Promise<boolean> {
     const badge = badgeDefinitions.find(b => b.id === badgeId)
     const canStack = badge ? STACKABLE_BADGE_CATEGORIES.has(badge.category) : false
 
     // Engangs-merker: blokker om allerede har
     if (!canStack) {
       const alreadyHas = userBadges.some(ub => ub.user_id === userId && ub.badge_id === badgeId)
-      if (alreadyHas) return
+      if (alreadyHas) return false
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabaseRef.current.from('user_badges') as any).insert({
+    const { data, error } = await (supabaseRef.current.from('user_badges') as any).insert({
       user_id: userId,
       badge_id: badgeId,
       event_id: null,
-    }).select().single() as { data: UserBadge | null }
+    }).select().single() as { data: UserBadge | null; error: unknown }
 
-    if (data) {
-      setUserBadges(prev => [...prev, data])
-    }
+    if (error || !data) { console.error('Merke-tildeling feilet:', error); return false }
+    setUserBadges(prev => [...prev, data])
+    return true
   }
 
   // Fjern ett merke (siste instans)
-  async function handleRemoveBadge(userId: string, badgeId: number) {
+  async function handleRemoveBadge(userId: string, badgeId: number): Promise<boolean> {
     const badges = userBadges.filter(ub => ub.user_id === userId && ub.badge_id === badgeId)
     const badge = badges[badges.length - 1]
-    if (!badge) return
+    if (!badge) return false
 
-    await supabaseRef.current.from('user_badges').delete().eq('id', badge.id)
+    const { error } = await supabaseRef.current.from('user_badges').delete().eq('id', badge.id)
+    if (error) { console.error('Merke-fjerning feilet:', error); return false }
     setUserBadges(prev => prev.filter(ub => ub.id !== badge.id))
+    return true
   }
 
   // Fjern alle merker for en bruker
-  async function handleResetBadges(userId: string) {
-    await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
+  async function handleResetBadges(userId: string): Promise<boolean> {
+    const { error } = await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
+    if (error) { console.error('Merke-nullstilling feilet:', error); return false }
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
+    return true
   }
 
   // Slett medlem — fjerner profil, merker, claims og auth-bruker
@@ -552,10 +562,10 @@ export default function MembersAdminPage() {
           zoneCount={selectedProfile ? getClaimCount(selectedProfile.id) : 0}
           badgeCounts={selectedProfile ? getBadgeCountsForUser(selectedProfile.id) : new Map()}
           onClose={() => setSelectedId(null)}
-          onRoleChange={(role) => { if (selectedProfile) handleRoleChange(selectedProfile.id, role) }}
-          onTypeChange={(isM, g) => { if (selectedProfile) handleTypeChange(selectedProfile.id, isM, g) }}
-          onAwardBadge={(id) => { if (selectedProfile) handleAwardBadge(selectedProfile.id, id) }}
-          onRemoveBadge={(id) => { if (selectedProfile) handleRemoveBadge(selectedProfile.id, id) }}
+          onRoleChange={(role) => selectedProfile ? handleRoleChange(selectedProfile.id, role) : Promise.resolve(false)}
+          onTypeChange={(isM, g) => selectedProfile ? handleTypeChange(selectedProfile.id, isM, g) : Promise.resolve(false)}
+          onAwardBadge={(id) => selectedProfile ? handleAwardBadge(selectedProfile.id, id) : Promise.resolve(false)}
+          onRemoveBadge={(id) => selectedProfile ? handleRemoveBadge(selectedProfile.id, id) : Promise.resolve(false)}
           onResetBadges={() => { if (selectedProfile) handleResetBadges(selectedProfile.id) }}
           onDeleteMember={() => { if (selectedProfile) handleDeleteMember(selectedProfile.id) }}
         />

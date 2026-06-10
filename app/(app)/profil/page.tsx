@@ -15,6 +15,8 @@ import Link from 'next/link'
 import { isMockMode } from '@/lib/mock/useMock'
 import { mockProfile, mockHistory, mockDittBidrag } from '@/lib/mock/data'
 import type { DittBidragData } from '@/lib/mock/data'
+import { korpsBidrag } from '@/lib/data/korps-bidrag'
+import { APP_VERSION } from '@/lib/version'
 import DittBidrag from '@/components/features/DittBidrag'
 import AvatarPicker, { getAvatarUrl, getRandomAvatarId } from '@/components/features/AvatarPicker'
 import { useTheme } from '@/lib/hooks/useTheme'
@@ -29,6 +31,7 @@ export default function ProfilePage() {
   const [musicianGroup, setMusicianGroup] = useState<ChildGroup>('Aspirant')
 
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
@@ -78,7 +81,8 @@ export default function ProfilePage() {
         setIsMusician(!!p.is_musician)
         if (p.musician_group) setMusicianGroup(p.musician_group)
         setAvatarId(p.avatar_url || getRandomAvatarId())
-        setDittBidrag(mockDittBidrag)
+        // Korpsets felles bidragstall — ekte tall, vedlikeholdes i lib/data/korps-bidrag.ts
+        setDittBidrag(korpsBidrag)
 
         // Hent deltakelse fra alle 6 kilder: soner, vakter, sjåfør/stripser/vert,
         // musikant, dugnadsansvarlig (matching contact_phone), og user_badges
@@ -272,14 +276,20 @@ export default function ProfilePage() {
         musician_group: isMusician ? musicianGroup : null,
       })
 
-    if (!error) {
-      // Re-evaluer badges (tildeler Profil-proffen hvis kriteriene er møtt)
-      try { await evaluateBadges(user.id) } catch { /* noop — admin kan tildele manuelt */ }
-      setEditing(false)
-      // Reload profil
-      const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
-      if (data) setProfile(data as unknown as Profile)
+    if (error) {
+      // Ikke feile stille — brukeren må få vite at lagringen ikke gikk gjennom
+      setSaveError('Kunne ikke lagre profilen. Sjekk nettet og prøv igjen.')
+      setSaving(false)
+      return
     }
+
+    setSaveError(null)
+    // Re-evaluer badges (tildeler Profil-proffen hvis kriteriene er møtt)
+    try { await evaluateBadges(user.id) } catch { /* noop — admin kan tildele manuelt */ }
+    setEditing(false)
+    // Reload profil
+    const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()
+    if (data) setProfile(data as unknown as Profile)
     setSaving(false)
   }
 
@@ -479,6 +489,9 @@ export default function ProfilePage() {
                 {saving ? 'Lagrer...' : 'Lagre'}
               </button>
             </div>
+            {saveError && (
+              <p className="mt-3 text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl p-3">{saveError}</p>
+            )}
           </section>
         </form>
         </>
@@ -662,7 +675,7 @@ export default function ProfilePage() {
 
                 {/* Versjon — separat søsken så lik 20px-avstand fra både kort over og knapp under */}
                 <p className="hidden lg:block text-center text-[11px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
-                  Tillerbyen Skolekorps Dugnadshub v 10.31.0
+                  Tillerbyen Skolekorps Dugnadshub v {APP_VERSION}
                 </p>
 
                 {/* Logg ut — separat søsken for samme grunn */}
@@ -771,7 +784,7 @@ export default function ProfilePage() {
             {/* Versjon + logg ut — full bredde på mobil (desktop-versjonen er i venstre kolonne) */}
             <div className="lg:hidden">
               <p className="text-center text-[10px] uppercase tracking-widest text-text-tertiary/50 pt-8">
-                Tillerbyen Skolekorps Dugnadshub v 10.31.0
+                Tillerbyen Skolekorps Dugnadshub v {APP_VERSION}
               </p>
               <div className="flex justify-center pt-1 pb-4">
                 <button

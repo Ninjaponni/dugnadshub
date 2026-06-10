@@ -22,7 +22,10 @@ export default function ArrangementPage() {
   const supabaseRef = useRef(createClient())
   const [event, setEvent] = useState<ArrangementEvent | null>(null)
   const [userId, setUserId] = useState<string | undefined>()
-  const [selectedShift, setSelectedShift] = useState<ShiftWithClaims | null>(null)
+  // Lagrer kun ID — selve vakta utledes fra shifts, så åpen modal/sheet alltid
+  // viser ferske tall når realtime oppdaterer lista (ikke et stale snapshot)
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null)
+  const setSelectedShift = (s: ShiftWithClaims | null) => setSelectedShiftId(s?.id ?? null)
 
   const { shifts, loading, refetch } = useRealtimeShifts(id)
 
@@ -49,6 +52,8 @@ export default function ArrangementPage() {
 
   const sorted = sortShifts(shifts) as ShiftWithClaims[]
   const grouped = groupShiftsByDate(sorted)
+  // Alltid fersk utgave av valgt vakt (realtime kan ha endret claims siden klikket)
+  const selectedShift = selectedShiftId ? sorted.find(s => s.id === selectedShiftId) ?? null : null
   const dateRange = sorted.length > 0
     ? `${formatShiftDateShort(sorted[0].shift_date)} – ${formatShiftDateShort(sorted[sorted.length - 1].shift_date)}`
     : event?.date

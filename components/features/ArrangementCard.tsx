@@ -91,9 +91,10 @@ export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity 
         </motion.button>
       </Link>
 
-      {/* Sub-info: antall vakter + signup deadline */}
+      {/* Sub-info: antall plasser + signup deadline. Teller PLASSER (sum kapasitet),
+          samme enhet som fremdriftslinja over — ikke vakt-rader. */}
       <p className="text-xs text-text-tertiary mt-3 text-center relative">
-        {totalShifts} {totalShifts === 1 ? 'vakt' : 'vakter'}
+        {totalCapacity} {totalCapacity === 1 ? 'vakt' : 'vakter'}
         {event.signup_deadline && !deadlinePassed && (
           <> · Påmelding stenger {new Date(event.signup_deadline).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}</>
         )}

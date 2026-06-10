@@ -885,7 +885,11 @@ export default function EventsAdminPage() {
     }).eq('id', editingId) as { error: unknown }
 
     if (error) {
+      // Ikke lukk skjemaet ved feil — da tror admin endringen er lagret og mister den
       console.error('Feil ved oppdatering:', error)
+      setErrorMsg('Kunne ikke lagre endringene. Prøv igjen.')
+      setEditSaving(false)
+      return
     }
 
     setEditingId(null)

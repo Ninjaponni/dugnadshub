@@ -192,7 +192,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="pt-20 pb-28 px-5 space-y-8">
+      <main className="pt-20 pb-28 px-5 space-y-8 lg:pt-8 lg:pb-12 lg:px-8 xl:px-12">
         <PushPrompt userId={profile?.id ?? null} />
 
         {/* Hilsen */}

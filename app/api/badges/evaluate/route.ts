@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+import { badgeDefinitions } from '@/lib/badges/definitions'
 
 export async function POST(request: NextRequest) {
   // Verifiser at kallet er autentisert
@@ -31,11 +32,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Aktivitet- og 17mai-merker som indikerer event-deltakelse når event_id er satt
-const PARTICIPATION_BADGE_IDS = new Set([
-  17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 43, 44, 66, 67,
-  29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 63, 64, 65,
-])
+// Aktivitet- og 17mai-merker indikerer event-deltakelse når event_id er satt.
+// Utledes fra definisjonene så nye merker telles automatisk — den gamle
+// håndskrevne id-lista hadde allerede driftet (manglet 68/69/70).
+const PARTICIPATION_BADGE_IDS = new Set(
+  badgeDefinitions
+    .filter(b => b.category === 'aktivitet' || b.category === '17mai')
+    .map(b => b.id)
+)
 
 // Server-side badge-evaluering med admin-klient (bypass RLS)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -25,10 +25,10 @@ interface Props {
   // Antall ganger brukeren har hvert merke (badge_id -> antall)
   badgeCounts: Map<number, number>
   onBack: () => void
-  onRoleChange: (role: Role) => void
-  onTypeChange: (isMusician: boolean, group: ChildGroup | null) => void
-  onAwardBadge: (badgeId: number) => void
-  onRemoveBadge: (badgeId: number) => void
+  onRoleChange: (role: Role) => Promise<boolean>
+  onTypeChange: (isMusician: boolean, group: ChildGroup | null) => Promise<boolean>
+  onAwardBadge: (badgeId: number) => Promise<boolean>
+  onRemoveBadge: (badgeId: number) => Promise<boolean>
   onResetBadges: () => void
   onDeleteMember: () => void
 }
@@ -83,11 +83,13 @@ export default function MemberDetailDesktop({
   const selectedBadge = badgeDefinitions.find(b => b.id === selectedBadgeId) ?? null
   const selectedBadgeCount = selectedBadgeId ? (badgeCounts.get(selectedBadgeId) ?? 0) : 0
 
-  // Wrappere med toast-bekreftelse (samme moenster som overlayet)
-  const handleAward = (badgeId: number) => {
+  // Wrappere med toast-bekreftelse (samme moenster som overlayet).
+  // Venter paa DB-resultatet foer suksess-toast — skal ikke lyve ved feil.
+  const handleAward = async (badgeId: number) => {
     const b = badgeDefinitions.find(bb => bb.id === badgeId)
     const c = badgeCounts.get(badgeId) ?? 0
-    onAwardBadge(badgeId)
+    const ok = await onAwardBadge(badgeId)
+    if (!ok) { showToast('Kunne ikke lagre merket — prøv igjen'); return }
     if (b) {
       if (c > 0) {
         setBumpedBadgeId(badgeId)
@@ -101,24 +103,25 @@ export default function MemberDetailDesktop({
     }
   }
 
-  const handleRemove = (badgeId: number) => {
+  const handleRemove = async (badgeId: number) => {
     const b = badgeDefinitions.find(bb => bb.id === badgeId)
     const c = badgeCounts.get(badgeId) ?? 0
-    onRemoveBadge(badgeId)
+    const ok = await onRemoveBadge(badgeId)
+    if (!ok) { showToast('Kunne ikke fjerne merket — prøv igjen'); return }
     if (b) {
       if (c > 1) showToast(`«${b.name}» redusert til ×${c - 1}`)
       else showToast(`«${b.name}» fjernet`)
     }
   }
 
-  const handleRoleChangeWrapped = (role: Role) => {
-    onRoleChange(role)
-    showToast(`Rolle oppdatert: ${ROLE_LABELS[role]}`)
+  const handleRoleChangeWrapped = async (role: Role) => {
+    const ok = await onRoleChange(role)
+    showToast(ok ? `Rolle oppdatert: ${ROLE_LABELS[role]}` : 'Kunne ikke lagre rollen — prøv igjen')
   }
 
-  const handleTypeChangeWrapped = (isM: boolean, g: ChildGroup | null) => {
-    onTypeChange(isM, g)
-    showToast(isM ? `Type: Musikant${g ? ` · ${g}` : ''}` : 'Type: Forelder')
+  const handleTypeChangeWrapped = async (isM: boolean, g: ChildGroup | null) => {
+    const ok = await onTypeChange(isM, g)
+    showToast(ok ? (isM ? `Type: Musikant${g ? ` · ${g}` : ''}` : 'Type: Forelder') : 'Kunne ikke lagre — prøv igjen')
   }
 
   // Slaa sammen definisjoner med antall

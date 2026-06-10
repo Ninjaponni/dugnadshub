@@ -19,7 +19,8 @@ export default function DesktopTopbar({ hasUnread = false, onBellClick }: Props)
     <header
       className="hidden lg:flex sticky top-0 z-50 items-center gap-5 px-9 py-5 border-b border-surface-low"
       style={{
-        background: 'rgba(255, 255, 255, 0.7)',
+        // Bygger på kort-fargen så glasset følger dark mode (hardkodet hvit ble uleselig der)
+        background: 'color-mix(in srgb, var(--color-card) 70%, transparent)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       }}

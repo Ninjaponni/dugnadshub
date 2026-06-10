@@ -47,7 +47,9 @@ export function useRealtimeZones(eventId: string | null) {
     }
     const { data: allZones } = await zoneQuery
 
-    if (!allZones) return
+    // Ved fetch-feil: slå av spinneren i stedet for å la den gå evig.
+    // Realtime/refetch prøver igjen ved neste endring.
+    if (!allZones) { setLoading(false); return }
 
     let assignments: ZoneAssignment[] = []
     let claims: (ZoneClaim & { profiles?: { full_name: string | null; phone: string | null } } & { notes: string | null })[] = []
