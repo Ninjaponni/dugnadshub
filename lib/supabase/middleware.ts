@@ -41,7 +41,10 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/profil') ||
     request.nextUrl.pathname.startsWith('/admin') ||
     request.nextUrl.pathname.startsWith('/sjafor') ||
-    request.nextUrl.pathname.startsWith('/arrangement')
+    request.nextUrl.pathname.startsWith('/arrangement') ||
+    request.nextUrl.pathname.startsWith('/vakter') ||
+    // /tur har rominndeling med barnas navn + telefonnumre — MÅ være innlogget
+    request.nextUrl.pathname.startsWith('/tur')
 
   if (!user && isAppRoute) {
     const url = request.nextUrl.clone()

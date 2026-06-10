@@ -22,7 +22,8 @@ export function formatDate(dateStr: string, time: string | null): string {
 // Lesbar tekst for dager-til (I dag, I morgen, om X dager, tidligere)
 export function daysUntilLabel(dateStr: string): string {
   const d = daysUntil(dateStr)
-  if (d < 0) return 'tidligere'
+  // Negativt = startdato passert men eventet vises fortsatt (aktivt) — «Pågår»
+  if (d < 0) return 'Pågår'
   if (d === 0) return 'I dag!'
   if (d === 1) return 'I morgen'
   return `om ${d} dager`

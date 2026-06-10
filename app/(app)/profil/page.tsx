@@ -326,7 +326,7 @@ export default function ProfilePage() {
               >
                 <div className="w-full h-full rounded-full overflow-hidden">
                   {avatarId ? (
-                    <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={getAvatarUrl(avatarId) || undefined} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-surface-low flex items-center justify-center">
                       <User size={32} className="text-text-tertiary" />
@@ -526,7 +526,7 @@ export default function ProfilePage() {
                     >
                       <div className="w-20 h-20 lg:w-[120px] lg:h-[120px] rounded-full overflow-hidden ring-2 ring-accent/20 group-active:ring-accent transition-all">
                         {avatarId ? (
-                          <img src={getAvatarUrl(avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                          <img src={getAvatarUrl(avatarId) || undefined} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-accent/10 flex items-center justify-center">
                             <User size={48} className="text-accent" />

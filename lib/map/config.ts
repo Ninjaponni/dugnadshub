@@ -11,20 +11,4 @@ export const MAP_CONFIG = {
   satelliteStyle: 'mapbox://styles/mapbox/satellite-streets-v12',
 }
 
-// Statusfarger for sonepolygoner — varm palett
-export const ZONE_COLORS: Record<string, string> = {
-  available: '#E57373',   // Varm rød — ledig
-  claimed: '#FFD54F',     // Varm gul — delvis tatt
-  in_progress: '#FFD54F', // Varm gul — pågår
-  completed: '#6B8F71',   // Dempet grønn — ferdig
-  picked_up: '#9C7DB8',   // Varm lilla — hentet
-}
-
-// Opacity for sonepolygoner
-export const ZONE_OPACITY: Record<string, number> = {
-  available: 0.25,
-  claimed: 0.35,
-  in_progress: 0.4,
-  completed: 0.35,
-  picked_up: 0.3,
-}
+// Sonestatus-farger bor i lib/map/zone-colors.ts (én kilde)

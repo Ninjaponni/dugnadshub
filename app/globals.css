@@ -156,6 +156,14 @@ body {
   padding-top: max(env(safe-area-inset-top), 0px);
 }
 
+/* safe-top er ulagret CSS og vinner ellers over Tailwind-utilities.
+   På lg+ (desktop, ingen notch) skal lg:py-8 o.l. få bestemme padding-top. */
+@media (min-width: 1024px) {
+  .safe-top {
+    padding-top: revert-layer;
+  }
+}
+
 /* Statusfarger — kompakte prikker */
 .status-dot {
   width: 8px;

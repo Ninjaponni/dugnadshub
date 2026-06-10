@@ -61,7 +61,8 @@ export default function TurPage() {
         .select('phone')
         .eq('id', user.id)
         .single() as { data: { phone: string | null } | null }
-      const phone = (data?.phone || '').replace(/\s+/g, '')
+      // Normaliser: fjern mellomrom og +47/0047-prefiks så matching tåler alle formater
+      const phone = (data?.phone || '').replace(/\s+/g, '').replace(/^(\+47|0047)/, '')
       if (!phone) return
       const hit = ansvar.find(a => a.phone === phone)
       if (hit) setMyLines(hit.lines)

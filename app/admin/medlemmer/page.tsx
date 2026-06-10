@@ -93,7 +93,8 @@ export default function MembersAdminPage() {
     ])
 
     // Sortér klient-side (fetchAll har ingen order-param)
-    setProfiles([...allProfiles].sort((a, b) => (a.full_name ?? '').localeCompare(b.full_name ?? '', 'nb')))
+    // Navnløse profiler sist (som gammel DB-sortering med NULLS LAST)
+    setProfiles([...allProfiles].sort((a, b) => (a.full_name ?? '\uffff').localeCompare(b.full_name ?? '\uffff', 'nb')))
     setUserBadges(badges)
     setAllClaims(claims)
     setAllShiftClaims(shiftClaims)

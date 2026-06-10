@@ -12,9 +12,12 @@ export async function fetchAll<T>(
   const PAGE = 1000
   const out: T[] = []
   for (let offset = 0; ; offset += PAGE) {
+    // .order('id') gir stabil rekkefølge mellom sidene — uten den kan
+    // PostgREST duplisere/hoppe over rader ved paginering
     const { data } = await supabase
       .from(table)
       .select(select)
+      .order('id')
       .range(offset, offset + PAGE - 1) as unknown as { data: T[] | null }
     if (!data || data.length === 0) break
     out.push(...data)

@@ -20,7 +20,7 @@ export const turMeta = {
   title: 'Korpstur til Lillehammerfestivalen',
   dates: '12.–14. juni',
   stats: [
-    ['Avreise', 'Fre 15:00 · Tonstad'],
+    ['Oppmøte', 'Fre 15:00 · Tonstad'],
     ['Hjemme', 'Søn ca. 23:00'],
     ['Overnatting', 'Åretta ungdomsskole'],
   ] as Array<[string, string]>,
@@ -54,8 +54,10 @@ export const program: ProgramDay[] = [
     label: 'Søndag 14. juni',
     shortLabel: 'SØN 14',
     items: [
+      { time: '', title: 'Frokost + smør lunsjpakke', detail: 'Samme opplegg som lørdag — matpakken leveres ut i parken.' },
       { time: '', title: 'Pakking og rydding', detail: 'Alt ut av klasserommene før avreise.' },
-      { time: '10:00', title: 'Oppmøte Hunderfossen', detail: 'Korps-t-skjorte som uniform under paraden, så slipper vi å skifte før lek og moro.', highlight: true },
+      { time: '10:00', title: 'Oppmøte Hunderfossen', detail: 'Korps-t-skjorte som uniform, så slipper vi å skifte før lek og moro.', highlight: true },
+      { time: '', title: 'Parade i parken', detail: 'Marsjering i korps-t-skjorte. Husk instrument og notestativ!' },
       { time: '', title: 'Lek i parken', detail: 'Felles møtepunkt med voksne fra korpset. Alle som vil og trenger får gå sammen med en voksen.' },
       { time: '16:30', title: 'Avreise fra parken', detail: 'Parken stenger 17:00, men logistikken krever avreise 16:30.', highlight: true },
       { time: '', title: 'Middag på Oppdal' },
@@ -64,7 +66,8 @@ export const program: ProgramDay[] = [
   },
 ]
 
-// Nattevakter natt til lørdag — festivalens to tildelte vakter
+// Nattevakter — festivalen tildelte korpset KUN disse to vaktene,
+// begge natt til lørdag. Natt til søndag har korpset ingen vakter.
 export const nattevakter = [
   { time: '23:00–03:00', name: 'Ole Petter', note: 'Kjører egen bil og er fremme før bussen' },
   { time: '03:00–06:30', name: 'Tor Martin' },
@@ -144,7 +147,7 @@ export const rom: Rom[] = [
       { navn: 'Erle Nesmoen Norvik', gruppe: 'HK' },
       { navn: 'Jon Kristian Askim', gruppe: 'HK' },
       { navn: 'Mia Harborg Rustad', gruppe: 'HK' },
-      { navn: 'June Volden Dyrendal', gruppe: 'HK' },
+      { navn: 'June Volden Dyrendahl', gruppe: 'HK' },
       { navn: 'Selda Aakvik Jørgensen', gruppe: 'HK' },
       { navn: 'Sebastian Skavlan', gruppe: 'HK' },
       { navn: 'Alma Margrete Løberg', gruppe: 'HK' },

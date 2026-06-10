@@ -38,6 +38,11 @@ export default function HomePage() {
   const [events, setEvents] = useState<EventWithProgress[]>([])
   const [myZones, setMyZones] = useState<MyZone[]>([])
   const [loading, setLoading] = useState(true)
+  // Korpstur-banner: klient-gate unngår hydration-mismatch (server er UTC).
+  // Cutoff middag 15. juni — bussen kan bli forsinket forbi midnatt søndag,
+  // og foreldre som venter trenger kontaktlista på /tur.
+  const [showTurBanner, setShowTurBanner] = useState(false)
+  useEffect(() => { setShowTurBanner(new Date() < new Date('2026-06-15T12:00:00')) }, [])
   const [showOnboarding, setShowOnboarding] = useState(false)
   // Aggregerte vakt-data per arrangement-event: totalt antall vakter og ledige plasser
   const [shiftAggregates, setShiftAggregates] = useState<Map<string, { total: number; free: number; totalCapacity: number }>>(new Map())
@@ -219,7 +224,7 @@ export default function HomePage() {
         </motion.section>
 
         {/* Korpstur-banner — lenker til /tur, fjernes automatisk etter turen */}
-        {new Date() < new Date('2026-06-15T00:00:00') && (
+        {showTurBanner && (
           <Link href="/tur" className="block">
             <motion.div
               initial={{ opacity: 0, y: 8 }}

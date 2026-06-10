@@ -62,3 +62,7 @@ from public.user_badges ub
 join public.profiles pr on pr.id = ub.user_id
 where ub.badge_id in (56, 71, 72, 73)
 order by ub.badge_id, pr.full_name;
+
+-- ETTERPÅ: kjør scripts/backfill-deltakelse-merker.sql på nytt!
+-- Korpstur-eventet gir +1 deltakelse til 17 personer og kan løfte noen
+-- over tersklene for Frøspire/Tre på rad/Ringrev/Maskin.

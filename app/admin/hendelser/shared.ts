@@ -19,7 +19,7 @@ export interface EventWithZones extends DugnadEvent {
 export const statusLabels: Record<EventStatus, string> = {
   upcoming: 'Kommende',
   active: 'Aktiv',
-  completed: 'Fullfort',
+  completed: 'Fullført',
 }
 
 export const statusColors: Record<EventStatus, string> = {
