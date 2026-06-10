@@ -20,8 +20,6 @@ export default function VMShiftCell({ time, capacity, people, mine, onClick }: P
   const left = capacity - claimed
   const full = left <= 0
   const muted = full && !mine
-  const shown = people.slice(0, 3)
-  const extra = people.length - shown.length
 
   return (
     <button
@@ -38,19 +36,16 @@ export default function VMShiftCell({ time, capacity, people, mine, onClick }: P
     >
       <div className="flex-1 min-w-0">
         <div className="font-mono text-sm font-semibold tabular-nums text-text-primary -tracking-[0.02em]">{time}</div>
-        <div className="text-xs mt-0.5 truncate">
+        <div className="text-xs mt-0.5 leading-snug">
           {people.length === 0 ? (
             <span className="text-text-tertiary">Ingen påmeldt ennå</span>
           ) : (
-            <>
-              {shown.map((p, i) => (
-                <span key={i}>
-                  {i > 0 && <span className="text-text-primary/30"> · </span>}
-                  <span className={p === 'Du' ? 'text-accent font-bold' : 'text-text-secondary font-medium'}>{p}</span>
-                </span>
-              ))}
-              {extra > 0 && <span className="text-text-tertiary font-medium"> +{extra}</span>}
-            </>
+            people.map((p, i) => (
+              <span key={i}>
+                {i > 0 && <span className="text-text-primary/30"> · </span>}
+                <span className={p === 'Du' ? 'text-accent font-bold' : 'text-text-secondary font-medium'}>{p}</span>
+              </span>
+            ))
           )}
         </div>
       </div>
