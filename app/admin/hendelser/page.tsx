@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone, MeetingPoint } from '@/lib/supabase/types'
 import { evaluateBadges } from '@/lib/badges/evaluator'
 import { localInputToISO, isoToLocalInput } from '@/lib/utils/date'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { parseKmz } from '@/lib/plast/kmz-parser'
 import { importPlastZones, importMusicians, type TuttiCsvRow } from '@/lib/plast/admin-actions'
 import Papa from 'papaparse'
@@ -610,22 +611,20 @@ export default function EventsAdminPage() {
   // Gjenbruker hele mobile-card-koden via renderMobileEventCard().
   const [desktopExpandedId, setDesktopExpandedId] = useState<string | null>(null)
 
-  // Last alle hendelser med sonestatus
+  // Last alle hendelser med sonestatus.
+  // fetchAll chunker i 1000-bolker — claims/assignments vokser forbi
+  // PostgREST-taket over tid, og uten chunking blir tellingene stille feil.
   const loadEvents = useCallback(async () => {
-    const [eventsRes, assignmentsRes, claimsRes, shiftsRes, shiftClaimsRes] = await Promise.all([
+    const [eventsRes, allAssignments, allClaims, allShifts, allShiftClaims] = await Promise.all([
       supabaseRef.current.from('events').select('*').order('date', { ascending: true }) as unknown as Promise<{ data: DugnadEvent[] | null }>,
-      supabaseRef.current.from('zone_assignments').select('*') as unknown as Promise<{ data: ZoneAssignment[] | null }>,
-      supabaseRef.current.from('zone_claims').select('assignment_id') as unknown as Promise<{ data: Array<{ assignment_id: string }> | null }>,
+      fetchAll<ZoneAssignment>(supabaseRef.current, 'zone_assignments', '*'),
+      fetchAll<{ assignment_id: string }>(supabaseRef.current, 'zone_claims', 'assignment_id'),
       // Vakt-data for arrangement-events så vi kan vise progress og ledige vakter i listen
-      supabaseRef.current.from('event_shifts').select('id, event_id, capacity') as unknown as Promise<{ data: Array<{ id: string; event_id: string; capacity: number }> | null }>,
-      supabaseRef.current.from('shift_claims').select('shift_id') as unknown as Promise<{ data: Array<{ shift_id: string }> | null }>,
+      fetchAll<{ id: string; event_id: string; capacity: number }>(supabaseRef.current, 'event_shifts', 'id, event_id, capacity'),
+      fetchAll<{ shift_id: string }>(supabaseRef.current, 'shift_claims', 'shift_id'),
     ])
 
     const allEvents = eventsRes.data || []
-    const allAssignments = assignmentsRes.data || []
-    const allClaims = claimsRes.data || []
-    const allShifts = shiftsRes.data || []
-    const allShiftClaims = shiftClaimsRes.data || []
 
     // Tell vakt-plasser fylt per shift_id (kan være flere claims per vakt opp til capacity)
     const claimsPerShift = new Map<string, number>()

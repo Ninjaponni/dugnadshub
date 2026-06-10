@@ -31,7 +31,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
   }
 
-  // Slett auth-bruker via admin API
+  // Rydd ALLE relaterte rader først, så ingenting blir liggende foreldreløst
+  // ("Anonym" i vaktlister og sjåføroversikter). Service role omgår RLS.
+  // event_musicians.profile_id peker på forelderen — også den må ryddes.
+  const cleanups: Array<[string, string]> = [
+    ['user_badges', 'user_id'],
+    ['zone_claims', 'user_id'],
+    ['shift_claims', 'user_id'],
+    ['driver_assignments', 'user_id'],
+    ['push_subscriptions', 'user_id'],
+    ['event_musicians', 'profile_id'],
+  ]
+  const failed: string[] = []
+  await Promise.all(cleanups.map(async ([table, col]) => {
+    const { error } = await supabase.from(table).delete().eq(col, user_id)
+    if (error) failed.push(`${table}: ${error.message}`)
+  }))
+  if (failed.length > 0) {
+    // Ikke slett brukeren hvis oppryddingen feilet — da mister vi sporbarheten
+    return NextResponse.json({ error: `Opprydding feilet: ${failed.join('; ')}` }, { status: 500 })
+  }
+
+  // Slett auth-bruker via admin API — profilen følger med (FK on delete cascade)
   const { error } = await supabase.auth.admin.deleteUser(user_id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

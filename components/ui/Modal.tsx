@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 // Sentrert desktop-modal med bakdrop, blur og springy entrance.
 // Mobil bruker fortsatt BottomSheet — denne er for lg+.
@@ -14,6 +14,13 @@ type Props = {
 }
 
 export default function Modal({ open, onClose, children, maxWidth = 540 }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Dialog-semantikk: flytt fokus inn ved åpning (kun når synlig, dvs. lg+)
+  useEffect(() => {
+    if (open && window.matchMedia('(min-width: 1024px)').matches) dialogRef.current?.focus()
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     // Modalen brukes bak `hidden lg:block`-wrappers — på mobil er den usynlig,
@@ -40,11 +47,15 @@ export default function Modal({ open, onClose, children, maxWidth = 540 }: Props
         >
           <div className="absolute inset-0" style={{ background: 'rgba(45,38,32,.42)', backdropFilter: 'blur(3px)' }} />
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
             initial={{ y: 24, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-            className="relative bg-card rounded-[28px] border border-text-primary/[0.09] w-full max-h-[88vh] overflow-y-auto"
+            className="relative bg-card rounded-[28px] border border-text-primary/[0.09] w-full max-h-[88vh] overflow-y-auto outline-none"
             style={{ maxWidth, boxShadow: '0 24px 60px rgba(45,38,32,.32)' }}
             onClick={(e) => e.stopPropagation()}
           >

@@ -2,23 +2,12 @@
 
 import { Marker } from 'react-map-gl/mapbox'
 import { Flag } from 'lucide-react'
-import type { ZoneArea } from '@/lib/supabase/types'
+import { bases } from '@/lib/map/bases'
 
-// Baser for flaskeinnsamling — eksportert for bruk i BaseSheet
-export const bases = [
-  {
-    id: 'base-nord',
-    name: 'Base Nord — Baksiden av Bunnpris, Tonstad',
-    area: 'NORD' as ZoneArea,
-    coordinates: [10.38978, 63.36167] as [number, number],
-  },
-  {
-    id: 'base-sor',
-    name: 'Base Sør — Hårstad Skole',
-    area: 'SOR' as ZoneArea,
-    coordinates: [10.38261, 63.35125] as [number, number],
-  },
-]
+// Selve base-dataene bor i lib/map/bases.ts (uten Mapbox-imports) så andre
+// filer kan importere dem uten å dra mapbox-gl inn i bundlen.
+// Re-eksport for eksisterende importører av denne fila.
+export { bases }
 
 interface BaseMarkerProps {
   activeArea?: 'NORD' | 'SOR' | null

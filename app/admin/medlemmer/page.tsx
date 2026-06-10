@@ -13,6 +13,7 @@ import { badgeDefinitions, STACKABLE_BADGE_CATEGORIES } from '@/lib/badges/defin
 import type { Child } from '@/lib/supabase/types'
 import type { Profile, Role, UserBadge, ZoneClaim, ChildGroup } from '@/lib/supabase/types'
 import { ROLE_LABELS } from '@/lib/roles'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import MemberDetailOverlay from '@/components/admin/MemberDetailOverlay'
 import MemberDetailDesktop from '@/components/admin/MemberDetailDesktop'
 
@@ -73,38 +74,26 @@ export default function MembersAdminPage() {
   const [sortMode, setSortMode] = useState<SortMode>('badges')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('alle')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
 
   // Aktivt valgt medlem (vises i overlay). Slås opp på id for å holde data ferskt
   // etter mutasjoner (rolle, merker osv.) i samme render.
   const selectedProfile = profiles.find(p => p.id === selectedId) ?? null
 
-  // Supabase har server-side hard cap på 1000 rader per request.
-  // Vi henter alt i 1000-bolker til tabellen er tom.
-  async function fetchAll<T>(table: string, select: string): Promise<T[]> {
-    const PAGE = 1000
-    const out: T[] = []
-    for (let offset = 0; ; offset += PAGE) {
-      const { data } = await supabaseRef.current
-        .from(table)
-        .select(select)
-        .range(offset, offset + PAGE - 1) as unknown as { data: T[] | null }
-      if (!data || data.length === 0) break
-      out.push(...data)
-      if (data.length < PAGE) break
-    }
-    return out
-  }
-
   async function loadData() {
-    const [profilesRes, badges, claims, shiftClaims] = await Promise.all([
-      supabaseRef.current.from('profiles').select('*').order('full_name') as unknown as Promise<{ data: Profile[] | null }>,
-      fetchAll<UserBadge>('user_badges', '*'),
-      fetchAll<ZoneClaim>('zone_claims', '*'),
-      fetchAll<{ user_id: string }>('shift_claims', 'user_id'),
+    // fetchAll chunker i 1000-bolker (PostgREST-taket) — også profiles,
+    // så nyeste medlemmer ikke forsvinner stille fra lista den dagen
+    // korpset passerer 1000 profiler.
+    const [allProfiles, badges, claims, shiftClaims] = await Promise.all([
+      fetchAll<Profile>(supabaseRef.current, 'profiles', '*'),
+      fetchAll<UserBadge>(supabaseRef.current, 'user_badges', '*'),
+      fetchAll<ZoneClaim>(supabaseRef.current, 'zone_claims', '*'),
+      fetchAll<{ user_id: string }>(supabaseRef.current, 'shift_claims', 'user_id'),
     ])
 
-    setProfiles(profilesRes.data || [])
+    // Sortér klient-side (fetchAll har ingen order-param)
+    setProfiles([...allProfiles].sort((a, b) => (a.full_name ?? '').localeCompare(b.full_name ?? '', 'nb')))
     setUserBadges(badges)
     setAllClaims(claims)
     setAllShiftClaims(shiftClaims)
@@ -236,25 +225,29 @@ export default function MembersAdminPage() {
     return true
   }
 
-  // Slett medlem — fjerner profil, merker, claims og auth-bruker
+  // Slett medlem — API-et rydder ALT (merker, claims, vakter, sjåfør-tildelinger,
+  // musikant-koblinger, push) og sletter auth-brukeren. Lokal state oppdateres
+  // kun ved suksess, ellers vises feilen.
   async function handleDeleteMember(userId: string) {
-    // Slett relaterte data forst
-    await supabaseRef.current.from('user_badges').delete().eq('user_id', userId)
-    await supabaseRef.current.from('zone_claims').delete().eq('user_id', userId)
-    await supabaseRef.current.from('push_subscriptions').delete().eq('user_id', userId)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('profiles') as any).delete().eq('id', userId)
-
-    // Slett auth-bruker via admin API
     const { data: { session } } = await supabaseRef.current.auth.getSession()
-    if (session) {
-      await fetch('/api/admin/delete-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ user_id: userId }),
-      }).catch(() => {})
+    if (!session) {
+      setDeleteError('Ikke innlogget — last siden på nytt.')
+      return
     }
 
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ user_id: userId }),
+    }).catch(() => null)
+
+    if (!res || !res.ok) {
+      const j = res ? await res.json().catch(() => ({ error: 'Ukjent feil' })) : { error: 'Nettverksfeil' }
+      setDeleteError(`Kunne ikke slette medlemmet: ${j.error}`)
+      return
+    }
+
+    setDeleteError(null)
     setProfiles(prev => prev.filter(p => p.id !== userId))
     setUserBadges(prev => prev.filter(ub => ub.user_id !== userId))
     setAllClaims(prev => prev.filter(c => c.user_id !== userId))
@@ -282,6 +275,14 @@ export default function MembersAdminPage() {
           {loading ? '...' : `${profiles.length} totalt`}
         </span>
       </div>
+
+      {/* Feilbanner for sletting — vises til neste vellykkede handling */}
+      {deleteError && (
+        <div className="mb-4 text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-start justify-between gap-3">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="font-bold shrink-0">OK</button>
+        </div>
+      )}
 
       {/* Desktop: dedikert side-by-side merkeutdeling naar et medlem er valgt.
           Skjuler hele lista + filterene saa fokus er paa medlemmet. */}

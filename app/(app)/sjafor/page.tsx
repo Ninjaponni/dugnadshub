@@ -141,39 +141,72 @@ export default function DriverPage() {
   async function loadData() {
     const sb = supabaseRef.current
 
-    // Hent aktive hendelser — flaskeinnsamling har soner og henting, plast har
-    // bare møteplass-info (kun for sjåføren på plast-eventet).
-    const { data: eventsData } = await sb
-      .from('events')
-      .select('*')
-      .eq('status', 'active')
-      .in('type', ['bottle_collection', 'plast'])
-      .order('date') as unknown as { data: DugnadEvent[] | null }
+    // Sjåfører står ofte ved hengeren på mobilnett — derfor kjøres uavhengige
+    // spørringer parallelt i 3 runder i stedet for 7 sekvensielle rundturer.
 
-    const activeEvents = eventsData || []
+    // Runde 1: aktive hendelser + innlogget bruker (uavhengige)
+    const [eventsRes, userRes] = await Promise.all([
+      sb
+        .from('events')
+        .select('*')
+        .eq('status', 'active')
+        .in('type', ['bottle_collection', 'plast'])
+        .order('date') as unknown as Promise<{ data: DugnadEvent[] | null }>,
+      sb.auth.getUser(),
+    ])
+
+    const activeEvents = eventsRes.data || []
     setEvents(activeEvents)
+    const earlyUser = userRes.data.user
 
-    // Hent innlogget bruker for å sjekke om de er plast-sjåfør
-    const { data: { user: earlyUser } } = await sb.auth.getUser()
-
-    // Sjekk om brukeren er driver på et aktivt plast-event
     const plastEvents = activeEvents.filter(e => e.type === 'plast')
-    if (earlyUser && plastEvents.length > 0) {
-      const { data: plastDriver } = await sb
-        .from('driver_assignments')
-        .select('event_id')
-        .eq('user_id', earlyUser.id)
-        .eq('role', 'driver')
-        .in('event_id', plastEvents.map(e => e.id))
-        .limit(1) as unknown as { data: Array<{ event_id: string }> | null }
-      if (plastDriver && plastDriver.length > 0) {
-        const ev = plastEvents.find(e => e.id === plastDriver[0].event_id)
-        if (ev) setPlastDriverInfo({ eventTitle: ev.title })
-      }
-    }
-
     // Filtrer ut plast for resten av flyten — bare flaskeinnsamling har soner
     const bottleEvents = activeEvents.filter(e => e.type === 'bottle_collection')
+    const eventIds = bottleEvents.map(e => e.id)
+
+    // Runde 2: plast-sjåførsjekk + sjåførtildelinger + ferdigmeldte soner (uavhengige)
+    const [plastDriverRes, driverAssignmentsRes, assignmentsRes] = await Promise.all([
+      earlyUser && plastEvents.length > 0
+        ? (sb
+            .from('driver_assignments')
+            .select('event_id')
+            .eq('user_id', earlyUser.id)
+            .eq('role', 'driver')
+            .in('event_id', plastEvents.map(e => e.id))
+            .limit(1) as unknown as Promise<{ data: Array<{ event_id: string }> | null }>)
+        : Promise.resolve({ data: null as Array<{ event_id: string }> | null }),
+      bottleEvents.length > 0
+        ? (sb
+            .from('driver_assignments')
+            .select('user_id, event_id, trailer_group, area, profiles(full_name)')
+            .in('event_id', eventIds)
+            .eq('role', 'driver') as unknown as Promise<{
+              data: Array<{
+                user_id: string
+                event_id: string
+                trailer_group: number
+                area: string
+                profiles: { full_name: string | null } | null
+              }> | null
+            }>)
+        : Promise.resolve({ data: null }),
+      bottleEvents.length > 0
+        ? (sb
+            .from('zone_assignments')
+            .select('id, event_id, zone_id, status')
+            .in('event_id', eventIds)
+            .in('status', ['completed', 'picked_up']) as unknown as Promise<{
+              data: Array<{ id: string; event_id: string; zone_id: string; status: string }> | null
+            }>)
+        : Promise.resolve({ data: null }),
+    ])
+
+    // Plast-sjåfør?
+    const plastDriver = plastDriverRes.data
+    if (plastDriver && plastDriver.length > 0) {
+      const ev = plastEvents.find(e => e.id === plastDriver[0].event_id)
+      if (ev) setPlastDriverInfo({ eventTitle: ev.title })
+    }
 
     if (bottleEvents.length === 0) {
       setZones([])
@@ -182,24 +215,9 @@ export default function DriverPage() {
     }
 
     // Resten av flyten gjelder kun flaskeinnsamlinger (soner + henter-flyt)
-    const eventIds = bottleEvents.map(e => e.id)
     setEvents(bottleEvents)
     const user = earlyUser
-
-    // Hent sjåførtildelinger med profilnavn
-    const { data: driverAssignments } = await sb
-      .from('driver_assignments')
-      .select('user_id, event_id, trailer_group, area, profiles(full_name)')
-      .in('event_id', eventIds)
-      .eq('role', 'driver') as unknown as {
-        data: Array<{
-          user_id: string
-          event_id: string
-          trailer_group: number
-          area: string
-          profiles: { full_name: string | null } | null
-        }> | null
-      }
+    const driverAssignments = driverAssignmentsRes.data
 
     // Bygg lookup: "NORD-1" → sjåførnavn
     const driverNameMap = new Map<string, string>()
@@ -219,14 +237,7 @@ export default function DriverPage() {
       }
     }
 
-    // Hent assignments med status completed eller picked_up
-    const { data: assignments } = await sb
-      .from('zone_assignments')
-      .select('id, event_id, zone_id, status')
-      .in('event_id', eventIds)
-      .in('status', ['completed', 'picked_up']) as unknown as {
-        data: Array<{ id: string; event_id: string; zone_id: string; status: string }> | null
-      }
+    const assignments = assignmentsRes.data
 
     if (!assignments || assignments.length === 0) {
       // Ingen soner klare, men vis likevel hengergruppene
@@ -236,30 +247,32 @@ export default function DriverPage() {
       return
     }
 
-    // Hent soneinfo med trailer_group
+    // Runde 3: soneinfo + claims (begge avhenger kun av assignments)
     const zoneIds = [...new Set(assignments.map(a => a.zone_id))]
-    const { data: zonesData } = await sb
-      .from('zones')
-      .select('id, name, area, households, trailer_group')
-      .in('id', zoneIds) as unknown as {
-        data: Array<{ id: string; name: string; area: string; households: number; trailer_group: number }> | null
-      }
-
-    const zoneMap = new Map((zonesData || []).map(z => [z.id, z]))
-
-    // Hent claims med profil (for kontaktinfo)
     const assignmentIds = assignments.map(a => a.id)
-    const { data: claims } = await sb
-      .from('zone_claims')
-      .select('assignment_id, user_id, notes, profiles(full_name, phone)')
-      .in('assignment_id', assignmentIds) as unknown as {
-        data: Array<{
-          assignment_id: string
-          user_id: string
-          notes: string | null
-          profiles: { full_name: string | null; phone: string | null } | null
-        }> | null
-      }
+    const [zonesRes, claimsRes] = await Promise.all([
+      sb
+        .from('zones')
+        .select('id, name, area, households, trailer_group')
+        .in('id', zoneIds) as unknown as Promise<{
+          data: Array<{ id: string; name: string; area: string; households: number; trailer_group: number }> | null
+        }>,
+      sb
+        .from('zone_claims')
+        .select('assignment_id, user_id, notes, profiles(full_name, phone)')
+        .in('assignment_id', assignmentIds) as unknown as Promise<{
+          data: Array<{
+            assignment_id: string
+            user_id: string
+            notes: string | null
+            profiles: { full_name: string | null; phone: string | null } | null
+          }> | null
+        }>,
+    ])
+
+    const zonesData = zonesRes.data
+    const zoneMap = new Map((zonesData || []).map(z => [z.id, z]))
+    const claims = claimsRes.data
 
     // Bygg sjåfør-soner
     const driverZones: DriverZone[] = assignments.map(a => {

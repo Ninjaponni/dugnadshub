@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useDragControls, type PanInfo } from 'framer-motion'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface BottomSheetProps {
   open: boolean
@@ -31,6 +31,13 @@ function useIsDesktop() {
 export default function BottomSheet({ open, onClose, children, title, pinToBottom = false }: BottomSheetProps) {
   const dragControls = useDragControls()
   const isDesktop = useIsDesktop()
+  const sheetRef = useRef<HTMLDivElement>(null)
+
+  // Dialog-semantikk: flytt fokus inn i sheeten ved åpning, så
+  // tastatur/skjermleser lander i dialogen og ikke i innholdet bak
+  useEffect(() => {
+    if (open) sheetRef.current?.focus()
+  }, [open])
 
   const handleDragEnd = useCallback((_: unknown, info: PanInfo) => {
     if (info.velocity.y > 300 || info.offset.y > 150) {
@@ -68,12 +75,17 @@ export default function BottomSheet({ open, onClose, children, title, pinToBotto
             /* Desktop — sentrert modal */
             <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 pointer-events-none">
               <motion.div
+                ref={sheetRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={title}
+                tabIndex={-1}
                 initial={{ y: 20, opacity: 0, scale: 0.97 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 exit={{ y: 20, opacity: 0, scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 340, damping: 28 }}
                 onClick={(e) => e.stopPropagation()}
-                className="pointer-events-auto bg-bg rounded-[28px] w-full max-w-[440px] max-h-[85vh] flex flex-col shadow-[0_24px_60px_rgba(45,38,32,0.28)]"
+                className="pointer-events-auto bg-bg rounded-[28px] w-full max-w-[440px] max-h-[85vh] flex flex-col shadow-[0_24px_60px_rgba(45,38,32,0.28)] outline-none"
               >
                 {title && (
                   <h2 className="text-xl font-semibold font-[var(--font-display)] px-5 pt-5 pb-3 shrink-0">{title}</h2>
@@ -86,6 +98,11 @@ export default function BottomSheet({ open, onClose, children, title, pinToBotto
           ) : (
             /* Mobil — bottom sheet med drag-håndtak */
             <motion.div
+              ref={sheetRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={title}
+              tabIndex={-1}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -96,7 +113,7 @@ export default function BottomSheet({ open, onClose, children, title, pinToBotto
               dragConstraints={{ top: 0 }}
               dragElastic={0.2}
               onDragEnd={handleDragEnd}
-              className={`fixed ${pinToBottom ? 'bottom-0' : 'bottom-20'} left-0 right-0 z-[55] bg-bg rounded-t-[28px] max-h-[75dvh] flex flex-col shadow-[0_-12px_30px_rgba(61,53,48,0.08)] safe-bottom`}
+              className={`fixed ${pinToBottom ? 'bottom-0' : 'bottom-20'} left-0 right-0 z-[55] bg-bg rounded-t-[28px] max-h-[75dvh] flex flex-col shadow-[0_-12px_30px_rgba(61,53,48,0.08)] safe-bottom outline-none`}
             >
               {/* Drag-håndtak — kun dette området trigger drag-to-close */}
               <div
