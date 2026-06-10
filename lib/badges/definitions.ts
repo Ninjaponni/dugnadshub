@@ -43,6 +43,9 @@ export const badgeDefinitions = [
   { id: 67, name: 'Plastminister', icon: '/badges/plastminister.png', category: 'aktivitet' as const, description: 'Deltatt i plastdugnad', auto_criteria: null },
   { id: 69, name: 'Festivalvakt', icon: '/badges/festivalvakt.png', category: 'aktivitet' as const, description: 'Sto vakt på festival', auto_criteria: null },
   { id: 70, name: 'VM-vakt', icon: '/badges/vm-vakt.png', category: 'aktivitet' as const, description: 'Sto vakt under Fotball-VM', auto_criteria: null },
+  { id: 71, name: 'Reiseleder', icon: '/badges/reiseleder.png', category: 'aktivitet' as const, description: 'Reiseleder på korpstur', auto_criteria: null },
+  { id: 72, name: 'Nattevakta', icon: '/badges/nattevakta.png', category: 'aktivitet' as const, description: 'Tok nattevakta på korpstur', auto_criteria: null },
+  { id: 73, name: 'Bussjåføren', icon: '/badges/bussjaforen.png', category: 'aktivitet' as const, description: 'Kjørte korpset trygt på tur', auto_criteria: null },
 
   // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
   { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },
