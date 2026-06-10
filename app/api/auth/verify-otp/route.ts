@@ -21,20 +21,35 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabase()
   const now = new Date().toISOString()
 
-  // Finn gyldig kode
+  // Finn nyeste gyldige kode for e-posten — uavhengig av hva brukeren tastet,
+  // slik at vi kan telle feilforsøk på riktig rad
   const { data: otpRow } = await supabase
     .from('otp_codes')
-    .select('id')
+    .select('id, code, attempts')
     .eq('email', email.toLowerCase())
-    .eq('code', code)
     .eq('used', false)
     .gte('expires_at', now)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .single() as { data: { id: string; code: string; attempts: number } | null }
 
   if (!otpRow) {
     // Forsinkelse på 1 sekund for å bremse brute-force
+    await new Promise(r => setTimeout(r, 1000))
+    return NextResponse.json({ error: 'Feil eller utløpt kode' }, { status: 401 })
+  }
+
+  // Maks 5 feilforsøk per kode — stopper brute-force selv ved parallelle kall
+  if (otpRow.attempts >= 5) {
+    return NextResponse.json({ error: 'For mange forsøk. Be om en ny kode.' }, { status: 429 })
+  }
+
+  if (otpRow.code !== String(code)) {
+    // Tell feilforsøket før vi svarer
+    await supabase
+      .from('otp_codes')
+      .update({ attempts: otpRow.attempts + 1 })
+      .eq('id', otpRow.id)
     await new Promise(r => setTimeout(r, 1000))
     return NextResponse.json({ error: 'Feil eller utløpt kode' }, { status: 401 })
   }
