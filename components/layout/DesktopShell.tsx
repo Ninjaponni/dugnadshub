@@ -31,27 +31,33 @@ export default async function DesktopShell({ children, mobileMainClassName }: { 
   let memberCount: number | undefined
   let isAdmin = false
 
-  if (user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name, role, avatar_url, is_musician')
-      .eq('id', user.id)
-      .single()
-    if (data) {
-      const d = data as unknown as {
-        full_name: string | null
-        role: Role
-        avatar_url: string | null
-        is_musician: boolean
-      }
-      profile = {
-        full_name: d.full_name,
-        role: d.role,
-        avatar_url: d.avatar_url,
-        type: d.is_musician ? 'Musikant' : 'Forelder',
-      }
-      isAdmin = d.role === 'admin'
+  // Profil og sub-nav-events er uavhengige — hent dem parallelt.
+  // (Var fire sekvensielle rundturer per hard load, også for mobilbrukere.)
+  const [profileRes, shiftEvents] = await Promise.all([
+    (user
+      ? supabase
+          .from('profiles')
+          .select('full_name, role, avatar_url, is_musician')
+          .eq('id', user.id)
+          .single()
+      : Promise.resolve({ data: null })) as Promise<{ data: unknown }>,
+    getShiftEventsForNav(),
+  ])
+
+  if (profileRes.data) {
+    const d = profileRes.data as unknown as {
+      full_name: string | null
+      role: Role
+      avatar_url: string | null
+      is_musician: boolean
     }
+    profile = {
+      full_name: d.full_name,
+      role: d.role,
+      avatar_url: d.avatar_url,
+      type: d.is_musician ? 'Musikant' : 'Forelder',
+    }
+    isAdmin = d.role === 'admin'
   }
 
   // Antall medlemmer i sidebaren — kun for admin (count vises bare i ADMIN-gruppen)
@@ -61,9 +67,6 @@ export default async function DesktopShell({ children, mobileMainClassName }: { 
       .select('*', { count: 'exact', head: true })
     memberCount = count ?? undefined
   }
-
-  // Kommende arrangement-events til Vakter-undermenyen
-  const shiftEvents = await getShiftEventsForNav()
 
   return (
     <div className="lg:flex lg:min-h-screen lg:bg-bg">

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { localDateISO } from '@/lib/utils/date'
 
 // Henter kommende arrangement-events til sidebar-undermenyen (Vakter).
 // Server-side: kjøres i DesktopShell og sendes ned som prop.
@@ -11,7 +12,8 @@ export type ShiftNavEvent = {
 
 export async function getShiftEventsForNav(): Promise<ShiftNavEvent[]> {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
+  // Lokal dato — toISOString gir UTC og viste gårsdagens event etter midnatt
+  const today = localDateISO()
   const { data } = await supabase
     .from('events')
     .select('id, title, signup_deadline')

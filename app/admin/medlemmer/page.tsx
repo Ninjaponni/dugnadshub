@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import BrandLink from '@/components/layout/BrandLink'
@@ -103,19 +103,39 @@ export default function MembersAdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData() }, [])
 
+  // Forhåndsberegnede tellinger per bruker — én gjennomgang av hver liste
+  // i stedet for filter-per-profil-per-sammenligning (O(n×m) per tastetrykk).
+  const claimCounts = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const c of allClaims) m.set(c.user_id, (m.get(c.user_id) ?? 0) + 1)
+    return m
+  }, [allClaims])
+
+  const shiftClaimCounts = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const c of allShiftClaims) m.set(c.user_id, (m.get(c.user_id) ?? 0) + 1)
+    return m
+  }, [allShiftClaims])
+
+  const badgeCountByUser = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const ub of userBadges) m.set(ub.user_id, (m.get(ub.user_id) ?? 0) + 1)
+    return m
+  }, [userBadges])
+
   // Antall sone-claims (vises i lista som "X soner")
   function getClaimCount(userId: string): number {
-    return allClaims.filter(c => c.user_id === userId).length
+    return claimCounts.get(userId) ?? 0
   }
 
   // Total aktivitet for sortering = sone-claims + vakt-claims, så vakttakere
   // på arrangement ikke fremstår som inaktive.
   function getActivityCount(userId: string): number {
-    return getClaimCount(userId) + allShiftClaims.filter(c => c.user_id === userId).length
+    return getClaimCount(userId) + (shiftClaimCounts.get(userId) ?? 0)
   }
 
   function getBadgeCountForUser(userId: string): number {
-    return userBadges.filter(ub => ub.user_id === userId).length
+    return badgeCountByUser.get(userId) ?? 0
   }
 
   // Antall ganger brukeren har hvert merke, så BadgeTile kan vise x2/x3 osv
@@ -128,37 +148,42 @@ export default function MembersAdminPage() {
     return m
   }
 
-  // Filtrer på type (foreldre/musikanter) og søk, deretter sorter
-  const filteredByType = profiles.filter(p => {
-    if (typeFilter === 'foreldre') return !p.is_musician
-    if (typeFilter === 'musikanter') return p.is_musician
-    return true
-  })
+  // Filtrer på type (foreldre/musikanter) og søk, deretter sorter.
+  // Memoisert så lista ikke re-beregnes ved urelatert state-endring.
+  const sortedProfiles = useMemo(() => {
+    const filteredByType = profiles.filter(p => {
+      if (typeFilter === 'foreldre') return !p.is_musician
+      if (typeFilter === 'musikanter') return p.is_musician
+      return true
+    })
 
-  const sortedProfiles = filteredByType
-    .filter(p => {
-      if (!searchQuery) return true
-      const q = searchQuery.toLowerCase()
-      const roleLabel = ROLE_LABELS[p.role as Role] || ''
-      return (
-        (p.full_name || '').toLowerCase().includes(q) ||
-        p.email.toLowerCase().includes(q) ||
-        (p.children || []).some((c: Child) => c.name?.toLowerCase().includes(q)) ||
-        roleLabel.toLowerCase().includes(q) ||
-        (p.role || '').toLowerCase().includes(q)
-      )
-    })
-    .sort((a, b) => {
-      switch (sortMode) {
-        case 'badges':
-          return getBadgeCountForUser(b.id) - getBadgeCountForUser(a.id)
-        case 'least_active':
-          return (getBadgeCountForUser(a.id) + getActivityCount(a.id)) - (getBadgeCountForUser(b.id) + getActivityCount(b.id))
-        case 'alpha':
-        default:
-          return (a.full_name || '').localeCompare(b.full_name || '', 'nb')
-      }
-    })
+    return filteredByType
+      .filter(p => {
+        if (!searchQuery) return true
+        const q = searchQuery.toLowerCase()
+        const roleLabel = ROLE_LABELS[p.role as Role] || ''
+        return (
+          (p.full_name || '').toLowerCase().includes(q) ||
+          p.email.toLowerCase().includes(q) ||
+          (p.children || []).some((c: Child) => c.name?.toLowerCase().includes(q)) ||
+          roleLabel.toLowerCase().includes(q) ||
+          (p.role || '').toLowerCase().includes(q)
+        )
+      })
+      .sort((a, b) => {
+        switch (sortMode) {
+          case 'badges':
+            return (badgeCountByUser.get(b.id) ?? 0) - (badgeCountByUser.get(a.id) ?? 0)
+          case 'least_active': {
+            const act = (id: string) => (badgeCountByUser.get(id) ?? 0) + (claimCounts.get(id) ?? 0) + (shiftClaimCounts.get(id) ?? 0)
+            return act(a.id) - act(b.id)
+          }
+          case 'alpha':
+          default:
+            return (a.full_name || '').localeCompare(b.full_name || '', 'nb')
+        }
+      })
+  }, [profiles, typeFilter, searchQuery, sortMode, badgeCountByUser, claimCounts, shiftClaimCounts])
 
   // Endre rolle
   // Handlerne returnerer true/false så detail-komponentene kan toaste

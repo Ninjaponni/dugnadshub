@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Ticket } from 'lucide-react'
 import type { ArrangementEvent } from '@/lib/types/shifts'
+import { daysUntilLabel } from '@/lib/utils/date'
 
 interface Props {
   event: ArrangementEvent
@@ -23,16 +24,6 @@ function formatLongDate(isoDate: string, startTime: string | null): string {
   return base
 }
 
-function daysUntilLabel(isoDate: string): string {
-  const target = new Date(isoDate + 'T00:00:00')
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const diff = Math.round((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0) return 'tidligere'
-  if (diff === 0) return 'i dag'
-  if (diff === 1) return 'i morgen'
-  return `om ${diff} dager`
-}
 
 export function ArrangementCard({ event, totalShifts, freePlaces, totalCapacity }: Props) {
   const filled = Math.max(0, totalCapacity - freePlaces)
