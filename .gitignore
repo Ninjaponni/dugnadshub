@@ -15,4 +15,6 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
-supabase/
+# Kun CLI-mappa i rota — uankret "supabase/" traff også lib/supabase/ og
+# holdt fetch-all.ts utenfor commit (brakk prod-bygget 10. juni)
+/supabase/
