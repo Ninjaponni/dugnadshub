@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
-import { MapPin, Check, ChevronRight, Calendar } from 'lucide-react'
+import { MapPin, Check, ChevronRight, Calendar, Bus } from 'lucide-react'
 import Link from 'next/link'
 import BrandLink from '@/components/layout/BrandLink'
 import type { Profile, HomeEvent, HomeData } from '@/lib/supabase/types'
@@ -217,6 +217,28 @@ export default function HomePage() {
             </>
           )}
         </motion.section>
+
+        {/* Korpstur-banner — lenker til /tur, fjernes automatisk etter turen */}
+        {new Date() < new Date('2026-06-15T00:00:00') && (
+          <Link href="/tur" className="block">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-[1.5rem] p-5 text-white flex items-center gap-4"
+              style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))', boxShadow: '0 10px 28px rgba(162,74,51,0.28)' }}
+            >
+              <span className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                <Bus size={22} />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] opacity-80">Korpstur · 12.–14. juni</span>
+                <span className="block font-[var(--font-display)] text-lg font-extrabold leading-tight">Lillehammerfestivalen</span>
+                <span className="block text-[12.5px] opacity-85 mt-0.5">Program, rominndeling, pakkeliste og kontakter</span>
+              </span>
+              <ChevronRight size={20} className="opacity-80 shrink-0" />
+            </motion.div>
+          </Link>
+        )}
 
         {/* Skeleton for lasting */}
         {loading && (

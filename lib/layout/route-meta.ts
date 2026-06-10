@@ -10,6 +10,7 @@ export const ROUTE_META: Record<string, RouteMeta> = {
   '/kart': { title: 'Kart', fullBleed: true },
   '/sjafor': { title: 'Henting', sub: 'Sjåfør-oversikt og rute' },
   '/vakter': { title: 'Vakter' },
+  '/tur': { title: 'Korpstur', sub: 'Lillehammerfestivalen · 12.–14. juni' },
   '/merker': { title: 'Merker' },
   '/profil': { title: 'Min profil', sub: 'Tillerbyen Skolekorps' },
   '/admin/hendelser': { title: 'Hendelser', sub: 'Opprett og styr dugnader og arrangementer' },
