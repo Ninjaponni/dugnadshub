@@ -1,16 +1,17 @@
 import BottomNav from '@/components/layout/BottomNav'
 import DesktopShell from '@/components/layout/DesktopShell'
 
-// Mobil-flyt under lg, desktop-shell over lg. Pages rendres i begge.
-// DesktopShell har egen lg-gating, så ingen ekstra wrapper rundt den.
+// Children rendres ÉN gang inni DesktopShell — mobil-wrapper-klassene gjelder
+// under lg, desktop-chrome (sidebar/topbar) er hidden lg:*, BottomNav lg:hidden.
+// (Tidligere dual-render monterte alle sider dobbelt: dobbel datahenting,
+// Realtime-topics som stjal fra hverandre, og dobbel Mapbox-instans.)
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div className="lg:hidden max-w-[430px] mx-auto min-h-dvh pb-20">
+      <DesktopShell mobileMainClassName="max-w-[430px] mx-auto min-h-dvh pb-20">
         {children}
-        <BottomNav />
-      </div>
-      <DesktopShell>{children}</DesktopShell>
+      </DesktopShell>
+      <BottomNav />
     </>
   )
 }

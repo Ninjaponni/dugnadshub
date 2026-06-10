@@ -3,16 +3,25 @@
 import { usePathname } from 'next/navigation'
 import { getRouteMeta } from '@/lib/layout/route-meta'
 
-// Desktop-innholdsområdet. På fullBleed-ruter (Kart) fyller innholdet hele
-// flaten ved siden av sidebaren — ingen padding, ingen max-width, og `relative`
-// så et `lg:absolute inset-0`-kart havner innenfor flaten i stedet for å dekke
-// hele viewporten (og dermed skjule menyen). Andre ruter beholder padded main.
-export default function DesktopMain({ children }: { children: React.ReactNode }) {
+// Felles innholdsområde for BÅDE mobil og desktop — children rendres ÉN gang.
+// Mobil-wrapper-klassene (max-w, padding) sendes inn fra layouten og gjelder
+// under lg; lg:-klassene overstyrer på desktop. Dette erstattet dual-render-
+// oppsettet der hele sidetreet ble montert to ganger (som ga dobbel datahenting,
+// Realtime-kanaler som stjal topic fra hverandre, og dobbel Mapbox-instans).
+//
+// På fullBleed-ruter (Kart) er flaten `relative` på lg så et
+// `lg:absolute inset-0`-kart fyller flaten ved siden av sidebaren.
+export default function DesktopMain({ children, mobileClassName = '' }: { children: React.ReactNode; mobileClassName?: string }) {
   const meta = getRouteMeta(usePathname())
 
   if (meta.fullBleed) {
-    return <main className="flex-1 relative overflow-hidden min-w-0">{children}</main>
+    // Kart er fixed på mobil — ingen mobil-wrapper-stiler trengs
+    return <div className="lg:flex-1 lg:relative lg:overflow-hidden lg:min-w-0">{children}</div>
   }
 
-  return <main className="max-w-[1320px] w-full mx-auto px-9 py-8">{children}</main>
+  return (
+    <div className={`${mobileClassName} lg:max-w-[1320px] lg:w-full lg:mx-auto lg:min-h-0 lg:px-9 lg:py-8`}>
+      {children}
+    </div>
+  )
 }

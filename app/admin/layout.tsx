@@ -21,11 +21,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!p || p.role !== 'admin') redirect('/hjem')
 
   return (
-    <>
-      <div className="lg:hidden max-w-4xl mx-auto min-h-dvh px-4 pt-14 pb-8 safe-top">
-        {children}
-      </div>
-      <DesktopShell>{children}</DesktopShell>
-    </>
+    <DesktopShell mobileMainClassName="max-w-4xl mx-auto min-h-dvh px-4 pt-14 pb-8 safe-top">
+      {children}
+    </DesktopShell>
   )
 }

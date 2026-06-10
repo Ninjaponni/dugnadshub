@@ -7,11 +7,12 @@ import type { Profile, Role } from '@/lib/supabase/types'
 
 type SidebarProfile = Pick<Profile, 'full_name' | 'role' | 'avatar_url'> & { type?: string }
 
-// Wrapper som rendrer desktop-chrome på lg+. Selve `hidden lg:flex` ligger på
-// rotnoden her, slik at vi unngår en ekstra block-wrapper i layout-filene som
-// kan forstyrre sticky-posisjonering av sidebaren.
+// Felles app-shell: children rendres ÉN gang og deler treet mellom mobil og
+// desktop via CSS. Sidebar/topbar er `hidden lg:*`, BottomNav er `lg:hidden`,
+// og DesktopMain bærer mobil-wrapper-klassene under lg. (Tidligere dual-render
+// monterte alle sider dobbelt — det brøt Realtime og doblet datahenting.)
 // Henter profil server-side slik at sidebaren kan vise rolle og navn uten klienthenting.
-export default async function DesktopShell({ children }: { children: React.ReactNode }) {
+export default async function DesktopShell({ children, mobileMainClassName }: { children: React.ReactNode; mobileMainClassName?: string }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -65,11 +66,11 @@ export default async function DesktopShell({ children }: { children: React.React
   const shiftEvents = await getShiftEventsForNav()
 
   return (
-    <div className="hidden lg:flex lg:min-h-screen lg:bg-bg">
+    <div className="lg:flex lg:min-h-screen lg:bg-bg">
       <DesktopSidebar profile={profile} memberCount={memberCount} shiftEvents={shiftEvents} />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="lg:flex-1 lg:flex lg:flex-col lg:min-w-0">
         <DesktopTopbar />
-        <DesktopMain>{children}</DesktopMain>
+        <DesktopMain mobileClassName={mobileMainClassName}>{children}</DesktopMain>
       </div>
     </div>
   )

@@ -67,7 +67,7 @@ export default function BottomNav() {
     : baseTabs
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[60] bg-card safe-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-card safe-bottom">
       <div className="rounded-t-[2rem] shadow-[0_-4px_20px_rgba(57,56,43,0.08)] max-w-[430px] mx-auto bg-card">
         <div className="flex justify-around items-end px-4 pb-1 pt-2 h-20">
           {tabs.map(({ href, label, icon: Icon }) => {

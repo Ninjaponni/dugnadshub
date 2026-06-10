@@ -16,6 +16,9 @@ type Props = {
 export default function Modal({ open, onClose, children, maxWidth = 540 }: Props) {
   useEffect(() => {
     if (!open) return
+    // Modalen brukes bak `hidden lg:block`-wrappers — på mobil er den usynlig,
+    // men effekten kjører likevel. Gate på lg så vi ikke låser scroll på mobil.
+    if (!window.matchMedia('(min-width: 1024px)').matches) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handler)
