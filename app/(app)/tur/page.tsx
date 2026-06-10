@@ -7,12 +7,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronRight, Phone, AlertTriangle, Moon, BedDouble, Backpack, Info, Users, ClipboardCheck } from 'lucide-react'
+import { ChevronRight, Phone, AlertTriangle, Moon, BedDouble, Backpack, Info, Users, ClipboardCheck, Bus } from 'lucide-react'
 import BrandLink from '@/components/layout/BrandLink'
 import { isMockMode } from '@/lib/mock/useMock'
 import {
   turMeta, program, nattevakter, ansvar, rom, pakkeliste, praktisk, varsler,
-  turkomite, reiseledere, kontaktHjemme,
+  turkomite, reiseledere, kontaktHjemme, bussjafor,
 } from '@/lib/data/korpstur-2026'
 
 const GRADIENT_BRAND = 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))'
@@ -259,7 +259,7 @@ export default function TurPage() {
         <section>
           <div className="mb-3"><Eyebrow>Kontakter</Eyebrow></div>
 
-          {/* Turkomiteen med ansvarsområde */}
+          {/* Turkomiteen med ansvarsområde + bussjåføren */}
           <div className="bg-card rounded-[20px] overflow-hidden border border-text-primary/[0.08] mb-4" style={{ boxShadow: '0 4px 16px rgba(160,120,80,0.10)' }}>
             {turkomite.map((k, i) => (
               <a key={k.navn} href={`tel:${k.tlf}`} className={`flex items-center gap-3.5 px-5 py-3.5 hover:bg-surface-low/60 transition-colors ${i ? 'border-t border-text-primary/[0.07]' : ''}`}>
@@ -273,6 +273,16 @@ export default function TurPage() {
                 <Phone size={15} className="text-accent shrink-0" />
               </a>
             ))}
+            <a href={`tel:${bussjafor.tlf}`} className="flex items-center gap-3.5 px-5 py-3.5 hover:bg-surface-low/60 transition-colors border-t border-text-primary/[0.07]">
+              <span className="w-9 h-9 rounded-full bg-surface-low flex items-center justify-center text-accent shrink-0">
+                <Bus size={16} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[14.5px] font-bold text-text-primary">{bussjafor.navn}</div>
+                <div className="text-[12.5px] text-text-secondary">{bussjafor.rolle}</div>
+              </div>
+              <Phone size={15} className="text-accent shrink-0" />
+            </a>
           </div>
 
           {/* Alle reiseledere — kompakt grid med tel-lenker */}

@@ -79,6 +79,7 @@ export const ansvar: Array<{ phone: string; lines: string[] }> = [
   { phone: '97034895', lines: ['Romansvarlig · Rom 2', 'Logistikk, turregler og mobilhotell'] },
   { phone: '99712460', lines: ['Romansvarlig · Rom 3', 'Kjører egen bil med senere avreise (egne avtaler med passasjerene)'] },
   { phone: '93614200', lines: ['Romansvarlig · Rom 4'] },
+  { phone: '93027902', lines: ['Bussjåfør på korpstur'] },
   { phone: '91580826', lines: ['Turleder · vara beredskapsansvarlig'] },
   { phone: '45665959', lines: ['Ansvar for mat, allergier og behov knyttet til dette'] },
   { phone: '99104938', lines: ['Ansvar for helse og beredskap'] },
@@ -254,5 +255,7 @@ export const reiseledere: Array<{ navn: string; tlf: string }> = [
   { navn: 'Aina Nesmoen Norvik', tlf: '93614200' },
   { navn: 'Marit Kotsbakk Bollingmo', tlf: '91735177' },
 ]
+
+export const bussjafor = { navn: 'Eyvind Dyrendahl', rolle: 'Bussjåfør på korpstur', tlf: '93027902' }
 
 export const kontaktHjemme = { navn: 'Alfhild Lien Eide', rolle: 'Kontaktperson på Tiller', tlf: '90971238' }
