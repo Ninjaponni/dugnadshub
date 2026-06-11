@@ -135,7 +135,7 @@ function BigBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
       onClick={onClick}
       onMouseEnter={() => setH(true)}
       onMouseLeave={() => setH(false)}
-      style={{ width: 110, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, background: h ? 'var(--color-surface-low)' : 'transparent', border: 0, cursor: 'pointer', padding: '14px 6px 11px', borderRadius: 20, fontFamily: 'inherit', transition: 'background .16s, transform .16s', transform: h ? 'translateY(-3px)' : 'none' }}
+      style={{ width: 128, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, background: h ? 'var(--color-surface-low)' : 'transparent', border: 0, cursor: 'pointer', padding: '14px 6px 11px', borderRadius: 20, fontFamily: 'inherit', transition: 'background .16s, transform .16s', transform: h ? 'translateY(-3px)' : 'none' }}
     >
       <div style={{ position: 'relative' }}>
         {fresh && <Sparks />}
@@ -155,7 +155,8 @@ function BigBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
           : <span style={{ position: 'absolute', bottom: -3, right: -3, width: 24, height: 24, background: 'var(--color-success)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2.5px solid var(--color-card)' }}><Check size={12} strokeWidth={3} /></span>}
         {fresh && <span style={{ position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%)', background: 'var(--color-warning)', color: '#6b4e00', fontSize: 9.5, fontWeight: 800, letterSpacing: '.08em', padding: '2px 7px', borderRadius: 9999, boxShadow: '0 2px 6px rgba(160,120,80,.3)' }}>NY</span>}
       </div>
-      <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', lineHeight: 1.25, color: 'var(--color-text-secondary)' }}>{b.name}</span>
+      {/* maxWidth + overflowWrap: lange enkeltord (Steinkjerspællkomiteen) brytes i stedet for å renne inn i naboen */}
+      <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', lineHeight: 1.25, color: 'var(--color-text-secondary)', maxWidth: '100%', overflowWrap: 'anywhere' }}>{b.name}</span>
     </button>
   )
 }
