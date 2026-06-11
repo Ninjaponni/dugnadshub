@@ -9,9 +9,9 @@
 -- (user_id, badge_id, event_id) WHERE event_id IS NOT NULL — derfor uten
 -- kolonneliste, jf. 42P10-fella).
 --
--- IKKE med (mangler profil/skal ikke ha): Rita Myrvold, Anne Mari Fiksdal
--- (ingen profil), Sverre (musikant, ingen bruker), Rolf Erik Magnussen (ukjent),
--- hele Tillerblæsen, åresalg-selgerne (alle TB).
+-- IKKE med: Rita Myrvold + Anne Mari Fiksdal (ikke i korpset), Sverre
+-- (musikant, ingen bruker), Rolf Erik Magnussen (ukjent), hele Tillerblæsen,
+-- åresalg-selgerne (alle TB).
 
 -- 0) badges-tabellen har FK fra user_badges OG en category-CHECK — begge må
 --    utvides FØR tildeling. (Kjørt i prod 2026-06-11, idempotent.)
@@ -46,7 +46,7 @@ p as (
 ),
 tildeling (tel, badge_id) as (
   values
-    -- Sommerkonserten (id 74) — alle 15 TS-bidragsytere
+    -- Sommerkonserten (id 74) — alle 16 TS-bidragsytere
     ('97034895', 74), -- Arne-Olav Thuestad (rigg)
     ('48130067', 74), -- Wusam Jabber (rigg)
     ('93887270', 74), -- Linda Svendsen Dahl (rigg)
@@ -62,15 +62,18 @@ tildeling (tel, badge_id) as (
     ('90971238', 74), -- Alfhild Lien Eide (premie)
     ('97546823', 74), -- Remi Bakke (styreansvar rigg/kiosk/frakt)
     ('91351290', 74), -- Tor Martin Norvik (lotteri)
+    ('93614200', 74), -- Aina Nesmoen (fruktkurver)
     -- Sommerbakeren (id 75)
     ('45665959', 75), ('40832888', 75), ('45449193', 75),
     -- Sommerkiosken (id 76)
     ('98002317', 76), ('45665959', 76), ('97963424', 76),
     -- Sommerriggen (id 77)
     ('97034895', 77), ('48130067', 77), ('93887270', 77),
+    ('97546823', 77), -- Remi (styreansvar for riggingen)
     -- Sommergaver (id 78)
     ('45035478', 78), ('97720890', 78), ('40873732', 78),
     ('98849029', 78), ('90971238', 78),
+    ('93614200', 78), -- Aina Nesmoen (fruktkurver)
     -- Sommertrekker (id 79)
     ('91351290', 79)
 )
