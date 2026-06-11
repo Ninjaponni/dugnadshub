@@ -15,6 +15,7 @@ const categoryLabels: Record<string, string> = {
   elite: 'Elite',
   aktivitet: 'Aktivitet',
   '17mai': '17. mai',
+  sommerkonsert: 'Sommerkonsert',
   styret: 'Styret',
   komite: 'Komité',
   vakt: 'Vakt',

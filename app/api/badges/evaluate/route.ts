@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Aktivitet- og 17mai-merker indikerer event-deltakelse når event_id er satt.
+// Aktivitet-, 17mai- og sommerkonsert-merker indikerer event-deltakelse når event_id er satt.
 // Utledes fra definisjonene så nye merker telles automatisk — den gamle
 // håndskrevne id-lista hadde allerede driftet (manglet 68/69/70).
 const PARTICIPATION_BADGE_IDS = new Set(
   badgeDefinitions
-    .filter(b => b.category === 'aktivitet' || b.category === '17mai')
+    .filter(b => b.category === 'aktivitet' || b.category === '17mai' || b.category === 'sommerkonsert')
     .map(b => b.id)
 )
 

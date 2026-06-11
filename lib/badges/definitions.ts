@@ -47,6 +47,14 @@ export const badgeDefinitions = [
   { id: 72, name: 'Nattevakta', icon: '/badges/nattevakta.png', category: 'aktivitet' as const, description: 'Tok nattevakta på korpstur', auto_criteria: null },
   { id: 73, name: 'Bussjåføren', icon: '/badges/bussjaforen.png', category: 'aktivitet' as const, description: 'Kjørte korpset trygt på tur', auto_criteria: null },
 
+  // Sommerkonsert-merker (gjentagende arrangement — deles ut på nytt hvert år med event_id)
+  { id: 74, name: 'Sommerkonserten', icon: '/badges/sommerkonserten.png', category: 'sommerkonsert' as const, description: 'Bidro på korpsets sommerkonsert', auto_criteria: null },
+  { id: 75, name: 'Sommerbakeren', icon: '/badges/sommerbakeren.png', category: 'sommerkonsert' as const, description: 'Bakte kake til sommerkonserten', auto_criteria: null },
+  { id: 76, name: 'Sommerkiosken', icon: '/badges/sommerkiosken.png', category: 'sommerkonsert' as const, description: 'Sto i kiosken på sommerkonserten', auto_criteria: null },
+  { id: 77, name: 'Sommerriggen', icon: '/badges/sommerriggen.png', category: 'sommerkonsert' as const, description: 'Rigget og ryddet til sommerkonserten', auto_criteria: null },
+  { id: 78, name: 'Sommergaver', icon: '/badges/sommergaver.png', category: 'sommerkonsert' as const, description: 'Skaffet premier til åresalget', auto_criteria: null },
+  { id: 79, name: 'Sommertrekker', icon: '/badges/sommertrekker.png', category: 'sommerkonsert' as const, description: 'Ledet lotteri, trekning og premieutdeling', auto_criteria: null },
+
   // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
   { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },
   { id: 30, name: 'Festkakebaker', icon: '/badges/festkakebaker.png', category: '17mai' as const, description: 'Bakte og leverte kake til 17. mai', auto_criteria: null },
@@ -105,6 +113,7 @@ export type BadgeDefinition = (typeof badgeDefinitions)[number]
 export const STACKABLE_BADGE_CATEGORIES: Set<BadgeCategory> = new Set([
   'aktivitet',
   '17mai',
+  'sommerkonsert',
   'styret',
   'komite',
   'vakt',
