@@ -13,6 +13,21 @@
 -- (ingen profil), Sverre (musikant, ingen bruker), Rolf Erik Magnussen (ukjent),
 -- hele Tillerblæsen, åresalg-selgerne (alle TB).
 
+-- 0) badges-tabellen har FK fra user_badges OG en category-CHECK — begge må
+--    utvides FØR tildeling. (Kjørt i prod 2026-06-11, idempotent.)
+alter table public.badges drop constraint if exists badges_category_check;
+alter table public.badges add constraint badges_category_check
+  check (category = any (array['starter','vanlig','veteran','elite','aktivitet','17mai','sommerkonsert','styret','komite','vakt']));
+
+insert into public.badges (id, name, description, icon, category, auto_criteria) values
+  (74, 'Sommerkonserten', 'Bidro på korpsets sommerkonsert', '/badges/sommerkonserten.png', 'sommerkonsert', null),
+  (75, 'Sommerbakeren', 'Bakte kake til sommerkonserten', '/badges/sommerbakeren.png', 'sommerkonsert', null),
+  (76, 'Sommerkiosken', 'Sto i kiosken på sommerkonserten', '/badges/sommerkiosken.png', 'sommerkonsert', null),
+  (77, 'Sommerriggen', 'Rigget og ryddet til sommerkonserten', '/badges/sommerriggen.png', 'sommerkonsert', null),
+  (78, 'Sommergaver', 'Skaffet premier til åresalget', '/badges/sommergaver.png', 'sommerkonsert', null),
+  (79, 'Sommertrekker', 'Ledet lotteri, trekning og premieutdeling', '/badges/sommertrekker.png', 'sommerkonsert', null)
+on conflict (id) do nothing;
+
 -- 1) Metadata-event for konserten (0 vakter, 0 soner — kun badge-kobling/historikk)
 insert into public.events (title, type, date, status, area, description)
 select 'Sommerkonsert 2026', 'other', '2026-06-11', 'completed', 'begge',

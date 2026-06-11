@@ -8,8 +8,10 @@
 -- KJØR PÅ NYTT etter bulk-tildelinger med event_id (f.eks. korpstur-merkene),
 -- siden de gir ny deltakelse som kan løfte folk over tersklene. Idempotent.
 --
--- NB: id-lista i user_badges-kilden = alle aktivitet+17mai-merker.
--- Synkroniser med lib/badges/definitions.ts hvis nye kategorier kommer til.
+-- NB: user_badges-kilden filtrerer på kategori via badges-tabellen
+-- (aktivitet + 17mai + sommerkonsert) — selvvedlikeholdende når nye
+-- merker kommer til. Nye KATEGORIER må fortsatt legges til her,
+-- synkronisert med PARTICIPATION_BADGE_IDS i app/api/badges/evaluate/route.ts.
 
 with deltakelse as (
   select user_id, event_id from (
@@ -22,8 +24,9 @@ with deltakelse as (
     select em.profile_id as user_id, em.event_id from event_musicians em
     union
     select ub.user_id, ub.event_id from user_badges ub
+    join badges b on b.id = ub.badge_id
+      and b.category in ('aktivitet', '17mai', 'sommerkonsert')
     where ub.event_id is not null
-      and ub.badge_id in (14,15,17,18,19,20,21,22,23,24,25,26,27,28,67,69,70,71,72,73,29,30,31,32,33,34,35,36,37,38,39,40,41,42,63,64,65,66,68,43,44)
   ) u
   join events e on e.id = u.event_id and e.status = 'completed'
   where u.user_id is not null  -- driver_assignments/event_musicians kan ha tomme slots

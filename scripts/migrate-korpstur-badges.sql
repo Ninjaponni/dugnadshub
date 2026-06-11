@@ -9,6 +9,15 @@
 -- (user_id, badge_id, event_id) WHERE event_id IS NOT NULL — derfor uten
 -- kolonneliste, jf. tidligere 42P10-felle) + NOT EXISTS-guards.
 
+-- 0) badges-tabellen har FK fra user_badges — definisjonene må finnes der.
+--    (Allerede kjørt i prod 2026-06-11 sammen med sommerkonsert-merkene,
+--    men idempotent her så skriptet er selvbærende.)
+insert into public.badges (id, name, description, icon, category, auto_criteria) values
+  (71, 'Reiseleder', 'Reiseleder på korpstur', '/badges/reiseleder.png', 'aktivitet', null),
+  (72, 'Nattevakta', 'Tok nattevakta på korpstur', '/badges/nattevakta.png', 'aktivitet', null),
+  (73, 'Bussjåføren', 'Kjørte korpset trygt på tur', '/badges/bussjaforen.png', 'aktivitet', null)
+on conflict (id) do nothing;
+
 -- 1) Metadata-event for turen (0 vakter, 0 soner — kun badge-kobling/historikk)
 insert into public.events (title, type, date, status, area, description)
 select 'Korpstur Lillehammer 2026', 'other', '2026-06-14', 'completed', 'begge',
