@@ -285,13 +285,13 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
                         {passed && i === curIdx && <Check size={9} strokeWidth={3.5} />}
                       </span>
                     </span>
-                    {/* Sikksakk i to rader — 10 nivånavn kolliderer ellers på smale skjermer */}
-                    <span style={{ position: 'absolute', top: i % 2 === 0 ? 22 : 36, fontSize: 9.5, fontWeight: 700, whiteSpace: 'nowrap', opacity: isNext ? 1 : passed ? .85 : .5, color: isNext ? 'var(--color-warning)' : '#fff' }}>{lv.name}</span>
+                    {/* Annenhver etikett skjules på smalere vinduer (lvl-lbl-odd i globals.css) — 10 navn på én rad krever plass */}
+                    <span className={i % 2 === 1 ? 'lvl-lbl-odd' : undefined} style={{ position: 'absolute', top: 22, fontSize: 9.5, fontWeight: 700, whiteSpace: 'nowrap', opacity: isNext ? 1 : passed ? .85 : .5, color: isNext ? 'var(--color-warning)' : '#fff' }}>{lv.name}</span>
                   </div>
                 )
               })}
             </div>
-            <div style={{ height: 32 }} />
+            <div style={{ height: 20 }} />
           </div>
         </div>
       </div>

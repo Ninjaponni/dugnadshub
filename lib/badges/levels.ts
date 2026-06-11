@@ -6,7 +6,7 @@ export const BADGE_LEVELS = [
   { at: 5, name: 'Ja-mennesket', desc: 'Sier ja før spørsmålet er ferdig stilt' },
   { at: 10, name: 'Poteten', desc: 'Kan brukes til alt, og blir det' },
   { at: 16, name: 'Arbeidsjernet', desc: 'Tar i et tak hver gang, ruster aldri' },
-  { at: 23, name: 'Allværsjakka', desc: 'Vær er en unnskyldning andre bruker' },
+  { at: 23, name: 'Allværsjakka', desc: 'Stiller opp i regn, sludd og sidevind' },
   { at: 31, name: 'Limet', desc: 'Holder hele korpset sammen' },
   { at: 40, name: 'Ryggraden', desc: 'Korpset hadde kollapset uten' },
   { at: 50, name: 'Grunnfjellet', desc: 'Har vært med siden før noen kan huske' },

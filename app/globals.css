@@ -223,3 +223,9 @@ input[type="time"] {
   .next-beacon { animation: nextBeacon 2.3s ease-out infinite; }
   .blob-drift { animation: blobDrift 10s ease-in-out infinite; }
 }
+
+/* Merker-desktop: 10 nivånavn får ikke plass på én rad i smalere vinduer —
+   annenhver etikett skjules under 1440px (prikkene vises alltid) */
+@media (max-width: 1439.98px) {
+  .lvl-lbl-odd { display: none; }
+}
