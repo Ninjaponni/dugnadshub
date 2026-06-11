@@ -127,6 +127,20 @@ function Pill({ tone, children }: { tone: 'success' | 'neutral'; children: React
 }
 
 // Stor coin til trophy-shelf
+// Lange enkeltord brytes på sammensetningsgrensa med myk bindestrek (­) —
+// usynlig til brytning faktisk trengs, og da blir det «Steinkjerspæll-komiteen»
+// i stedet for et tilfeldig kutt midt i ordet.
+const MYKE_BRYTNINGER: Record<string, string> = {
+  'Steinkjerspællkomiteen': 'Steinkjerspæll­komiteen',
+  'Konfirmasjonsfaneren': 'Konfirmasjons­faneren',
+  'Dugnadsansvarlig': 'Dugnads­ansvarlig',
+  'Instrumentansvarlig': 'Instrument­ansvarlig',
+  'Innkjøpsansvarlig': 'Innkjøps­ansvarlig',
+  'Materialforvalter': 'Material­forvalter',
+  'Uniformskomiteen': 'Uniforms­komiteen',
+}
+const mykBryt = (navn: string) => MYKE_BRYTNINGER[navn] ?? navn
+
 function BigBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
   const [h, setH] = useState(false)
   const fresh = b.fresh
@@ -155,8 +169,8 @@ function BigBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
           : <span style={{ position: 'absolute', bottom: -3, right: -3, width: 24, height: 24, background: 'var(--color-success)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2.5px solid var(--color-card)' }}><Check size={12} strokeWidth={3} /></span>}
         {fresh && <span style={{ position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%)', background: 'var(--color-warning)', color: '#6b4e00', fontSize: 9.5, fontWeight: 800, letterSpacing: '.08em', padding: '2px 7px', borderRadius: 9999, boxShadow: '0 2px 6px rgba(160,120,80,.3)' }}>NY</span>}
       </div>
-      {/* maxWidth + overflowWrap: lange enkeltord (Steinkjerspællkomiteen) brytes i stedet for å renne inn i naboen */}
-      <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', lineHeight: 1.25, color: 'var(--color-text-secondary)', maxWidth: '100%', overflowWrap: 'anywhere' }}>{b.name}</span>
+      {/* Myk bindestrek foretrekkes ved brytning; overflowWrap er kun nødbrems for ukjente lange navn */}
+      <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', lineHeight: 1.25, color: 'var(--color-text-secondary)', maxWidth: '100%', overflowWrap: 'anywhere' }}>{mykBryt(b.name)}</span>
     </button>
   )
 }
