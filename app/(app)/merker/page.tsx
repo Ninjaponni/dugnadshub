@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { badgeDefinitions } from '@/lib/badges/definitions'
+import { getBadgeLevel } from '@/lib/badges/levels'
 import { Check, Lock, X, Sparkles } from 'lucide-react'
 import BrandLink from '@/components/layout/BrandLink'
 import { isMockMode } from '@/lib/mock/useMock'
@@ -36,49 +37,7 @@ const categoryDescriptions: Record<string, string> = {
   vakt: 'For vakter på øvelseskvelder',
 }
 
-// Nivåsystem — 25 nivåer fra fersking til legende
-// 3 merker per nivå
-const levels = [
-  { min: 0, title: 'Sofaekspert' },
-  { min: 3, title: 'Nysgjerrig nabo' },
-  { min: 6, title: 'Dugnadsspire' },
-  { min: 9, title: 'Pantejeger' },
-  { min: 12, title: 'Sonevandrer' },
-  { min: 15, title: 'Flaskesamler' },
-  { min: 18, title: 'Dugnadsløve' },
-  { min: 21, title: 'Sonekriger' },
-  { min: 24, title: 'Nabolagshelt' },
-  { min: 27, title: 'Dugnadshelt' },
-  { min: 30, title: 'Pantekonge' },
-  { min: 33, title: 'Frivilligveteran' },
-  { min: 36, title: 'Dugnadsmaskin' },
-  { min: 39, title: 'Korpskjempe' },
-  { min: 42, title: 'Sonesjef' },
-  { min: 45, title: 'Pantelegende' },
-  { min: 48, title: 'Dugnadsdrott' },
-  { min: 51, title: 'Tillerlegenden' },
-  { min: 54, title: 'Dugnadsguru' },
-  { min: 57, title: 'Sonegeneral' },
-  { min: 60, title: 'Panteorakel' },
-  { min: 63, title: 'Dugnadsjarl' },
-  { min: 66, title: 'Korpslegende' },
-  { min: 69, title: 'Dugnadsmytisk' },
-  { min: 72, title: 'Tillerbyen Udødelig' },
-]
-
-// Finn nivå og neste nivå basert på totalt antall merker
-function getLevel(totalBadgeCount: number) {
-  let current = levels[0]
-  let next = levels[1] || null
-  for (let i = levels.length - 1; i >= 0; i--) {
-    if (totalBadgeCount >= levels[i].min) {
-      current = levels[i]
-      next = levels[i + 1] || null
-      break
-    }
-  }
-  return { current, next }
-}
+// Nivåstige — delt med desktop via lib/badges/levels.ts (10 nivåer)
 
 // Konfetti-partikkel
 function Confetti() {
@@ -173,11 +132,11 @@ export default function BadgesPage() {
   let totalBadgeCount = 0
   badgeCounts.forEach(count => { totalBadgeCount += count })
 
-  const { current: currentLevel, next: nextLevel } = getLevel(totalBadgeCount)
+  const { current: currentLevel, next: nextLevel } = getBadgeLevel(totalBadgeCount)
 
-  // Progress mot neste nivå
+  // Progress mot neste nivå (klampes til 0 når man står på trinn 1 med 0 merker)
   const progressToNext = nextLevel
-    ? ((totalBadgeCount - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100
+    ? Math.max(0, ((totalBadgeCount - currentLevel.at) / (nextLevel.at - currentLevel.at)) * 100)
     : 100
 
   return (
@@ -222,7 +181,7 @@ export default function BadgesPage() {
                 <h1 className="text-4xl font-extrabold tracking-tight font-[var(--font-display)]">Merker</h1>
                 <span className="text-4xl font-bold font-[var(--font-display)]">{totalBadgeCount}</span>
               </div>
-              <p className="text-white/80 font-medium text-sm mb-5">Din innsats betyr noe</p>
+              <p className="text-white/80 font-medium text-sm mb-5 italic">{currentLevel.desc}</p>
               <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
@@ -232,11 +191,11 @@ export default function BadgesPage() {
                 />
               </div>
               <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/70">
-                Ditt nivå: {currentLevel.title}
+                Ditt nivå: {currentLevel.name}
               </p>
               {nextLevel && (
                 <p className="text-[11px] font-bold uppercase tracking-widest text-white/50">
-                  Neste: {nextLevel.title}
+                  Neste: {nextLevel.name} ({nextLevel.at} merker)
                 </p>
               )}
             </div>

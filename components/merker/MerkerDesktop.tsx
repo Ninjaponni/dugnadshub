@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, Sparkles } from 'lucide-react'
 import { badgeDefinitions } from '@/lib/badges/definitions'
+import { BADGE_LEVELS } from '@/lib/badges/levels'
 
 // Kategori-rekkefølge + etiketter — speiler mobil-siden
 const CATS: [string, string][] = [
@@ -28,16 +29,8 @@ const CATS: [string, string][] = [
   ['vakt', 'Vaktmerker'],
 ]
 
-// Navngitt nivå-stige — reisen fra første merke til legende (fra prototypen)
-const LEVELS = [
-  { name: 'Frøspire', at: 1 },
-  { name: 'Samler', at: 5 },
-  { name: 'Pantejeger', at: 12 },
-  { name: 'Sonevandrer', at: 19 },
-  { name: 'Rodemester', at: 30 },
-  { name: 'Veteran', at: 45 },
-  { name: 'Legende', at: 60 },
-]
+// Navngitt nivå-stige — delt med mobil-siden via lib/badges/levels.ts
+const LEVELS = BADGE_LEVELS
 
 const GRADIENT_BRAND = 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))'
 const GRADIENT_BRAND_HORIZ = 'linear-gradient(90deg, var(--color-accent), var(--color-primary-container))'
@@ -271,8 +264,9 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
           <div style={{ flex: 1, minWidth: 320 }}>
             <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', opacity: .82 }}>Din samling · Nivå {curIdx + 1}</span>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.05, margin: '5px 0 4px' }}>{cur.name}</h2>
+            <p style={{ margin: '0 0 2px', fontSize: 13.5, fontStyle: 'italic', opacity: .85 }}>{cur.desc}</p>
             <p style={{ margin: '0 0 22px', fontSize: 14.5, opacity: .92 }}>
-              {next ? <>Bare <b>{toNext} {toNext === 1 ? 'merke' : 'merker'}</b> igjen til <b>{next.name}</b> — du er nesten der!</> : <>Du har nådd toppen. Legende!</>}
+              {next ? <>Bare <b>{toNext} {toNext === 1 ? 'merke' : 'merker'}</b> igjen til <b>{next.name}</b> — du er nesten der!</> : <>Du har nådd toppen. Statuen er bestilt!</>}
             </p>
 
             {/* journey track */}
@@ -291,12 +285,13 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
                         {passed && i === curIdx && <Check size={9} strokeWidth={3.5} />}
                       </span>
                     </span>
-                    <span style={{ position: 'absolute', top: 22, fontSize: 9.5, fontWeight: 700, whiteSpace: 'nowrap', opacity: isNext ? 1 : passed ? .85 : .5, color: isNext ? 'var(--color-warning)' : '#fff' }}>{lv.name}</span>
+                    {/* Sikksakk i to rader — 10 nivånavn kolliderer ellers på smale skjermer */}
+                    <span style={{ position: 'absolute', top: i % 2 === 0 ? 22 : 36, fontSize: 9.5, fontWeight: 700, whiteSpace: 'nowrap', opacity: isNext ? 1 : passed ? .85 : .5, color: isNext ? 'var(--color-warning)' : '#fff' }}>{lv.name}</span>
                   </div>
                 )
               })}
             </div>
-            <div style={{ height: 18 }} />
+            <div style={{ height: 32 }} />
           </div>
         </div>
       </div>
