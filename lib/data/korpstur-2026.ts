@@ -80,8 +80,9 @@ export const ansvar: Array<{ phone: string; lines: string[] }> = [
   { phone: '91351290', lines: ['Nattevakt 2 · natt til lørdag · 03:00–06:30', 'Ole Petter brifer deg etter infomøtet hvis bussen er forsinket'] },
   { phone: '98849029', lines: ['Romansvarlig · Rom 1'] },
   { phone: '97034895', lines: ['Romansvarlig · Rom 2', 'Logistikk, turregler og mobilhotell'] },
-  { phone: '99712460', lines: ['Romansvarlig · Rom 3', 'Kjører egen bil med senere avreise (egne avtaler med passasjerene)'] },
-  { phone: '93614200', lines: ['Romansvarlig · Rom 4'] },
+  // Aina (93614200) er ikke med på turen (ørebetennelse) — Rina overtok Rom 4, Mari overtok Rom 3
+  { phone: '99712460', lines: ['Romansvarlig · Rom 4', 'Kjører egen bil med senere avreise (egne avtaler med passasjerene)'] },
+  { phone: '99464774', lines: ['Romansvarlig · Rom 3'] },
   { phone: '93027902', lines: ['Bussjåfør på korpstur'] },
   { phone: '91580826', lines: ['Turleder · vara beredskapsansvarlig'] },
   { phone: '45665959', lines: ['Ansvar for mat, allergier og behov knyttet til dette'] },
@@ -135,8 +136,8 @@ export const rom: Rom[] = [
   },
   {
     navn: 'Rom 3',
-    ansvarlig: 'Rina',
-    voksne: ['Rina (romansvarlig)', 'Tor Martin', 'Edel', 'Mari'],
+    ansvarlig: 'Mari',
+    voksne: ['Mari (romansvarlig)', 'Tor Martin', 'Edel'],
     barn: [
       { navn: 'Vanja Campar', gruppe: 'HK' },
       { navn: 'Montaser Said Shifa', gruppe: 'JK' },
@@ -157,8 +158,8 @@ export const rom: Rom[] = [
   },
   {
     navn: 'Rom 4',
-    ansvarlig: 'Aina',
-    voksne: ['Aina (romansvarlig)', 'Remi'],
+    ansvarlig: 'Rina',
+    voksne: ['Rina (romansvarlig)', 'Remi'],
     barn: [
       { navn: 'Ismael Ang Alic', gruppe: 'HK' },
       { navn: 'Håvard Heggvik', gruppe: 'HK' },
@@ -255,7 +256,7 @@ export const reiseledere: Array<{ navn: string; tlf: string }> = [
   { navn: 'Tove Myrhaug', tlf: '98849029' },
   { navn: 'Ole Petter Talgø', tlf: '93066213' },
   { navn: 'Kristin Belsaas', tlf: '97605797' },
-  { navn: 'Aina Nesmoen Norvik', tlf: '93614200' },
+  // Aina Nesmoen Norvik (93614200) utgikk — ørebetennelse
   { navn: 'Marit Kotsbakk Bollingmo', tlf: '91735177' },
 ]
 

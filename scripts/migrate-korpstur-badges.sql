@@ -36,11 +36,12 @@ p as (
 ),
 tildeling (tel, badge_id) as (
   values
-    -- Reiseleder (id 71) — alle 14 reiselederne
+    -- Reiseleder (id 71) — alle 13 reiselederne
+    -- (Aina 93614200 utgikk pga. ørebetennelse — skal IKKE ha merket)
     ('91580826', 71), ('45665959', 71), ('97034895', 71), ('99104938', 71),
     ('99464774', 71), ('97546823', 71), ('99309814', 71), ('99712460', 71),
     ('91351290', 71), ('98849029', 71), ('93066213', 71), ('97605797', 71),
-    ('93614200', 71), ('91735177', 71),
+    ('91735177', 71),
     -- Nattevakta (id 72) — Ole Petter + Tor Martin
     ('93066213', 72), ('91351290', 72),
     -- Bussjåføren (id 73) — Eyvind Dyrendahl
