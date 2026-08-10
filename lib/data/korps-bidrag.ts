@@ -26,11 +26,12 @@ export const korpsBidrag: KorpsBidragData = {
   kakerBakt: 125,
   premierSkaffet: 42,
   loddbokerSolgt: 58,
-  dugnader: 6,
+  dugnader: 8,
   polserSolgt: 668,
   isSolgt: 755,
   kakestykkerSolgt: 1255,
   brusSolgt: 938,
   literSoppel: 300,
-  kronerOpptjent: 232385,
+  // 232 385 + 13 650 (Fotball-VM Clarion, 91 t) + 8 400 (Neonfestivalen, 56 t)
+  kronerOpptjent: 254435,
 }
