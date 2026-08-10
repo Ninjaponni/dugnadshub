@@ -40,7 +40,7 @@ function DelPosisjon({
   share: ReturnType<typeof useShareLocation>
   eventTitle: string
 }) {
-  const { active, error, lastUpdate, start, stop } = share
+  const { active, live, error, lastUpdate, start, stop } = share
   const [busy, setBusy] = useState(false)
 
   async function toggle() {
@@ -62,22 +62,31 @@ function DelPosisjon({
       })()
     : null
 
+  // Tre tilstander, ikke to: av, slått på men uten kontakt med GPS, og faktisk synlig
+  // for andre. Grønt kort er forbeholdt det siste
+  const venter = active && !live
+
   return (
-    <div className={`card rounded-2xl p-4 transition-colors ${active ? 'bg-success/10' : ''}`}>
+    <div className={`card rounded-2xl p-4 transition-colors ${live ? 'bg-success/10' : venter ? 'bg-warning/10' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${active ? 'bg-success/20' : 'bg-accent/10'}`}>
-          <Navigation size={16} className={active ? 'text-success' : 'text-accent'} />
+        <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${live ? 'bg-success/20' : venter ? 'bg-warning/30' : 'bg-accent/10'}`}>
+          {/* Gul tekst på gul flate ble uleselig i v10.13 — venter-ikonet står derfor mørkt */}
+          <Navigation size={16} className={live ? 'text-success' : venter ? 'text-text-primary' : 'text-accent'} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-text-primary">
-            {active ? 'Posisjon deles' : 'Del posisjon med team'}
+            {live ? 'Posisjon deles' : venter ? (lastUpdate ? 'Mistet GPS-signalet' : 'Kobler til GPS') : 'Del posisjon med team'}
           </p>
           <p className="text-xs text-text-secondary mt-0.5">
-            {active
-              ? `${eventTitle} · sist oppdatert ${sinceText || 'venter på GPS'}`
-              : 'Andre på dugnaden ser hengeren din på kartet'}
+            {live
+              ? `${eventTitle} · sist oppdatert ${sinceText}`
+              : venter
+                ? (lastUpdate
+                    ? 'Andre ser deg ikke på kartet akkurat nå. Vi prøver videre.'
+                    : 'Venter på GPS-signal. Hold appen åpen.')
+                : 'Andre på dugnaden ser hengeren din på kartet'}
           </p>
-          {active && (
+          {live && (
             <p className="text-[11px] text-text-tertiary mt-1.5">
               Skjermen holdes på. Husk å slå av når du er ferdig.
             </p>

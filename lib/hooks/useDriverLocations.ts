@@ -14,7 +14,9 @@ export interface DriverLocation {
   updated_at: string
 }
 
-const STALE_MS = 60_000
+// Eksportert fordi useShareLocation speiler den samme grensen — sjåførens eget kort
+// skal ikke si «deles» når kartet allerede har skjult markøren
+export const STALE_MS = 60_000
 
 // Lytter på sjåfør-posisjoner i sanntid via Supabase Realtime.
 // Returnerer kun ferske posisjoner (oppdatert innen 60 sek).

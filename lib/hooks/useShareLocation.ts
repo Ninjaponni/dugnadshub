@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { STALE_MS } from './useDriverLocations'
 
 // Sjåfør deler live-posisjon mens denne hooken er aktiv.
 // - watchPosition gir hyppige oppdateringer, men vi sender bare hvert 10. sek til API
@@ -8,9 +9,15 @@ import { useEffect, useRef, useState } from 'react'
 // - Hvis API returnerer 410 (utenfor tidsvindu) stopper vi automatisk
 //
 // Krav: bruker må være logget inn og være sjåfør på event_id
+//
+// `active` = sjåføren har slått på deling. `live` = vi vet at posisjonen faktisk
+// ligger ute og synes for andre. De to er IKKE det samme: GPS kan nekte, henge
+// eller falle ut mens deling står på. UI-et må vise `live`, ellers lover vi
+// sjåføren at hengeren er på kartet når den ikke er det.
 
 interface UseShareLocationResult {
   active: boolean
+  live: boolean
   error: string | null
   lastUpdate: Date | null
   start: () => Promise<void>
@@ -21,6 +28,7 @@ const SEND_INTERVAL_MS = 10_000
 
 export function useShareLocation(eventId: string | null): UseShareLocationResult {
   const [active, setActive] = useState(false)
+  const [live, setLive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
@@ -66,8 +74,12 @@ export function useShareLocation(eventId: string | null): UseShareLocationResult
       }
       setError(null)
       setLastUpdate(new Date())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nettverksfeil')
+      setLive(true)
+    } catch {
+      // Nettet kan falle ut i en kjeller eller tunnel — vi prøver igjen ved neste
+      // posisjon, men slutter å love at andre ser oss
+      setError('Fikk ikke sendt posisjonen. Sjekker igjen om litt.')
+      setLive(false)
     }
   }
 
@@ -105,8 +117,18 @@ export function useShareLocation(eventId: string | null): UseShareLocationResult
         lastSentRef.current = now
         sendPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy)
       },
-      (err) => {
-        setError(err.message)
+      async (err) => {
+        setLive(false)
+        if (err.code === err.PERMISSION_DENIED) {
+          // Å vente hjelper ikke — brukeren må gi tilgang selv. Slå av så knappen
+          // ikke står og påstår at vi deler
+          await stop()
+          setError('Appen får ikke tilgang til posisjonen din. Gi tilgang under Innstillinger, og prøv igjen.')
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setError('Finner ikke posisjonen din. Sjekk at stedstjenester er på.')
+        } else {
+          setError('Får ikke kontakt med GPS. Prøver videre.')
+        }
       },
       {
         enableHighAccuracy: true,
@@ -116,12 +138,14 @@ export function useShareLocation(eventId: string | null): UseShareLocationResult
     )
 
     setActive(true)
+    setLive(false)
     setError(null)
   }
 
   async function stop() {
     if (stoppedRef.current) return
     stoppedRef.current = true
+    setLive(false)
 
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current)
@@ -146,6 +170,16 @@ export function useShareLocation(eventId: string | null): UseShareLocationResult
     setActive(false)
     setLastUpdate(null)
   }
+
+  // Kartet skjuler sjåfører som ikke har oppdatert seg på STALE_MS. Speil den samme
+  // grensen her, ellers står det «Posisjon deles» lenge etter at markøren er borte
+  useEffect(() => {
+    if (!live || !lastUpdate) return
+    const timer = setInterval(() => {
+      if (Date.now() - lastUpdate.getTime() >= STALE_MS) setLive(false)
+    }, 10_000)
+    return () => clearInterval(timer)
+  }, [live, lastUpdate])
 
   // Gjenoppta Wake Lock hvis fanen blir synlig igjen (Safari slipper den ved tab-bytte)
   useEffect(() => {
@@ -176,5 +210,5 @@ export function useShareLocation(eventId: string | null): UseShareLocationResult
     }
   }, [])
 
-  return { active, error, lastUpdate, start, stop }
+  return { active, live, error, lastUpdate, start, stop }
 }
