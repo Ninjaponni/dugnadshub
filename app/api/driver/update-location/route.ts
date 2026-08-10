@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { norwegianLocalToInstant } from '@/lib/utils/date'
 
 // Sjåfør sender posisjon hvert ~10. sek mens "Del posisjon" er på.
 // Validerer at brukeren faktisk er sjåfør på en aktiv hendelse innenfor tidsvinduet.
@@ -51,12 +52,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Hendelse er ikke aktiv' }, { status: 410 })
   }
 
-  // Hard tidsgrense: 30 min etter end_time stopper vi delingen
+  // Hard tidsgrense: 30 min etter end_time stopper vi delingen.
+  // end_time er norsk veggklokke, og denne ruta kjører i UTC på Vercel — derfor
+  // norwegianLocalToInstant og ikke new Date(), som ga to timers slingring om sommeren
   const ev = event as { date: string; start_time: string | null; end_time: string | null }
   if (ev.end_time && ev.date) {
-    const endsAt = new Date(`${ev.date}T${ev.end_time}:00`)
-    endsAt.setMinutes(endsAt.getMinutes() + 30)
-    if (Date.now() > endsAt.getTime()) {
+    const endsAt = norwegianLocalToInstant(ev.date, ev.end_time)
+    if (endsAt && Date.now() > endsAt.getTime() + 30 * 60_000) {
       return NextResponse.json({ error: 'Utenfor tidsvindu' }, { status: 410 })
     }
   }

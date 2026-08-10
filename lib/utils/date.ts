@@ -44,6 +44,34 @@ export function localInputToISO(local: string): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
+// Tolk 'YYYY-MM-DD' + 'HH:MM' som NORSK veggklokke og gi det faktiske tidspunktet.
+//
+// Helperne over lener seg på at «lokal tid» ER norsk tid. Det holder i nettleseren,
+// men IKKE på serveren: Vercel-funksjoner kjører i UTC, så `new Date('...T15:00:00')`
+// ble tolket som 15:00 UTC = 17:00 norsk. Bruk denne i API-ruter og cron.
+export function norwegianLocalToInstant(dateStr: string, timeStr: string): Date | null {
+  const date = dateStr.slice(0, 10)
+  const time = timeStr.slice(0, 5)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null
+
+  // Anta først at veggklokka er UTC, mål så hvor mye Oslo avviker på nettopp det
+  // tidspunktet (fanger sommer- og vintertid av seg selv), og korriger tilbake
+  const assumedUtc = new Date(`${date}T${time}:00Z`)
+  if (isNaN(assumedUtc.getTime())) return null
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Oslo',
+    hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(assumedUtc)
+
+  const get = (type: string) => Number(parts.find(p => p.type === type)?.value)
+  const osloWallClock = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'))
+
+  return new Date(assumedUtc.getTime() - (osloWallClock - assumedUtc.getTime()))
+}
+
 // ISO/timestamptz fra DB → datetime-local-format i LOKAL tid.
 // datetime-local-inputs avviser verdier med tidssone-suffiks, så vi må formatere selv.
 export function isoToLocalInput(iso: string | null): string {
