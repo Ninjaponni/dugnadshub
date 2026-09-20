@@ -7,6 +7,7 @@
 
 -- 1) Event — rolleoppgavene er hentet fra «Foreldrevaktinstruks for overnattingsseminar» (styret).
 --    «Alle foreldrevakter» er en felles oppgaveliste uten egne vakter (gir ingen kolonne i vaktplanen).
+--    Fellespunktene er også lagt sist på hver rolle, siden vakt-arket bare viser oppgavene for vaktas rolle.
 insert into public.events (
   title, type, date, start_time, end_time, status, area, description,
   signup_deadline, send_push_on_activate, meeting_point, role_info, general_info, program
@@ -36,19 +37,34 @@ select
       "Lørdag: sette frem frukt til pausene",
       "Lørdag: lage lunsj – middagsrester fra dagen før, brød, pålegg, melk og juice",
       "Søndag: rydde og pakke",
-      "Søndag: sette opp foreldrekiosk (godt synlig ved henting)"
+      "Søndag: sette opp foreldrekiosk (godt synlig ved henting)",
+      "Føre logg underveis i vakta",
+      "Sørge for at nøkler ikke brukes av uvedkommende",
+      "Bistå med å holde ro under øvelsene",
+      "Sørge for at ordensregler følges og at alle har det fint på seminar",
+      "Mobilhotell"
     ]},
     {"role": "Kveldsvakt", "tasks": [
       "Fredag: krysse av for oppmøtte HK-musikanter, og be bringende foreldre om å hjelpe til med innlosjering",
       "Sørge for middag",
       "Fredag: bistå HK i å lage taco (og rydde opp)",
-      "Lørdag: bestille/hente pizza"
+      "Lørdag: bestille/hente pizza",
+      "Føre logg underveis i vakta",
+      "Sørge for at nøkler ikke brukes av uvedkommende",
+      "Bistå med å holde ro under øvelsene",
+      "Sørge for at ordensregler følges og at alle har det fint på seminar",
+      "Mobilhotell"
     ]},
     {"role": "Nattevakt", "tasks": [
       "Minst én nattevakt skal være våken til enhver tid",
       "Klargjøre frokost: legge opp pålegg på fat og sette klart riktig antall asjetter, glass og bestikk",
       "Natt til lørdag: merk pålegg ment for allergikere godt",
-      "Skjære opp «passe mengde» frukt til fruktpausene"
+      "Skjære opp «passe mengde» frukt til fruktpausene",
+      "Føre logg underveis i vakta",
+      "Sørge for at nøkler ikke brukes av uvedkommende",
+      "Bistå med å holde ro under øvelsene",
+      "Sørge for at ordensregler følges og at alle har det fint på seminar",
+      "Mobilhotell"
     ]}
   ]'::jsonb,
   '[
