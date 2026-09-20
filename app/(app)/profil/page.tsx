@@ -743,7 +743,7 @@ export default function ProfilePage() {
                                   </p>
                                 </div>
                                 {/* Lange etiketter («Vert · Musikant · Ansvarlig») brytes i stedet for å stikke ut av kortet */}
-                                <span className="shrink-0 max-w-[58%] text-center leading-snug text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-[14px]">
+                                <span className="shrink-0 max-w-[58%] text-right leading-snug text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-[14px]">
                                   {h.label}
                                 </span>
                               </div>
