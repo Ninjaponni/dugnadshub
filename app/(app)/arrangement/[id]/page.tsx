@@ -150,7 +150,7 @@ export default function ArrangementPage() {
             )}
           </section>
 
-          {event.role_info && event.role_info.length > 0 && <RoleInfoCard roleInfo={event.role_info} arrangerName={event.arranger_name} />}
+          {event.role_info && event.role_info.length > 0 && <RoleInfoCard roleInfo={event.role_info} arrangerName={event.arranger_name} shiftRoles={Array.from(new Set(sorted.map(s => s.role)))} />}
           {event.program && event.program.length > 0 && <ProgramCard program={event.program} />}
           {event.general_info && event.general_info.length > 0 && <GeneralInfoCard entries={event.general_info} />}
 

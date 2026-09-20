@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { MapPin, Calendar, FileText, AlertCircle, CalendarDays, ChevronRight, Check } from 'lucide-react'
 import type { ArrangementEvent, ShiftWithClaims } from '@/lib/types/shifts'
-import { formatShiftDate, formatShiftDateShort, sortShifts, isDeadlinePassed } from '@/lib/shifts/utils'
+import { formatShiftDate, formatShiftDateShort, sortShifts, isDeadlinePassed, splitRoleInfo } from '@/lib/shifts/utils'
 import VaktplanGrid from './VaktplanGrid'
 import { ProgramList } from '@/components/features/ProgramCard'
 
@@ -67,10 +67,7 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
   // Oppgaver: en role_info-oppføring uten egne vakter er en FELLES liste (f.eks. «Alle foreldrevakter»).
   // Den vises som bånd øverst, og punktene derfra gjentas ikke under hver vaktrolle i oversikten.
   // (Vakt-modalen viser fortsatt alt for den enkelte vakta.) Uten vakter: alt behandles som roller.
-  const allInfos = event.role_info ?? []
-  const commonInfos = shiftRoles.length > 0 ? allInfos.filter(r => !shiftRoles.includes(r.role)) : []
-  const shiftInfos = allInfos.filter(r => !commonInfos.includes(r))
-  const commonTasks = new Set(commonInfos.flatMap(r => r.tasks))
+  const { common: commonInfos, roles: shiftInfos, commonTasks } = splitRoleInfo(event.role_info, shiftRoles)
 
   // Undertittel bygget av de faktiske overskriftene — «Sted, styrevakt, ved oppmøte og mer»
   const infoLabels = (event.general_info ?? []).map(g => g.label.trim()).filter(Boolean)

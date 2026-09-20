@@ -1,4 +1,4 @@
-import type { EventShift, ShiftWithClaims, Match } from '@/lib/types/shifts'
+import type { EventShift, ShiftWithClaims, Match, RoleInfo } from '@/lib/types/shifts'
 
 // Norske ukedager
 const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag']
@@ -160,6 +160,17 @@ export function tasksForShift(tasks: string[] | null | undefined, shiftDate: str
     out.push(rest.charAt(0).toUpperCase() + rest.slice(1))
   }
   return out
+}
+
+// Deler role_info i FELLES lister og vaktroller. En oppføring uten egne vakter (f.eks.
+// «Alle foreldrevakter») er felles: den vises én gang øverst, og punktene derfra gjentas
+// ikke under hver rolle i oversikten. Uten vakter behandles alt som roller.
+export function splitRoleInfo(roleInfo: RoleInfo[] | null | undefined, shiftRoles: string[]) {
+  const all = roleInfo ?? []
+  const common = shiftRoles.length > 0 ? all.filter(r => !shiftRoles.includes(r.role)) : []
+  const roles = all.filter(r => !common.includes(r))
+  const commonTasks = new Set(common.flatMap(r => r.tasks))
+  return { common, roles, commonTasks }
 }
 
 // Rolle-ikon mapping (utvides ved behov)
