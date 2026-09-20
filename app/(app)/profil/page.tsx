@@ -696,18 +696,19 @@ export default function ProfilePage() {
                 {/* Ditt bidrag — korps-total */}
                 {dittBidrag && <DittBidrag data={dittBidrag} />}
 
-                {/* Gjennomførte dugnader — alltid synlig på mobil, kollapsibel på desktop */}
+                {/* Gjennomførte dugnader — trekkspill på både mobil og desktop (lukket som default) */}
                 {historyLoaded && history.length > 0 && (
                   <Card className="overflow-hidden">
-                    {/* Desktop-header: klikkbar med chevron + tellerboble */}
+                    {/* Klikkbar header med tellerboble + chevron */}
                     <button
                       type="button"
                       onClick={() => setHistoryOpen(o => !o)}
-                      className="hidden lg:flex w-full items-center justify-between p-5 cursor-pointer hover:bg-surface-low/40 transition-colors rounded-[inherit]"
+                      aria-expanded={historyOpen}
+                      className="flex w-full items-center justify-between gap-2 px-3 py-5 lg:p-5 cursor-pointer active:bg-surface-low/40 lg:hover:bg-surface-low/40 transition-colors rounded-[inherit]"
                     >
                       <div className="flex items-center gap-2.5">
                         <ClipboardList size={20} className="text-accent" />
-                        <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
+                        <h3 className="font-bold text-[15px] font-[var(--font-display)] text-left">Gjennomførte dugnader</h3>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="bg-surface-low text-text-secondary text-xs font-bold px-2.5 py-1 rounded-full">
@@ -722,51 +723,27 @@ export default function ProfilePage() {
                       </div>
                     </button>
 
-                    {/* Mobil-header: alltid synlig, ikke klikkbar */}
-                    <div className="flex lg:hidden items-center gap-2.5 p-5 pb-3">
-                      <ClipboardList size={20} className="text-accent" />
-                      <h3 className="font-bold text-[15px] font-[var(--font-display)]">Gjennomførte dugnader</h3>
-                    </div>
-
-                    {/* Innhold: alltid synlig på mobil, animert på desktop */}
-                    <div className="lg:hidden px-5 pb-5">
-                      <div className="space-y-1">
-                        {history.map((h, i) => (
-                          <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
-                            <div>
-                              <p className="text-sm font-medium text-text-primary">{h.title}</p>
-                              <p className="text-xs text-text-secondary mt-0.5">
-                                {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
-                              </p>
-                            </div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
-                              {h.label}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
                     <AnimatePresence initial={false}>
                       {historyOpen && (
                         <motion.div
-                          key="history-desktop"
+                          key="history"
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                          className="hidden lg:block overflow-hidden"
+                          className="overflow-hidden"
                         >
-                          <div className="px-5 pb-5 space-y-1">
+                          <div className="px-3 lg:px-5 pb-5 space-y-1">
                             {history.map((h, i) => (
-                              <div key={i} className="flex items-center justify-between py-2.5 border-b border-surface-low last:border-0">
-                                <div>
+                              <div key={i} className="flex items-center justify-between gap-3 py-2.5 border-b border-surface-low last:border-0">
+                                <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium text-text-primary">{h.title}</p>
                                   <p className="text-xs text-text-secondary mt-0.5">
                                     {new Date(h.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}
                                   </p>
                                 </div>
-                                <span className="text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-full whitespace-nowrap">
+                                {/* Lange etiketter («Vert · Musikant · Ansvarlig») brytes i stedet for å stikke ut av kortet */}
+                                <span className="shrink-0 max-w-[58%] text-center leading-snug text-[11px] font-bold uppercase tracking-wider bg-surface-low text-accent px-3 py-1 rounded-[14px]">
                                   {h.label}
                                 </span>
                               </div>
