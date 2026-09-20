@@ -70,6 +70,7 @@ select
   '[
     {"label": "Sted", "value": "Tonstad skole"},
     {"label": "Styrevakt", "value": "En fra styret er til stede på hver vakt. Navnet står på vakta."},
+    {"label": "Ved oppmøte", "value": "Alle foreldre oppfordres til å hjelpe sin(e) musikant(er) til å finne sin soveplass og evt. utpakking."},
     {"label": "Søndag kl. 15:00", "value": "Alle foreldre oppfordres til å komme og hjelpe med pakking og rydding."}
   ]'::jsonb,
   '[
