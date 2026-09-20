@@ -193,7 +193,8 @@ export default function ProfilePage() {
                   if (lab) labels.push(lab)
                 }
               }
-              if (isMusician) labels.push('MUSIKANT')
+              // event_musicians.profile_id peker på forelderen — derfor «barn deltok», ikke «musikant»
+              if (isMusician) labels.push('BARN DELTOK')
               if (responsibleEvents.has(e.id)) labels.push('ANSVARLIG')
 
               return {
