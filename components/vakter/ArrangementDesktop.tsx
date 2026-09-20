@@ -64,6 +64,14 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
     ? `${formatShiftDateShort(sorted[0].shift_date)} – ${formatShiftDateShort(sorted[sorted.length - 1].shift_date)}`
     : event.date
 
+  // Oppgaver: en role_info-oppføring uten egne vakter er en FELLES liste (f.eks. «Alle foreldrevakter»).
+  // Den vises som bånd øverst, og punktene derfra gjentas ikke under hver vaktrolle i oversikten.
+  // (Vakt-modalen viser fortsatt alt for den enkelte vakta.) Uten vakter: alt behandles som roller.
+  const allInfos = event.role_info ?? []
+  const commonInfos = shiftRoles.length > 0 ? allInfos.filter(r => !shiftRoles.includes(r.role)) : []
+  const shiftInfos = allInfos.filter(r => !commonInfos.includes(r))
+  const commonTasks = new Set(commonInfos.flatMap(r => r.tasks))
+
   // Undertittel bygget av de faktiske overskriftene — «Sted, styrevakt, ved oppmøte og mer»
   const infoLabels = (event.general_info ?? []).map(g => g.label.trim()).filter(Boolean)
   const infoSubtitle = infoLabels.length === 0 ? undefined
@@ -161,8 +169,26 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
       {/* ── referanse ── */}
       {event.role_info && event.role_info.length > 0 && (
         <VMCollapse icon={<FileText size={19} />} title="Oppgaver" subtitle="Hva hver rolle gjør på vakt">
-          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-            {event.role_info.map(t => (
+          {/* Felles oppgaver (rolle uten egne vakter, f.eks. «Alle foreldrevakter») som bånd i full bredde */}
+          {commonInfos.map(t => (
+            <div key={t.role} className="bg-surface-low rounded-2xl px-5 py-4 mb-6">
+              <div className="font-display text-[15.5px] font-bold text-text-primary mb-2.5">{t.role}</div>
+              <ul className="grid gap-x-8 gap-y-2 list-none p-0 m-0" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+                {t.tasks.map((it, i) => (
+                  <li key={i} className="relative pl-4 text-[13.5px] text-text-secondary leading-snug">
+                    <span className="absolute left-0 top-[7px] w-1.5 h-1.5 rounded-full bg-accent" />{it}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          {/* Vaktrollene i like kolonner — fellespunktene gjentas ikke her når de står i båndet over */}
+          <div
+            className="grid gap-6"
+            style={{ gridTemplateColumns: shiftInfos.length <= 4 ? `repeat(${Math.max(shiftInfos.length, 1)}, minmax(0, 1fr))` : 'repeat(auto-fit, minmax(280px, 1fr))' }}
+          >
+            {shiftInfos.map(t => (
               <div key={t.role}>
                 <div className="flex items-center gap-2.5 mb-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -174,7 +200,7 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
                   </div>
                 )}
                 <ul className="ml-[18px] flex flex-col gap-2 list-none p-0 m-0">
-                  {t.tasks.map((it, i) => (
+                  {t.tasks.filter(it => !commonTasks.has(it)).map((it, i) => (
                     <li key={i} className="relative pl-4 text-[13.5px] text-text-secondary leading-snug">
                       <span className="absolute left-0 top-[7px] w-1.5 h-1.5 rounded-full bg-accent" />{it}
                     </li>
