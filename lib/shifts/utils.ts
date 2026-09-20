@@ -142,6 +142,26 @@ export function formatClaimedByList(
   return `${labels[0]}, ${labels[1]} og ${others} andre er påmeldt`
 }
 
+// Oppgaver for én konkret vakt: punkter uten dagsmerking vises alltid, mens punkter
+// merket «Lørdag: …» eller «Natt til lørdag: …» kun vises på vakta den dagen — da uten
+// prefikset. «Natt til X» treffer vakta som STARTER kvelden før X (nattevakt over midnatt).
+const DAY_PREFIX = /^(natt til\s+)?(mandag|tirsdag|onsdag|torsdag|fredag|lørdag|søndag)\s*:\s*/i
+export function tasksForShift(tasks: string[] | null | undefined, shiftDate: string): string[] {
+  if (!tasks) return []
+  const day = new Date(shiftDate + 'T00:00:00').getDay()
+  const out: string[] = []
+  for (const task of tasks) {
+    const m = task.match(DAY_PREFIX)
+    if (!m) { out.push(task); continue }
+    const taskDay = WEEKDAYS.findIndex(w => w.toLowerCase() === m[2].toLowerCase())
+    const wanted = m[1] ? (taskDay + 6) % 7 : taskDay
+    if (wanted !== day) continue
+    const rest = task.slice(m[0].length)
+    out.push(rest.charAt(0).toUpperCase() + rest.slice(1))
+  }
+  return out
+}
+
 // Rolle-ikon mapping (utvides ved behov)
 export function roleIcon(role: string): string {
   const r = role.toLowerCase()

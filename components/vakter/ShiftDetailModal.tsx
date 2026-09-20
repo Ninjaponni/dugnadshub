@@ -4,7 +4,7 @@ import { Calendar, Users, FileText, Trophy, Check, Phone } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import type { ShiftWithClaims, RoleInfo, Match } from '@/lib/types/shifts'
-import { formatShiftDate, formatShiftRange, shiftDurationHours, isDeadlinePassed, matchesDuringShift } from '@/lib/shifts/utils'
+import { formatShiftDate, formatShiftRange, shiftDurationHours, isDeadlinePassed, matchesDuringShift, tasksForShift } from '@/lib/shifts/utils'
 import { useShiftClaim } from '@/lib/hooks/useShiftClaim'
 
 interface Props {
@@ -48,7 +48,8 @@ export default function ShiftDetailModal({
   const isFull = left <= 0
   const deadlinePassed = isDeadlinePassed(signupDeadline)
   const role = shift ? roleInfo?.find(r => r.role === shift.role) : undefined
-  const taskList = role?.tasks ?? []
+  // Kun oppgaver som gjelder denne vaktas dag (dagsmerkede punkter for andre dager skjules)
+  const taskList = shift ? tasksForShift(role?.tasks, shift.shift_date) : []
   const roleContact = role?.contact
   const shiftMatches = shift ? matchesDuringShift(matches, shift) : []
 

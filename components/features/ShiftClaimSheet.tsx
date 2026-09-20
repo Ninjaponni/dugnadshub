@@ -4,7 +4,7 @@ import { Clock, Users, Phone, Trophy } from 'lucide-react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import type { ShiftWithClaims, RoleInfo, Match } from '@/lib/types/shifts'
-import { formatShiftDate, formatShiftRange, shiftDurationHours, roleIcon, isDeadlinePassed, matchesDuringShift } from '@/lib/shifts/utils'
+import { formatShiftDate, formatShiftRange, shiftDurationHours, roleIcon, isDeadlinePassed, matchesDuringShift, tasksForShift } from '@/lib/shifts/utils'
 import { useShiftClaim } from '@/lib/hooks/useShiftClaim'
 
 interface Props {
@@ -30,7 +30,8 @@ export function ShiftClaimSheet({
   const isFull = shift ? claimed >= shift.capacity : false
   const deadlinePassed = isDeadlinePassed(signupDeadline)
   const role = shift ? roleInfo?.find(r => r.role === shift.role) : undefined
-  const taskList = role?.tasks ?? []
+  // Kun oppgaver som gjelder denne vaktas dag (dagsmerkede punkter for andre dager skjules)
+  const taskList = shift ? tasksForShift(role?.tasks, shift.shift_date) : []
   const roleContact = role?.contact
   const shiftMatches = shift ? matchesDuringShift(matches, shift) : []
 
