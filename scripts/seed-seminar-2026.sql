@@ -5,7 +5,8 @@
 -- åpnes via direkte lenke, og påmelding virker med en gang (RPC-en sjekker kun fristen).
 -- Kjør derfor skriptet først når påmeldingen kan åpnes, og sett status til 'active' i admin.
 
--- 1) Event
+-- 1) Event — rolleoppgavene er hentet fra «Foreldrevaktinstruks for overnattingsseminar» (styret).
+--    «Alle foreldrevakter» er en felles oppgaveliste uten egne vakter (gir ingen kolonne i vaktplanen).
 insert into public.events (
   title, type, date, start_time, end_time, status, area, description,
   signup_deadline, send_push_on_activate, meeting_point, role_info, general_info, program
@@ -21,30 +22,38 @@ select
   false,
   '{"name": "Tonstad skole"}'::jsonb,
   '[
+    {"role": "Alle foreldrevakter", "tasks": [
+      "Føre logg underveis i vakta",
+      "Sørge for at nøkler ikke brukes av uvedkommende",
+      "Bistå med å holde ro under øvelsene",
+      "Sørge for at ordensregler følges og at alle har det fint på seminar",
+      "Mobilhotell"
+    ]},
     {"role": "Dagvakt", "tasks": [
-      "Lage og servere frokost og lunsj, sette fram frukt til pausene",
-      "Holde orden i fellesarealene",
-      "Lørdag: bistå juniorkorpset, blant annet ved eventuell butikktur",
-      "Søndag: hjelpe til med pakking og rydding før hjemreise kl. 15:00"
+      "Vekke musikantene",
+      "Sette frem frokost: brød, pålegg, melk og juice – allergivennlig buffet på eget bord",
+      "Lørdag: krysse av for oppmøtte JK-musikanter, og be bringende foreldre om å hjelpe til med innlosjering",
+      "Lørdag: sette frem frukt til pausene",
+      "Lørdag: lage lunsj – middagsrester fra dagen før, brød, pålegg, melk og juice",
+      "Søndag: rydde og pakke",
+      "Søndag: sette opp foreldrekiosk (godt synlig ved henting)"
     ]},
     {"role": "Kveldsvakt", "tasks": [
-      "Være til stede og tilgjengelig for musikantene",
-      "Hjelpe til med kveldsmat (taco fredag, pizza lørdag) og rydding",
-      "Bistå med sosiale aktiviteter",
-      "Samle inn mobiler etter mobiltid og sørge for ro til kl. 23:00"
+      "Fredag: krysse av for oppmøtte HK-musikanter, og be bringende foreldre om å hjelpe til med innlosjering",
+      "Sørge for middag",
+      "Fredag: bistå HK i å lage taco (og rydde opp)",
+      "Lørdag: bestille/hente pizza"
     ]},
     {"role": "Nattevakt", "tasks": [
-      "Overnatte på skolen sammen med musikantene",
-      "Sørge for nattero fra kl. 23:00",
-      "Være tilgjengelig hvis noen trenger en voksen i løpet av natta",
-      "Vekke til revelje og overlate til dagvaktene kl. 07:30"
+      "Minst én nattevakt skal være våken til enhver tid",
+      "Klargjøre frokost: legge opp pålegg på fat og sette klart riktig antall asjetter, glass og bestikk",
+      "Natt til lørdag: merk pålegg ment for allergikere godt",
+      "Skjære opp «passe mengde» frukt til fruktpausene"
     ]}
   ]'::jsonb,
   '[
     {"label": "Sted", "value": "Tonstad skole"},
-    {"label": "Styrevakt", "value": "En fra styret er til stede på hver vakt og har hovedansvaret. Navnet står på hver vakt."},
-    {"label": "Nattevakt", "value": "Ta med liggeunderlag/madrass og sovepose."},
-    {"label": "Mat", "value": "Vaktene spiser sammen med korpset."},
+    {"label": "Styrevakt", "value": "En fra styret er til stede på hver vakt. Navnet står på vakta."},
     {"label": "Søndag kl. 15:00", "value": "Alle foreldre oppfordres til å komme og hjelpe med pakking og rydding."}
   ]'::jsonb,
   '[
@@ -69,7 +78,7 @@ select
       {"time": "14:45", "hk": "Fruktpause", "jk": "Fruktpause", "note": "Butikktur junior? Foreldrevakter bistår"},
       {"time": "15:00", "hk": "Øving", "jk": "Aktivitet junior"},
       {"time": "15:45", "hk": "Pause", "jk": "Pause"},
-      {"time": "16:00", "hk": "Rekvisittlaging, scenografi og dans"},
+      {"time": "16:00", "hk": "Rekvisittlaging, scenografi og dans", "jk": "Rekvisittlaging, scenografi og dans"},
       {"time": "18:00", "hk": "Pizza", "jk": "Pizza"},
       {"time": "19:00", "hk": "Sosialt samvær", "jk": "Sosialt samvær", "note": "Rebusløp arrangeres av juniorstyret"},
       {"time": "20:00", "hk": "Mobiltid til kl. 21:00", "jk": "Mobiltid til kl. 21:00"},
