@@ -108,8 +108,8 @@ export default function ProfilePage() {
           // Alle completed events med contact_phone for matching mot brukers telefon
           supabaseRef.current
             .from('events')
-            .select('id, contact_phone')
-            .eq('status', 'completed') as unknown as Promise<{ data: Array<{ id: string; contact_phone: string | null }> | null }>,
+            .select('id, contact_phone, date')
+            .eq('status', 'completed') as unknown as Promise<{ data: Array<{ id: string; contact_phone: string | null; date: string }> | null }>,
           // Brukers merker med event_id (17. mai etc. koblet til konkrete events)
           supabaseRef.current
             .from('user_badges')
@@ -117,6 +117,14 @@ export default function ProfilePage() {
             .eq('user_id', user.id)
             .not('event_id', 'is', null) as unknown as Promise<{ data: Array<{ event_id: string }> | null }>,
         ])
+
+        // «Dugnader» i fellestallene regnes ut: alle fullførte hendelser i inneværende år
+        // (alt som er registrert som hendelse teller). Feiler oppslaget, står det manuelle tallet.
+        if (allEvents.data) {
+          const year = String(new Date().getFullYear())
+          const dugnader = allEvents.data.filter(e => e.date?.startsWith(year)).length
+          setDittBidrag({ ...korpsBidrag, dugnader })
+        }
 
         const responsibleEvents = new Set<string>()
         if (userPhone) {

@@ -26,7 +26,8 @@ export const korpsBidrag: KorpsBidragData = {
   kakerBakt: 125,
   premierSkaffet: 42,
   loddbokerSolgt: 58,
-  dugnader: 8,
+  // Kun reserve: profilsiden regner ut tallet fra fullførte hendelser i år (app/(app)/profil/page.tsx)
+  dugnader: 10,
   polserSolgt: 668,
   isSolgt: 755,
   kakestykkerSolgt: 1255,
