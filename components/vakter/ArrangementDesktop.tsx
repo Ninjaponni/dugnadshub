@@ -64,6 +64,12 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
     ? `${formatShiftDateShort(sorted[0].shift_date)} – ${formatShiftDateShort(sorted[sorted.length - 1].shift_date)}`
     : event.date
 
+  // Undertittel bygget av de faktiske overskriftene — «Sted, styrevakt, ved oppmøte og mer»
+  const infoLabels = (event.general_info ?? []).map(g => g.label.trim()).filter(Boolean)
+  const infoSubtitle = infoLabels.length === 0 ? undefined
+    : infoLabels.slice(0, 3).map((l, i) => (i === 0 ? l : l.charAt(0).toLowerCase() + l.slice(1))).join(', ')
+      + (infoLabels.length > 3 ? ' og mer' : '')
+
   const stats: [string, string][] = [
     ['Periode', dateRange],
     ['Vakter', String(totalSeats)],
@@ -187,7 +193,7 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
       )}
 
       {event.general_info && event.general_info.length > 0 && (
-        <VMCollapse icon={<AlertCircle size={19} />} title="Praktisk informasjon" subtitle="Oppmøte, kleskode, betaling og mer">
+        <VMCollapse icon={<AlertCircle size={19} />} title="Praktisk informasjon" subtitle={infoSubtitle}>
           <div className="grid gap-x-7 gap-y-[18px]" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
             {event.general_info.map(row => (
               <div key={row.label}>
