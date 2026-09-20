@@ -7,7 +7,8 @@
 
 -- 1) Event — rolleoppgavene er hentet fra «Foreldrevaktinstruks for overnattingsseminar» (styret).
 --    «Alle foreldrevakter» er en felles oppgaveliste uten egne vakter (gir ingen kolonne i vaktplanen).
---    Fellespunktene er også lagt sist på hver rolle, siden vakt-arket bare viser oppgavene for vaktas rolle.
+--    Fellespunktene er også lagt sist på hver rolle, siden vakt-arket bare viser oppgavene for vaktas rolle
+--    («holde ro under øvelsene» kun på Dagvakt — det er ingen øvinger på kveld/natt).
 insert into public.events (
   title, type, date, start_time, end_time, status, area, description,
   signup_deadline, send_push_on_activate, meeting_point, role_info, general_info, program
@@ -51,7 +52,6 @@ select
       "Lørdag: bestille/hente pizza",
       "Føre logg underveis i vakta",
       "Sørge for at nøkler ikke brukes av uvedkommende",
-      "Bistå med å holde ro under øvelsene",
       "Sørge for at ordensregler følges og at alle har det fint på seminar",
       "Mobilhotell"
     ]},
@@ -62,7 +62,6 @@ select
       "Skjære opp «passe mengde» frukt til fruktpausene",
       "Føre logg underveis i vakta",
       "Sørge for at nøkler ikke brukes av uvedkommende",
-      "Bistå med å holde ro under øvelsene",
       "Sørge for at ordensregler følges og at alle har det fint på seminar",
       "Mobilhotell"
     ]}
