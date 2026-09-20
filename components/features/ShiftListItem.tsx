@@ -43,6 +43,11 @@ export function ShiftListItem({ shift, onClick, currentUserId }: Props) {
             {claimedByText}
           </div>
         )}
+        {shift.notes && (
+          <div className="text-xs text-text-tertiary mt-1 truncate">
+            {shift.notes}
+          </div>
+        )}
       </div>
 
       <div className="shrink-0 text-right">

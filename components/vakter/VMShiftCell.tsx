@@ -10,11 +10,12 @@ type Props = {
   time: string
   capacity: number
   people: string[] // visningsnavn; "Du" for innlogget bruker
+  notes?: string | null
   mine?: boolean
   onClick: () => void
 }
 
-export default function VMShiftCell({ time, capacity, people, mine, onClick }: Props) {
+export default function VMShiftCell({ time, capacity, people, notes, mine, onClick }: Props) {
   const [hover, setHover] = useState(false)
   const claimed = people.length
   const left = capacity - claimed
@@ -48,6 +49,9 @@ export default function VMShiftCell({ time, capacity, people, mine, onClick }: P
             ))
           )}
         </div>
+        {notes && (
+          <div className="text-xs text-text-tertiary mt-0.5 truncate">{notes}</div>
+        )}
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <SeatDots cap={capacity} claimed={claimed} mine={mine} />

@@ -116,6 +116,7 @@ export default function VaktplanGrid({ shifts, roles, currentUserId, totalCount,
                               time={formatShiftRange(s.start_time, s.end_time)}
                               capacity={s.capacity}
                               people={displayNames(s, currentUserId)}
+                              notes={s.notes}
                               mine={mine}
                               onClick={() => onShiftClick(s)}
                             />

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Calendar, FileText, AlertCircle, ChevronRight, Check } from 'lucide-react'
+import { MapPin, Calendar, FileText, AlertCircle, CalendarDays, ChevronRight, Check } from 'lucide-react'
 import type { ArrangementEvent, ShiftWithClaims } from '@/lib/types/shifts'
 import { formatShiftDate, formatShiftDateShort, sortShifts, isDeadlinePassed } from '@/lib/shifts/utils'
 import VaktplanGrid from './VaktplanGrid'
+import { ProgramList } from '@/components/features/ProgramCard'
 
 // Rolig uppercase seksjons-etikett
 function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -46,7 +47,11 @@ type Props = {
 // vaktplan-rutenett (dag × rolle) og sammenleggbar referanse.
 export default function ArrangementDesktop({ event, shifts, currentUserId, onShiftClick }: Props) {
   const sorted = sortShifts(shifts)
-  const roles = Array.from(new Set(sorted.map(s => s.role)))
+  // Kolonnerekkefølge: følg role_info (admins rekkefølge) der den finnes,
+  // deretter roller som kun finnes på vaktene — i rekkefølgen de dukker opp.
+  const shiftRoles = Array.from(new Set(sorted.map(s => s.role)))
+  const infoRoles = (event.role_info ?? []).map(r => r.role).filter(r => shiftRoles.includes(r))
+  const roles = Array.from(new Set([...infoRoles, ...shiftRoles]))
   // Tell PLASSER (sum kapasitet), ikke vakt-rader — en vakt kan trenge flere personer.
   // 16 rader à ulik kapasitet = 44 plasser. Det er plasser folk teller.
   const totalSeats = sorted.reduce((n, s) => n + s.capacity, 0)
@@ -172,6 +177,12 @@ export default function ArrangementDesktop({ event, shifts, currentUserId, onShi
               </div>
             ))}
           </div>
+        </VMCollapse>
+      )}
+
+      {event.program && event.program.length > 0 && (
+        <VMCollapse icon={<CalendarDays size={19} />} title="Helgeprogram" subtitle="Hva som skjer fra fredag til søndag">
+          <ProgramList program={event.program} className="grid gap-x-10 gap-y-6 lg:grid-cols-3" />
         </VMCollapse>
       )}
 

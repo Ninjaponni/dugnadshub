@@ -45,6 +45,19 @@ export interface Match {
   away: string
 }
 
+export interface ProgramItem {
+  time: string
+  hk?: string    // Hovedkorps
+  jk?: string    // Juniorkorps
+  note?: string
+}
+
+export interface ProgramDay {
+  date: string   // ISO date 'YYYY-MM-DD'
+  label: string  // 'Fredag'
+  items: ProgramItem[]
+}
+
 export interface ArrangementEvent {
   id: string
   title: string
@@ -60,6 +73,8 @@ export interface ArrangementEvent {
   role_info: RoleInfo[] | null
   general_info: GeneralInfoEntry[] | null
   matches: Match[] | null
+  // Valgfri: kolonnen finnes kanskje ikke i DB ennå — select('*') gir da undefined
+  program?: ProgramDay[] | null
   driver_notes: string | null
   meeting_point: { lat: number; lng: number; name: string; description: string } | null
   send_push_on_activate: boolean | null

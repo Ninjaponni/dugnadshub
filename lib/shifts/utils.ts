@@ -147,6 +147,11 @@ export function roleIcon(role: string): string {
   const r = role.toLowerCase()
   if (r.includes('renhold')) return '🧽'
   if (r.includes('host') || r.includes('serv')) return '🍽️'
+  // Døgnvakter FØR den generelle vakt/parker-sjekken, ellers ville f.eks.
+  // "Nattevakt" truffet 🚧-regelen under (den inneholder også "vakt")
+  if (r.includes('nattevakt') || r.includes('natt')) return '💤'
+  if (r.includes('kveldsvakt') || r.includes('kveld')) return '🌙'
+  if (r.includes('dagvakt')) return '☀️'
   if (r.includes('vakt') || r.includes('parker')) return '🚧'
   if (r.includes('bar')) return '🍺'
   return '📋'
