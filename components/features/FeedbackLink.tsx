@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail, Copy, Check } from 'lucide-react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import { APP_VERSION } from '@/lib/version'
 
@@ -12,6 +12,7 @@ const FEEDBACK_EMAIL = 'tor.martin.norvik@gmail.com'
 // hvilken utgave forslaget gjelder.
 export function FeedbackLink({ className = '' }: { className?: string }) {
   const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const mailto = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Forslag til Dugnadshub')}&body=${encodeURIComponent(`\n\n\nSendt fra Dugnadshub v${APP_VERSION}`)}`
 
   return (
@@ -32,13 +33,29 @@ export function FeedbackLink({ className = '' }: { className?: string }) {
         {/* Lenke stylet 1:1 som primær <Button size="lg"> — en <a> kan ikke inneholde en <button> */}
         <a
           href={mailto}
-          onClick={() => setOpen(false)}
           className="mt-5 w-full inline-flex items-center justify-center gap-2 font-semibold font-[var(--font-display)] rounded-full text-white px-8 py-3.5 text-[17px] active:scale-[0.97] transition-transform"
           style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-primary-container))' }}
         >
           <Mail size={18} />
           <span>Skriv e-post</span>
         </a>
+
+        {/* mailto: gjør ingenting hvis enheten ikke har et e-postprogram satt opp (vanlig på PC med
+            webmail) — derfor står adressen også synlig, med kopier-knapp */}
+        <div className="mt-4 flex items-center justify-center gap-2 text-sm text-text-secondary">
+          <span className="select-all">{FEEDBACK_EMAIL}</span>
+          <button
+            type="button"
+            onClick={async () => {
+              try { await navigator.clipboard.writeText(FEEDBACK_EMAIL); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* utklippstavle utilgjengelig — adressen kan markeres manuelt */ }
+            }}
+            className="inline-flex items-center gap-1 font-semibold text-accent active:opacity-60"
+            aria-label="Kopier e-postadressen"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            <span>{copied ? 'Kopiert' : 'Kopier'}</span>
+          </button>
+        </div>
       </BottomSheet>
     </>
   )
