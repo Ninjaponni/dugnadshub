@@ -22,7 +22,8 @@ export interface KorpsBidragData {
 
 export const korpsBidrag: KorpsBidragData = {
   sekkerPant: 126,
-  lapperDeltUt: 3400,
+  // 3400 etter vårens utdelinger + 1404 (Sør 21.09.2026), rundet av Tor Martin
+  lapperDeltUt: 4800,
   kakerBakt: 125,
   premierSkaffet: 42,
   loddbokerSolgt: 58,
