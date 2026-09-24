@@ -1,4 +1,6 @@
 -- Korpsseminar 25.–27.09.2026 (Tonstad skole) — foreldrevakter som arrangement-event
+-- Oppdatert 24.09 etter Program_v2: ingen overnatting fredag (henting 22:00), ingen frokost lørdag,
+-- dagvakt lørdag fra 09:30, styrevakt lørdag kveld Maria Rustad. Prod-DB oppdatert direkte.
 -- Idempotent: trygt å kjøre flere ganger. Forutsetter migrate-arrangement-program.sql.
 -- Eventet opprettes som 'upcoming' og UTEN push ved aktivering.
 -- NB: 'upcoming' skjuler det kun fra forsiden. Det vises i Vakter-menyen på desktop og kan
@@ -32,8 +34,8 @@ select
       "Mobilhotell"
     ]},
     {"role": "Dagvakt", "tasks": [
-      "Vekke musikantene",
-      "Sette frem frokost: brød, pålegg, melk og juice – allergivennlig buffet på eget bord",
+      "Søndag: vekke musikantene",
+      "Søndag: sette frem frokost: brød, pålegg, melk og juice – allergivennlig buffet på eget bord",
       "Lørdag: krysse av for oppmøtte JK-musikanter, og be bringende foreldre om å hjelpe til med innlosjering",
       "Lørdag: sette frem frukt til pausene",
       "Lørdag: lage lunsj – middagsrester fra dagen før, brød, pålegg, melk og juice",
@@ -58,7 +60,7 @@ select
     {"role": "Nattevakt", "tasks": [
       "Minst én nattevakt skal være våken til enhver tid",
       "Klargjøre frokost: legge opp pålegg på fat og sette klart riktig antall asjetter, glass og bestikk",
-      "Natt til lørdag: merk pålegg ment for allergikere godt",
+      "Merk pålegg ment for allergikere godt",
       "Skjære opp «passe mengde» frukt til fruktpausene",
       "Føre logg underveis i vakta",
       "Sørge for at nøkler ikke brukes av uvedkommende",
@@ -78,13 +80,11 @@ select
       {"time": "19:30", "hk": "Taco", "note": "Foreldrevakt + gutta i HK lager taco, jentene dekker bord og rydder etterpå"},
       {"time": "20:30", "hk": "Sosialt"},
       {"time": "21:00", "hk": "Mobiltid til kl. 22:00"},
-      {"time": "23:00", "hk": "Nattero"}
+      {"time": "22:00", "hk": "Hjemreise", "note": "Ingen overnatting fredag. Alle må hentes innen kl. 22:00. HK-musikanter som skal overnatte lørdag til søndag, oppfordres til å ha med alt de trenger allerede fredag."}
     ]},
     {"date": "2026-09-26", "label": "Lørdag", "items": [
-      {"time": "09:00", "hk": "Revelje"},
-      {"time": "09:30", "hk": "Frokost"},
       {"time": "10:00", "jk": "Oppmøte og innkvartering"},
-      {"time": "11:00", "hk": "Gruppeøvinger med instruktør", "jk": "Øving"},
+      {"time": "11:00", "hk": "Gruppeøvinger med instruktør", "jk": "Øving", "note": "HK møter øvingsklare kl. 11:00. Ingen frokost lørdag."},
       {"time": "11:45", "hk": "Fruktpause", "jk": "Fruktpause"},
       {"time": "12:00", "hk": "Gruppeøvinger med instruktør", "jk": "Aktivitet junior"},
       {"time": "12:30", "hk": "Lunsj", "jk": "Lunsj"},
@@ -105,7 +105,7 @@ select
       {"time": "09:30", "hk": "Frokost", "jk": "Frokost"},
       {"time": "11:00", "hk": "Øving", "jk": "Øving"},
       {"time": "12:00", "hk": "Lunsj", "jk": "Lunsj"},
-      {"time": "12:30", "hk": "Øving / rekvisittlaging, scenografi og dans", "jk": "Øving"},
+      {"time": "12:30", "hk": "Rekvisittlaging, scenografi og dans", "jk": "Rekvisittlaging, scenografi og dans"},
       {"time": "13:45", "hk": "Pause", "jk": "Pause"},
       {"time": "14:00", "hk": "Fellesøving HK/JK", "jk": "Fellesøving HK/JK"},
       {"time": "15:00", "hk": "Hjemreise", "jk": "Hjemreise", "note": "Foreldre oppfordres til å komme og bistå med pakking og rydding"}
@@ -122,10 +122,9 @@ with ev as (
 insert into public.event_shifts (event_id, role, shift_date, start_time, end_time, capacity, notes)
 select ev.id, v.role, v.shift_date::date, v.start_time::time, v.end_time::time, v.capacity, v.notes
 from ev, (values
-  ('Kveldsvakt', '2026-09-25', '18:00', '23:00', 2, 'Styrevakt: Irun Walberg'),
-  ('Nattevakt',  '2026-09-25', '23:00', '07:30', 2, null),
-  ('Dagvakt',    '2026-09-26', '07:30', '16:00', 4, 'Styrevakt: Remi Bakke'),
-  ('Kveldsvakt', '2026-09-26', '16:00', '23:00', 4, 'Styrevakt: Edel Askim'),
+  ('Kveldsvakt', '2026-09-25', '18:00', '22:00', 2, 'Styrevakt: Irun Walberg'),
+  ('Dagvakt',    '2026-09-26', '09:30', '16:00', 4, 'Styrevakt: Remi Bakke'),
+  ('Kveldsvakt', '2026-09-26', '16:00', '23:00', 4, 'Styrevakt: Maria Rustad'),
   ('Nattevakt',  '2026-09-26', '23:00', '07:30', 3, null),
   ('Dagvakt',    '2026-09-27', '07:30', '15:00', 4, 'Styrevakt: Alfhild Eide')
 ) as v(role, shift_date, start_time, end_time, capacity, notes)
