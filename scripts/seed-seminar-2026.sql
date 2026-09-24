@@ -144,7 +144,7 @@ with ev as (
 forhand (navn, role, shift_date) as (
   values
     ('Synnøve Løberg',   'Kveldsvakt', '2026-09-25'),
-    ('Jan Åge Heggvik',  'Kveldsvakt', '2026-09-25'),
+    ('Bente Heggvik',  'Kveldsvakt', '2026-09-25'),
     ('Tove Myrhaug',     'Dagvakt',    '2026-09-26')
 ),
 treff as (
@@ -185,7 +185,7 @@ order by s.shift_date, s.start_time;
 -- 4b) Forhåndsnavn som IKKE ble entydig matchet mot profiles (0 = finnes ikke, >1 = flere treff).
 --     Tom liste = alle tre ble funnet. Disse må ellers melde seg på selv.
 select f.navn, count(p.id) as antall_treff
-from (values ('Synnøve Løberg'), ('Jan Åge Heggvik'), ('Tove Myrhaug')) as f(navn)
+from (values ('Synnøve Løberg'), ('Bente Heggvik'), ('Tove Myrhaug')) as f(navn)
 left join public.profiles p on lower(trim(p.full_name)) = lower(f.navn)
 group by f.navn
 having count(p.id) <> 1;
