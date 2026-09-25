@@ -55,6 +55,13 @@ export const badgeDefinitions = [
   { id: 78, name: 'Sommergaver', icon: '/badges/sommergaver.png', category: 'sommerkonsert' as const, description: 'Skaffet premier til åresalget', auto_criteria: null },
   { id: 79, name: 'Sommertrekker', icon: '/badges/sommertrekker.png', category: 'sommerkonsert' as const, description: 'Ledet lotteri, trekning og premieutdeling', auto_criteria: null },
 
+  // Seminar
+  { id: 80, name: 'Seminarhelten', icon: '/badges/seminarhelten.png', category: 'seminar' as const, description: 'Bidro på korpsseminaret', auto_criteria: null },
+  { id: 81, name: 'Kveldsvakta', icon: '/badges/kveldsvakta.png', category: 'seminar' as const, description: 'Hadde kveldsvakt på seminar', auto_criteria: null },
+  { id: 82, name: 'Nattugla', icon: '/badges/nattugla.png', category: 'seminar' as const, description: 'Holdt seg våken for korpset på seminar', auto_criteria: null },
+  { id: 83, name: 'Dagvakta', icon: '/badges/dagvakta.png', category: 'seminar' as const, description: 'Hadde dagvakt på seminar', auto_criteria: null },
+  { id: 84, name: 'Seminarsjefen', icon: '/badges/seminarsjefen.png', category: 'seminar' as const, description: 'Hadde styrevakt på seminar', auto_criteria: null },
+
   // 17. mai-merker (manuelt tildelt rundt nasjonaldagen)
   { id: 29, name: 'Hurra-helten', icon: '/badges/hurra-helten.png', category: '17mai' as const, description: 'Bidro på korpsets 17. mai-dugnad', auto_criteria: null },
   { id: 30, name: 'Festkakebaker', icon: '/badges/festkakebaker.png', category: '17mai' as const, description: 'Bakte og leverte kake til 17. mai', auto_criteria: null },
@@ -114,6 +121,7 @@ export const STACKABLE_BADGE_CATEGORIES: Set<BadgeCategory> = new Set([
   'aktivitet',
   '17mai',
   'sommerkonsert',
+  'seminar',
   'styret',
   'komite',
   'vakt',

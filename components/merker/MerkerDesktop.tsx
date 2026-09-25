@@ -24,6 +24,7 @@ const CATS: [string, string][] = [
   ['aktivitet', 'Aktivitetsmerker'],
   ['17mai', '17. mai-merker'],
   ['sommerkonsert', 'Sommerkonsert-merker'],
+  ['seminar', 'Seminar-merker'],
   ['styret', 'Styret'],
   ['komite', 'Komitémerker'],
   ['vakt', 'Vaktmerker'],

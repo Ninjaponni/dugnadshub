@@ -19,6 +19,7 @@ const categoryLabels: Record<string, string> = {
   aktivitet: 'Aktivitetsmerker',
   '17mai': '17. mai-merker',
   sommerkonsert: 'Sommerkonsert-merker',
+  seminar: 'Seminar-merker',
   styret: 'Styret',
   komite: 'Komitémerker',
   vakt: 'Vaktmerker',
@@ -32,6 +33,7 @@ const categoryDescriptions: Record<string, string> = {
   aktivitet: 'For alt det andre du gjør',
   '17mai': 'For innsats rundt nasjonaldagen',
   sommerkonsert: 'For innsats rundt sommerkonserten',
+  seminar: 'For foreldrevakter på korpsseminar',
   styret: 'For verv i korpsstyret',
   komite: 'For komitéarbeid',
   vakt: 'For vakter på øvelseskvelder',
@@ -223,7 +225,7 @@ export default function BadgesPage() {
         )}
 
         {/* Kategorier — clay-kort per kategori */}
-        {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet', '17mai', 'sommerkonsert', 'styret', 'komite', 'vakt'] as const).map((category) => {
+        {!loading && (['starter', 'vanlig', 'veteran', 'elite', 'aktivitet', '17mai', 'sommerkonsert', 'seminar', 'styret', 'komite', 'vakt'] as const).map((category) => {
           const badges = badgeDefinitions.filter((b) => b.category === category)
           const earnedInCategory = badges.filter(b => earnedBadgeIds.has(b.id)).length
           const hasAnyEarned = earnedInCategory > 0

@@ -25,7 +25,7 @@ with deltakelse as (
     union
     select ub.user_id, ub.event_id from user_badges ub
     join badges b on b.id = ub.badge_id
-      and b.category in ('aktivitet', '17mai', 'sommerkonsert')
+      and b.category in ('aktivitet', '17mai', 'sommerkonsert', 'seminar')
     where ub.event_id is not null
   ) u
   join events e on e.id = u.event_id and e.status = 'completed'
