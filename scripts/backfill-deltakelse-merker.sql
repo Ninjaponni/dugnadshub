@@ -9,7 +9,7 @@
 -- siden de gir ny deltakelse som kan løfte folk over tersklene. Idempotent.
 --
 -- NB: user_badges-kilden filtrerer på kategori via badges-tabellen
--- (aktivitet + 17mai + sommerkonsert) — selvvedlikeholdende når nye
+-- (aktivitet + 17mai + sommerkonsert + seminar) — selvvedlikeholdende når nye
 -- merker kommer til. Nye KATEGORIER må fortsatt legges til her,
 -- synkronisert med PARTICIPATION_BADGE_IDS i app/api/badges/evaluate/route.ts.
 
