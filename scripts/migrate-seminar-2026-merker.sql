@@ -9,6 +9,7 @@
 -- Tildeling fra vaktene (event_shifts + shift_claims):
 --   Kveldsvakt -> 81 Kveldsvakta, Nattevakt -> 82 Nattugla, Dagvakt -> 83 Dagvakta.
 --   Én rad per person per merke, selv med to vakter av samme type.
+--   + Shweta Tiwari (Nattugla) — nattevakt uten påmelding i appen, se 2b.
 -- IKKE med: 84 Seminarsjefen (styrevakt) og 80 Seminarhelten — tildeles manuelt i admin.
 --
 -- Idempotent: ON CONFLICT DO NOTHING (partial unique index user_badges_event_unique
@@ -55,6 +56,16 @@ from ev
 join public.event_shifts s on s.event_id = ev.id
 join public.shift_claims c on c.shift_id = s.id
 where s.role in ('Kveldsvakt', 'Nattevakt', 'Dagvakt')
+on conflict do nothing;
+
+-- 2b) Nattevakt som ikke var påmeldt i appen: Shweta Tiwari (natt til søndag).
+--     Matchet på fullt navn — ett treff i profiles per 2026-09-27.
+insert into public.user_badges (user_id, badge_id, event_id)
+select p.id, 82, e.id
+from public.profiles p
+cross join public.events e
+where lower(trim(p.full_name)) = 'shweta tiwari'
+  and e.title = 'Korpsseminar – foreldrevakter'
 on conflict do nothing;
 
 -- 3) No-shows: fjern merket for hånd, f.eks.
