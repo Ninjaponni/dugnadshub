@@ -107,7 +107,11 @@ function makeZone(
   opts: {
     assignmentId?: string | null
     status?: ZoneWithStatus['status']
-    claims?: ZoneWithStatus['claims']
+    // via_help er valgfri i mock (standard false)
+    claims?: Array<Omit<ZoneWithStatus['claims'][number], 'via_help'> & { via_help?: boolean }>
+    selfDelivered?: boolean
+    helpRequestedAt?: string | null
+    helpRequestedBy?: string | null
     trailerGroup?: number
     households?: number
     collectorsNeeded?: number
@@ -129,16 +133,22 @@ function makeZone(
     target_group: null,
     assignment_id: opts.assignmentId ?? `assign-${id}`,
     status: opts.status ?? 'available',
-    claims: opts.claims ?? [],
+    self_delivered: opts.selfDelivered ?? false,
+    help_requested_at: opts.helpRequestedAt ?? null,
+    help_requested_by: opts.helpRequestedBy ?? null,
+    claims: (opts.claims ?? []).map(c => ({ ...c, via_help: c.via_help ?? false })),
   }
 }
 
 export const mockZones: ZoneWithStatus[] = [
   // Brukerens soner
+  // Egen sone der vi har bedt om en ekstra hånd (viser DU med oransje prikk)
   makeZone('N3', 'Torvmyra', {
     status: 'claimed',
     trailerGroup: 1,
     households: 95,
+    helpRequestedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    helpRequestedBy: MOCK_USER_ID,
     claims: [
       { user_id: MOCK_USER_ID, full_name: 'Tor Martin Norvik', notes: null, phone: '912 34 567' },
       { user_id: 'user-2', full_name: 'Hilde Berntsen', notes: null, phone: '987 65 432' },
@@ -154,11 +164,13 @@ export const mockZones: ZoneWithStatus[] = [
     collectorsNeeded: 1,
   }),
 
-  // Andre tatt av andre
+  // Andre tatt av andre. N1 er full, men ber om en ekstra hånd (pille + "Bli med som hjelper")
   makeZone('N1', 'Porsmyra', {
     status: 'claimed',
     trailerGroup: 1,
     households: 110,
+    helpRequestedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+    helpRequestedBy: 'user-3',
     claims: [
       { user_id: 'user-3', full_name: 'Lars Holm', notes: null, phone: '900 11 222' },
       { user_id: 'user-4', full_name: 'Kari Svendsen', notes: null, phone: '900 33 444' },
@@ -200,13 +212,14 @@ export const mockZones: ZoneWithStatus[] = [
     households: 120,
     claims: [
       { user_id: 'user-10', full_name: 'Ingrid Aune', notes: 'Stod på hjørnet Tonstadringen', phone: '966 77 888' },
-      { user_id: 'user-11', full_name: 'Kristian Berg', notes: null, phone: '977 88 999' },
+      { user_id: 'user-11', full_name: 'Kristian Berg', notes: null, phone: '977 88 999', via_help: true },
     ],
   }),
 
-  // Hentet
+  // Tatt med selv (picked_up + self_delivered): ingenting å hente
   makeZone('N8', 'Movollen', {
     status: 'picked_up',
+    selfDelivered: true,
     trailerGroup: 1,
     households: 55,
     claims: [
@@ -250,6 +263,7 @@ export interface MockDriverZone {
   zoneName: string
   area: string
   status: string
+  selfDelivered: boolean
   households: number
   trailerGroup: number
   collectors: Array<{ full_name: string | null; phone: string | null; notes: string | null }>
@@ -272,6 +286,7 @@ const completedZones: MockDriverZone[] = mockZones
     zoneName: z.name,
     area: z.area,
     status: z.status,
+    selfDelivered: z.self_delivered,
     households: z.households,
     trailerGroup: z.trailer_group,
     collectors: z.claims.map(c => ({

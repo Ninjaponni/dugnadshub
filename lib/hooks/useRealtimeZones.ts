@@ -9,7 +9,10 @@ import { mockZones } from '@/lib/mock/data'
 export interface ZoneWithStatus extends Zone {
   assignment_id: string | null
   status: ZoneAssignment['status']
-  claims: Array<{ user_id: string; full_name: string | null; notes: string | null; phone: string | null }>
+  self_delivered: boolean
+  help_requested_at: string | null
+  help_requested_by: string | null
+  claims: Array<{ user_id: string; full_name: string | null; notes: string | null; phone: string | null; via_help: boolean }>
 }
 
 // Lytter på sone-endringer i sanntid via Supabase Realtime
@@ -83,11 +86,15 @@ export function useRealtimeZones(eventId: string | null) {
         ...zone,
         assignment_id: assignment?.id || null,
         status: assignment?.status || 'available',
+        self_delivered: assignment?.self_delivered ?? false,
+        help_requested_at: assignment?.help_requested_at ?? null,
+        help_requested_by: assignment?.help_requested_by ?? null,
         claims: zoneClaims.map(c => ({
           user_id: c.user_id,
           full_name: c.profiles?.full_name || null,
           notes: c.notes || null,
           phone: c.profiles?.phone || null,
+          via_help: c.via_help ?? false,
         })),
       }
     })

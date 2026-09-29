@@ -121,7 +121,17 @@ export interface ZoneAssignment {
   event_id: string
   zone_id: string
   status: ZoneStatus
+  // picked_up + self_delivered = plukkeren tok med alt selv, ingenting å hente
+  self_delivered: boolean
+  // Åpen "be om en ekstra hånd" når help_requested_at er satt (bare flaskesoner)
+  help_requested_at: string | null
+  help_requested_by: string | null
+  // Siste hjelp-push, brukes til 10 min cooldown i /api/push/notify-zone-help
+  help_notified_at: string | null
 }
+
+// Felter med standardverdi i databasen, valgfrie ved innsetting
+type ZoneAssignmentDefaults = 'id' | 'self_delivered' | 'help_requested_at' | 'help_requested_by' | 'help_notified_at'
 
 export interface ZoneClaim {
   id: string
@@ -129,6 +139,8 @@ export interface ZoneClaim {
   user_id: string
   claimed_at: string
   notes: string | null
+  // true når plukkeren kom inn via en åpen hjelpeforespørsel
+  via_help: boolean
 }
 
 // host = vert på plastdugnad-møteplass (egen rolle, ikke stripser).
@@ -194,8 +206,8 @@ export interface Database {
       zones: { Row: Zone; Insert: Omit<Zone, 'geometry'> & { geometry: unknown }; Update: Partial<Zone> }
       drop_points: { Row: DropPoint; Insert: DropPoint; Update: Partial<DropPoint> }
       events: { Row: DugnadEvent; Insert: Omit<DugnadEvent, 'id'>; Update: Partial<DugnadEvent> }
-      zone_assignments: { Row: ZoneAssignment; Insert: Omit<ZoneAssignment, 'id'>; Update: Partial<ZoneAssignment> }
-      zone_claims: { Row: ZoneClaim; Insert: Omit<ZoneClaim, 'id'>; Update: Partial<ZoneClaim> }
+      zone_assignments: { Row: ZoneAssignment; Insert: Omit<ZoneAssignment, ZoneAssignmentDefaults> & Partial<Pick<ZoneAssignment, ZoneAssignmentDefaults>>; Update: Partial<ZoneAssignment> }
+      zone_claims: { Row: ZoneClaim; Insert: Omit<ZoneClaim, 'id' | 'via_help'> & { via_help?: boolean }; Update: Partial<ZoneClaim> }
       driver_assignments: { Row: DriverAssignment; Insert: Omit<DriverAssignment, 'id'>; Update: Partial<DriverAssignment> }
       participation_log: { Row: ParticipationLog; Insert: Omit<ParticipationLog, 'id'>; Update: Partial<ParticipationLog> }
       badges: { Row: Badge; Insert: Omit<Badge, 'id'>; Update: Partial<Badge> }
