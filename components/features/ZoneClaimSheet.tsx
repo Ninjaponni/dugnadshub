@@ -22,8 +22,12 @@ interface ZoneClaimSheetProps {
   onFlyTo?: (lng: number, lat: number, zoom?: number) => void
   // Kalles etter "Jeg har tatt med alt selv", så kartet kan vise angre-toast
   onSelfDelivered?: (info: { assignmentId: string; asClaimer: boolean }) => void
-  // Arket er åpnet fra en hjelp-push (?hjelp=1)
+  // Arket er åpnet fra en hjelp-push (?hjelp=1) for akkurat denne sonen
   fromHelpLink?: boolean
+  // Henter sonene på nytt uten å lukke arket (etter be om hjelp / avbryt)
+  onRefresh?: () => void
+  // Feil fra kartsiden som gjelder denne sonen (f.eks. angre fra toast feilet)
+  externalError?: string | null
 }
 
 // Finn oppsamlingspunkt for en sone basert på område og navn
@@ -46,7 +50,7 @@ function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string 
   return { label: 'Ledig', color: 'bg-zone-available' }
 }
 
-export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo, onSelfDelivered, fromHelpLink }: ZoneClaimSheetProps) {
+export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo, onSelfDelivered, fromHelpLink, onRefresh, externalError }: ZoneClaimSheetProps) {
   const [loading, setLoading] = useState(false)
   const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
@@ -63,9 +67,16 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const [notice, setNotice] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
 
-  // Nullstill bekreftelser og meldinger når en annen sone åpnes
+  // Arket forblir montert mellom soner, så all midlertidig tilstand nullstilles når
+  // en annen sone åpnes (eller arket lukkes). Ellers kan en åpen "Hvor er panten nå?"
+  // bli stående og brukes på feil sone.
   useEffect(() => {
+    setShowCompleteConfirm(false)
+    setShowUnclaimConfirm(false)
     setShowHelpConfirm(false)
+    setShowMemberPicker(false)
+    setEditingNote(false)
+    setAdminUnclaimTarget(null)
     setNotice(null)
     setError(null)
   }, [zone?.id])
@@ -243,7 +254,8 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     notifyZoneHelp('request')
-    // Arket blir stående åpent: "Venter på en ekstra hånd" kommer via sanntid
+    // Arket blir stående åpent og viser "Venter på en ekstra hånd"
+    onRefresh?.()
     setShowHelpConfirm(false)
     setShowUnclaimConfirm(false)
     setLoading(false)
@@ -256,6 +268,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcError } = await (supabaseRef.current.rpc as any)('cancel_zone_help', { p_assignment_id: zone.assignment_id })
     if (rpcError) setError('Kunne ikke avbryte. Prøv igjen.')
+    else onRefresh?.()
     setLoading(false)
   }
 
@@ -313,6 +326,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
 
   async function handleAdminAssign(targetUserId: string) {
     if (!eventId || !zone) return
+    const fillingHelpSlot = helpOpen
     setAssignLoading(true)
     setError(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -326,6 +340,8 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       setAssignLoading(false)
       return
     }
+    // Admin fylte hjelpeplassen: plukkerne får "Hjelpen er på vei"
+    if (fillingHelpSlot) notifyZoneHelp('joined')
     setShowMemberPicker(false)
     setAssignLoading(false)
     recomputeFirstUser()
@@ -549,9 +565,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       )}
 
       {/* Feilmelding */}
-      {error && (
+      {(error || externalError) && (
         <div className="mb-3 p-3 rounded-xl bg-danger/10 text-danger text-sm text-center">
-          {error}
+          {error || externalError}
         </div>
       )}
 
@@ -605,7 +621,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             </button>
           )}
           {/* Flaske: plukkeren sier hvor panten er. Hovedvalget er det vanlige. */}
-          {showCompleteConfirm && zone.zone_type === 'bottle' && (
+          {showCompleteConfirm && canMarkComplete && zone.zone_type === 'bottle' && (
             <div className="rounded-2xl border border-success/20 bg-success/5 p-4">
               <p className="text-[15px] font-medium text-center mb-3">Hvor er panten nå?</p>
               <button
@@ -632,7 +648,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               </button>
             </div>
           )}
-          {showCompleteConfirm && zone.zone_type !== 'bottle' && (
+          {showCompleteConfirm && canMarkComplete && zone.zone_type !== 'bottle' && (
             <div className="rounded-2xl overflow-hidden border border-success/20">
               <div className="bg-success/5 p-4 text-center">
                 <CheckCircle size={32} className="text-success mx-auto mb-2" />

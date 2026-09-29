@@ -112,6 +112,8 @@ function MapPageContent() {
   // Angre-toast etter "Jeg har tatt med alt selv"
   const [undoInfo, setUndoInfo] = useState<{ assignmentId: string; asClaimer: boolean } | null>(null)
   const clearUndo = useCallback(() => setUndoInfo(null), [])
+  // Synlig feil i arket når angre fra toasten feiler (sekker ville ellers blitt stående)
+  const [undoError, setUndoError] = useState<{ zoneId: string; message: string } | null>(null)
   async function handleUndoSelfDelivered() {
     if (!undoInfo) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,7 +125,10 @@ function MapPageContent() {
       // Ikke la plukkeren tro at angringen gikk: åpne arket, der "Angre ferdigmelding" finnes
       console.error('Angre tatt med selv feilet:', error)
       const z = zones.find(zz => zz.assignment_id === undoInfo.assignmentId)
-      if (z) setSelectedZoneId(z.id)
+      if (z) {
+        setUndoError({ zoneId: z.id, message: 'Angre gikk ikke. Trykk «Angre ferdigmelding» under, eller prøv igjen.' })
+        setSelectedZoneId(z.id)
+      }
     }
     refetch()
   }
@@ -429,7 +434,7 @@ function MapPageContent() {
         zone={selectedZone}
         eventId={event?.id || null}
         userId={userId}
-        onClose={() => setSelectedZoneId(null)}
+        onClose={() => { setSelectedZoneId(null); setUndoError(null) }}
         onAction={() => {
           refetch()
           setSelectedZoneId(null)
@@ -439,11 +444,14 @@ function MapPageContent() {
           setFlyTarget({ lng, lat, zoom: zoom || 16 })
         }}
         onSelfDelivered={setUndoInfo}
-        fromHelpLink={fromHelpLink}
+        fromHelpLink={fromHelpLink && selectedZoneId === focusZoneId}
+        onRefresh={() => { refetch() }}
+        externalError={undoError && undoError.zoneId === selectedZoneId ? undoError.message : null}
       />
 
       {/* Feiltrykk på "tatt med selv" er dyrest (sekker blir stående), så det kan angres herfra */}
       <UndoToast
+        key={undoInfo?.assignmentId ?? 'ingen'}
         message={undoInfo ? 'Registrert: ingenting å hente.' : null}
         actionLabel="Angre"
         onAction={handleUndoSelfDelivered}

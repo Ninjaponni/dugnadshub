@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const { data: a } = await supabase
     .from('zone_assignments')
-    .select('id, event_id, zone_id, help_requested_at, help_requested_by, zones(name, zone_type)')
+    .select('id, event_id, zone_id, help_requested_at, help_requested_by, help_notified_at, zones(name, zone_type)')
     .eq('id', assignmentId)
     .maybeSingle()
   if (!a) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -59,15 +59,22 @@ export async function POST(request: NextRequest) {
       || claimers.some(c => c.user_id === user.id)
     if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    // Cooldown: sett help_notified_at bare hvis den er tom eller eldre enn 10 min.
-    // Oppdateringen er betinget i én spørring, så to samtidige kall gir maks én push.
+    // Cooldown mot be/avbryt/be-spam: sett help_notified_at bare hvis den er tom eller
+    // eldre enn 10 min. Unntak: "Be om én til" etter at forrige forespørsel ble fylt av
+    // en hjelper. Da er det en ny forespørsel og varselet skal gå. Oppdateringen er
+    // betinget i én spørring, så to samtidige kall gir maks én push.
+    const lastNotified = a.help_notified_at as string | null
+    const filledSinceLast = !!lastNotified && claimers.some(c => c.via_help && c.claimed_at > lastNotified)
     const cutoff = new Date(Date.now() - COOLDOWN_MS).toISOString()
-    const { data: stamped } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let stampQuery: any = supabase
       .from('zone_assignments')
       .update({ help_notified_at: new Date().toISOString() })
       .eq('id', a.id)
-      .or(`help_notified_at.is.null,help_notified_at.lt."${cutoff}"`)
-      .select('id')
+    stampQuery = filledSinceLast
+      ? stampQuery.eq('help_notified_at', lastNotified)
+      : stampQuery.or(`help_notified_at.is.null,help_notified_at.lt."${cutoff}"`)
+    const { data: stamped } = await stampQuery.select('id')
     if (!stamped || stamped.length === 0) return NextResponse.json({ skipped: 'cooldown' })
 
     // Mottakere: alle med sone-claim i samme hendelse, minus plukkerne på denne sonen.
@@ -76,7 +83,8 @@ export async function POST(request: NextRequest) {
       .from('zone_claims')
       .select('user_id, zone_assignments!inner(event_id)')
       .eq('zone_assignments.event_id', a.event_id)
-    const onZone = new Set(claimers.map(c => c.user_id))
+    // Aldri til den som ba om hjelp (f.eks. admin med egen sone i samme innsamling)
+    const onZone = new Set([...claimers.map(c => c.user_id), user.id])
     const userIds = [...new Set(((eventClaims || []) as Array<{ user_id: string }>).map(c => c.user_id))]
       .filter(id => !onZone.has(id))
     if (userIds.length === 0) return NextResponse.json({ sent: 0, failed: 0 })
@@ -89,14 +97,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result)
   }
 
-  // kind === 'joined': kalleren må nettopp ha kommet inn via hjelpeplassen
-  const mine = claimers.find(c => c.user_id === user.id)
-  if (!mine || !mine.via_help || Date.now() - new Date(mine.claimed_at).getTime() > JOINED_WINDOW_MS) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  // kind === 'joined': kalleren må nettopp ha kommet inn via hjelpeplassen, eller være
+  // admin som har tildelt hjelpeplassen (da er hjelperen den nyeste via_help-claimen).
+  const recent = (c: { via_help: boolean; claimed_at: string }) =>
+    c.via_help && Date.now() - new Date(c.claimed_at).getTime() <= JOINED_WINDOW_MS
+  let helper = claimers.find(c => c.user_id === user.id && recent(c))
+  if (!helper) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (profile?.role === 'admin') {
+      helper = claimers.filter(recent).sort((x, y) => y.claimed_at.localeCompare(x.claimed_at))[0]
+    }
   }
-  const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
-  const firstName = me?.full_name?.trim().split(/\s+/)[0] || 'En hjelper'
-  const userIds = claimers.map(c => c.user_id).filter(id => id !== user.id)
+  if (!helper) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const helperId = helper.user_id
+
+  const { data: helperProfile } = await supabase.from('profiles').select('full_name').eq('id', helperId).maybeSingle()
+  const firstName = helperProfile?.full_name?.trim().split(/\s+/)[0] || 'En hjelper'
+  const userIds = claimers.map(c => c.user_id).filter(id => id !== helperId && id !== user.id)
   if (userIds.length === 0) return NextResponse.json({ sent: 0, failed: 0 })
 
   const result = await sendPush({
