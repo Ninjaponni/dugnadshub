@@ -1268,6 +1268,8 @@ join public.profiles p on p.id = u.user_id
 order by u.badge_id, p.full_name;
 ```
 
+- [ ] **Steg 4b:** `app/api/events/recompute-first-user/route.ts`: hent `events.type` og returner tidlig (`{ skipped: 'plast' }`) for `plast`, før Førstemann slettes/settes. Samme regel som i `mark_event_completed` (godkjent av Tor Martin 29.09). Førstemann til plastdugnaden 31. mai blir liggende.
+
 - [ ] **Steg 5:** `npx tsc --noEmit` og `grep -rn "finalize-drivers\|audit-badges\|evaluateBadges(" app lib components scripts` → ingen treff utenom kommentarer.
 - [ ] **Steg 6:** Commit (`10.41.1`).
 
