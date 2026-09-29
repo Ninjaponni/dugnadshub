@@ -34,12 +34,12 @@ export default function UndoToast({ message, actionLabel, onAction, onDone, dura
           transition={{ duration: 0.3, ease: [0.2, 0.9, 0.3, 1.1] }}
           className="fixed left-4 right-4 bottom-24 z-[65] flex justify-center"
         >
-          <div className="inline-flex items-center gap-1 bg-text-primary text-white pl-[18px] pr-1 rounded-full text-[13.5px] font-semibold shadow-[0_12px_30px_rgba(45,38,32,0.3)] max-w-full">
+          <div className="inline-flex items-center gap-1 bg-text-primary text-bg pl-[18px] pr-1 rounded-full text-[13.5px] font-semibold shadow-[0_12px_30px_rgba(45,38,32,0.3)] max-w-full">
             <span className="py-3">{message}</span>
             <button
               type="button"
               onClick={() => { onAction(); onDone() }}
-              className="min-h-[44px] px-4 rounded-full font-bold text-primary-container active:bg-white/10"
+              className="min-h-[44px] px-4 rounded-full font-bold text-primary-container active:bg-bg/10"
             >
               {actionLabel}
             </button>
