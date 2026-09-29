@@ -15,6 +15,7 @@ import { bases } from '@/lib/map/bases'
 import type { ZoneArea, DugnadEvent, MeetingPoint } from '@/lib/supabase/types'
 import { MAP_CONFIG } from '@/lib/map/config'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
+import { isHelpOpen } from '@/lib/map/zone-colors'
 import MapInfoSheet from '@/components/features/MapInfoSheet'
 import { Map as MapIcon, Satellite, ChevronDown, Info, RotateCcw } from 'lucide-react'
 import { useTheme } from '@/lib/hooks/useTheme'
@@ -64,6 +65,8 @@ export default function MapPage() {
 function MapPageContent() {
   const searchParams = useSearchParams()
   const focusZoneId = searchParams.get('sone')
+  // Åpnet fra hjelp-push: arket viser "De klarte seg likevel" hvis forespørselen er lukket
+  const fromHelpLink = searchParams.get('hjelp') === '1'
   const overrideEventId = searchParams.get('event')
   const showAll = searchParams.get('alle') === '1'
 
@@ -245,6 +248,22 @@ function MapPageContent() {
   const fullCount = assignedZones.filter((z) => z.claims.length >= z.collectors_needed && z.status !== 'completed' && z.status !== 'picked_up').length
   const doneCount = assignedZones.filter((z) => z.status === 'completed').length
   const pickedUpCount = assignedZones.filter((z) => z.status === 'picked_up').length
+  // Soner med åpen "be om en ekstra hånd", eldste først
+  const helpZones = assignedZones
+    .filter(isHelpOpen)
+    .sort((a, b) => (a.help_requested_at ?? '').localeCompare(b.help_requested_at ?? ''))
+
+  // Fly til sonen og åpne arket (brukes av hjelp-brikken og av "Hjelp ønskes"-pillen)
+  function openZone(zone: ZoneWithStatus) {
+    const feature = zonesGeoJson.features.find((f) => f.properties?.id === zone.id)
+    if (feature) {
+      const [lng, lat] = getGeometryCenter(feature.geometry)
+      setFlyTarget({ lng, lat, zoom: 16 })
+    }
+    setSelectedZoneId(zone.id)
+    setSelectedBase(null)
+    setSelectedMeetingPoint(null)
+  }
 
   return (
     // Mobil: fullskjerm (fixed). Desktop: fyller innholdsflaten ved siden av
@@ -358,6 +377,16 @@ function MapPageContent() {
                     {pickedUpCount}
                   </span>}
                 </div>
+                {/* Egen linje, bare når noe er åpent. Trykk flyr til den eldste. */}
+                {helpZones.length > 0 && (
+                  <button
+                    onClick={() => openZone(helpZones[0])}
+                    className="mt-2 inline-flex items-center gap-1.5 min-h-[32px] px-3 rounded-full bg-surface-low text-xs font-semibold text-text-primary active:scale-[0.98] transition-transform"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-zone-help" />
+                    {helpZones.length === 1 ? '1 sone trenger hjelp' : `${helpZones.length} soner trenger hjelp`}
+                  </button>
+                )}
               </div>
             ) : (
               <p className="text-sm text-text-secondary text-center">
@@ -410,6 +439,7 @@ function MapPageContent() {
           setFlyTarget({ lng, lat, zoom: zoom || 16 })
         }}
         onSelfDelivered={setUndoInfo}
+        fromHelpLink={fromHelpLink}
       />
 
       {/* Feiltrykk på "tatt med selv" er dyrest (sekker blir stående), så det kan angres herfra */}

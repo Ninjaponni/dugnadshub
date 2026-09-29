@@ -10,6 +10,7 @@ import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import type { EventMusician } from '@/lib/supabase/types'
 import dropPointsData from '@/lib/map/drop-points-data'
 import { evaluateMyBadges } from '@/lib/badges/evaluator'
+import { isHelpOpen } from '@/lib/map/zone-colors'
 
 interface ZoneClaimSheetProps {
   zone: ZoneWithStatus | null
@@ -21,6 +22,8 @@ interface ZoneClaimSheetProps {
   onFlyTo?: (lng: number, lat: number, zoom?: number) => void
   // Kalles etter "Jeg har tatt med alt selv", så kartet kan vise angre-toast
   onSelfDelivered?: (info: { assignmentId: string; asClaimer: boolean }) => void
+  // Arket er åpnet fra en hjelp-push (?hjelp=1)
+  fromHelpLink?: boolean
 }
 
 // Finn oppsamlingspunkt for en sone basert på område og navn
@@ -36,12 +39,14 @@ function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string 
   const isPlast = zone.zone_type === 'plast'
   if (zone.status === 'picked_up') return { label: zone.self_delivered ? 'Tatt med selv' : 'Hentet', color: 'bg-purple' }
   if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : isPlast ? 'Ferdig ryddet' : 'Ferdigplukket', color: 'bg-success' }
+  // Går foran Fullt bemannet og Delvis tatt
+  if (isHelpOpen(zone)) return { label: 'Hjelp ønskes', color: 'bg-zone-help' }
   if (zone.claims.length >= zone.collectors_needed) return { label: isPlast ? 'Voksne meldt' : 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
   return { label: 'Ledig', color: 'bg-zone-available' }
 }
 
-export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo, onSelfDelivered }: ZoneClaimSheetProps) {
+export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo, onSelfDelivered, fromHelpLink }: ZoneClaimSheetProps) {
   const [loading, setLoading] = useState(false)
   const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
@@ -53,7 +58,17 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const [assignLoading, setAssignLoading] = useState(false)
   const [adminUnclaimTarget, setAdminUnclaimTarget] = useState<string | null>(null)
   const [musicians, setMusicians] = useState<EventMusician[]>([])
+  const [showHelpConfirm, setShowHelpConfirm] = useState(false)
+  // Nøytral beskjed (ikke feil), f.eks. tapt kappløp om hjelpeplassen
+  const [notice, setNotice] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
+
+  // Nullstill bekreftelser og meldinger når en annen sone åpnes
+  useEffect(() => {
+    setShowHelpConfirm(false)
+    setNotice(null)
+    setError(null)
+  }, [zone?.id])
 
   // Hent musikanter for plast-soner
   const isPlastZone = zone?.zone_type === 'plast'
@@ -78,7 +93,12 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
   const userHasClaimed = zone.claims.some((c) => c.user_id === userId)
   const isFull = zone.claims.length >= zone.collectors_needed
   const isFinished = zone.status === 'completed' || zone.status === 'picked_up'
-  const canClaim = eventId && !userHasClaimed && !isFull && !isFinished
+  const isBottle = zone.zone_type === 'bottle'
+  const helpOpen = isHelpOpen(zone)
+  // En åpen forespørsel gir én ekstra plass, også når sonen ellers er full
+  const canClaim = eventId && !userHasClaimed && !isFinished && (!isFull || helpOpen)
+  const canRequestHelp = !!eventId && isBottle && !isFinished && !helpOpen && zone.claims.length > 0 && (userHasClaimed || !!isAdmin)
+  const canManageHelp = helpOpen && (userHasClaimed || !!isAdmin)
   const canUnclaim = eventId && userHasClaimed && !isFinished
   const canMarkComplete = eventId && (userHasClaimed || (isAdmin && zone.claims.length > 0)) && !isFinished
 
@@ -98,15 +118,23 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
 
   async function handleClaim() {
     if (!eventId) return
+    const joiningAsHelper = helpOpen
     setLoading(true)
     setError(null)
+    setNotice(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcError } = await (supabaseRef.current.rpc as any)('claim_zone', { p_event_id: eventId, p_zone_id: zone!.id })
     if (rpcError) {
-      setError('Kunne ikke ta sonen. Prøv igjen.')
+      // Tapt kappløp om hjelpeplassen er ingen feil: noen andre kom først
+      if (joiningAsHelper && rpcError.message?.startsWith('ZONE_FULL')) {
+        setNotice('Noen kom deg i forkjøpet. Sonen har fått hjelp.')
+      } else {
+        setError('Kunne ikke ta sonen. Prøv igjen.')
+      }
       setLoading(false)
       return
     }
+    if (joiningAsHelper) notifyZoneHelp('joined')
     if (userId) {
       try { await evaluateMyBadges() } catch (e) {
         setError(`Sone tatt, men merker ble ikke oppdatert: ${(e as Error).message}`)
@@ -200,6 +228,49 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       })
     } catch {
       // Push-feil er ikke kritisk — stille feil
+    }
+  }
+
+  async function handleRequestHelp() {
+    if (!zone?.assignment_id) return
+    setLoading(true)
+    setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('request_zone_help', { p_assignment_id: zone.assignment_id })
+    if (rpcError) {
+      setError('Kunne ikke be om hjelp. Prøv igjen.')
+      setLoading(false)
+      return
+    }
+    notifyZoneHelp('request')
+    // Arket blir stående åpent: "Venter på en ekstra hånd" kommer via sanntid
+    setShowHelpConfirm(false)
+    setShowUnclaimConfirm(false)
+    setLoading(false)
+  }
+
+  async function handleCancelHelp() {
+    if (!zone?.assignment_id) return
+    setLoading(true)
+    setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('cancel_zone_help', { p_assignment_id: zone.assignment_id })
+    if (rpcError) setError('Kunne ikke avbryte. Prøv igjen.')
+    setLoading(false)
+  }
+
+  // Serveren henter sonenavn og mottakere selv, og har 10 min cooldown
+  async function notifyZoneHelp(kind: 'request' | 'joined') {
+    try {
+      const { data: { session } } = await supabaseRef.current.auth.getSession()
+      if (!session) return
+      await fetch('/api/push/notify-zone-help', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ assignmentId: zone!.assignment_id, kind }),
+      })
+    } catch {
+      // Push-feil er ikke kritisk
     }
   }
 
@@ -372,7 +443,12 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                   <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
                     {claim.full_name?.charAt(0) || '?'}
                   </div>
-                  <span className="flex-1">{claim.full_name || 'Ukjent'}</span>
+                  <span className="flex-1 min-w-0">
+                    {claim.full_name || 'Ukjent'}
+                    {claim.via_help && (
+                      <span className="ml-1.5 text-[11px] font-medium text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">hjelper</span>
+                    )}
+                  </span>
                   {(isAdmin || userHasClaimed) && claim.phone && claim.user_id !== userId && (
                     <a
                       href={`tel:${claim.phone}`}
@@ -479,6 +555,13 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         </div>
       )}
 
+      {/* Nøytral beskjed (ikke feil) */}
+      {notice && (
+        <div className="mb-3 p-3 rounded-xl bg-surface-low text-text-secondary text-sm text-center">
+          {notice}
+        </div>
+      )}
+
       {/* Handlingsknapper */}
       {!eventId ? (
         <p className="text-sm text-text-tertiary text-center py-2">
@@ -488,12 +571,13 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
         <div className="space-y-2">
           {canClaim && (
             <Button size="lg" loading={loading} onClick={handleClaim} className="w-full">
-              Ta denne sonen
+              {helpOpen ? 'Bli med som hjelper' : 'Ta denne sonen'}
             </Button>
           )}
 
           {/* Admin: tildel medlem */}
-          {isAdmin && !isFull && !isFinished && !showMemberPicker && (
+          {/* Tildel virker også mot hjelpeplassen */}
+          {isAdmin && (!isFull || helpOpen) && !isFinished && !showMemberPicker && (
             <button
               onClick={() => setShowMemberPicker(true)}
               disabled={assignLoading}
@@ -579,8 +663,53 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             </div>
           )}
 
+          {/* Åpen forespørsel: plukkere og admin ser at det ventes, og kan avbryte */}
+          {canManageHelp && !showCompleteConfirm && (
+            <p className="text-sm text-text-secondary text-center py-2">
+              Venter på en ekstra hånd ·{' '}
+              <button onClick={handleCancelHelp} disabled={loading} className="text-accent font-semibold disabled:opacity-40">
+                Avbryt
+              </button>
+            </p>
+          )}
+
+          {/* Be om en ekstra hånd — tekstknapp på nivå med Gi opp sonen */}
+          {canRequestHelp && !showHelpConfirm && !showUnclaimConfirm && !showCompleteConfirm && !editingNote && (
+            <button
+              onClick={() => setShowHelpConfirm(true)}
+              disabled={loading}
+              className="w-full text-accent text-xs font-semibold py-2 hover:opacity-80 transition-opacity disabled:opacity-40"
+            >
+              Be om en ekstra hånd
+            </button>
+          )}
+          {showHelpConfirm && (
+            <div className="rounded-2xl overflow-hidden border border-accent/20">
+              <div className="bg-accent/5 p-4">
+                <p className="text-sm text-text-primary">
+                  Plukkerne i innsamlingen får varsel. Første som melder seg, blir med.
+                </p>
+              </div>
+              <div className="flex border-t border-accent/20">
+                <button
+                  onClick={() => setShowHelpConfirm(false)}
+                  className="flex-1 py-3 text-sm font-medium text-text-secondary border-r border-accent/20 active:bg-surface-low"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleRequestHelp}
+                  disabled={loading}
+                  className="flex-1 py-3 text-sm font-medium text-accent active:bg-accent/10"
+                >
+                  {loading ? 'Sender...' : 'Be om hjelp'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Gi opp sonen — tekst-lenke */}
-          {canUnclaim && !showUnclaimConfirm && !showCompleteConfirm && !editingNote && (
+          {canUnclaim && !showUnclaimConfirm && !showCompleteConfirm && !showHelpConfirm && !editingNote && (
             <button
               onClick={() => setShowUnclaimConfirm(true)}
               disabled={loading}
@@ -595,6 +724,15 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                 <p className="text-sm text-text-primary">
                   Hvis du er forhindret fra å delta, setter vi stor pris på om du kan finne noen andre til å ta sonen din.
                 </p>
+                {/* Den som sliter, trykker oftere på gi opp enn den leter etter en hjelpeknapp */}
+                {canRequestHelp && (
+                  <p className="text-sm text-text-secondary mt-2">
+                    Heller få hjelp?{' '}
+                    <button onClick={handleRequestHelp} disabled={loading} className="text-accent font-semibold disabled:opacity-40">
+                      Be om en ekstra hånd
+                    </button>
+                  </p>
+                )}
               </div>
               <div className="flex border-t border-warning/20">
                 <button
@@ -622,9 +760,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             </Button>
           )}
 
-          {isFull && !userHasClaimed && !isFinished && (
+          {isFull && !userHasClaimed && !isFinished && !helpOpen && !notice && (
             <p className="text-sm text-text-tertiary text-center py-2">
-              Sonen er full — alle plasser er tatt
+              {fromHelpLink ? 'De klarte seg likevel. Takk!' : 'Sonen er full — alle plasser er tatt'}
             </p>
           )}
         </div>
