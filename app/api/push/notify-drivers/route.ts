@@ -20,41 +20,45 @@ export async function POST(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token)
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Verifiser at brukeren har minst ett aktivt claim (er samler)
-  const { data: activeClaims } = await supabase
-    .from('zone_claims')
-    .select('id')
-    .eq('user_id', user.id)
-    .limit(1)
-  if (!activeClaims || activeClaims.length === 0) {
-    return NextResponse.json({ error: 'No active claims' }, { status: 403 })
+  // Nye klienter sender assignmentId. Gamle cachede klienter sender zoneId + eventId.
+  // zoneName fra klienten brukes ikke lenger: navnet hentes fra databasen.
+  const body = await request.json().catch(() => ({})) as { assignmentId?: string; zoneId?: string; eventId?: string }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query: any = supabase
+    .from('zone_assignments')
+    .select('id, event_id, zone_id, status, zones(name, area, trailer_group)')
+  if (body.assignmentId) query = query.eq('id', body.assignmentId)
+  else if (body.zoneId && body.eventId) query = query.eq('event_id', body.eventId).eq('zone_id', body.zoneId)
+  else return NextResponse.json({ error: 'assignmentId required' }, { status: 400 })
+
+  const { data: assignment } = await query.maybeSingle()
+  if (!assignment) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Kalleren må ha claim på akkurat denne sonen, eller være admin
+  const [{ data: claim }, { data: profile }] = await Promise.all([
+    supabase.from('zone_claims').select('id').eq('assignment_id', assignment.id).eq('user_id', user.id).maybeSingle(),
+    supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+  ])
+  if (!claim && profile?.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { zoneName, zoneId, eventId } = await request.json()
-  if (!zoneName) {
-    return NextResponse.json({ error: 'zoneName required' }, { status: 400 })
+  // Bare soner som faktisk venter på henting. "Tatt med selv" er picked_up
+  // og gir aldri sjåførpush, heller ikke fra en gammel klient.
+  if (assignment.status !== 'completed') {
+    return NextResponse.json({ skipped: 'not completed' })
   }
+
+  const zone = assignment.zones as { name: string; area: string; trailer_group: number | null } | null
+  const zoneName = zone?.name || assignment.zone_id
+  const eventId: string = assignment.event_id
+  const zoneArea: string | null = zone?.area ?? null
+  const zoneTrailerGroup: number | null = zone?.trailer_group ?? null
 
   const payload = {
     title: 'Sone klar for henting!',
     body: `${zoneName} er ferdigplukket og venter på henting.`,
     url: '/sjafor',
-  }
-
-  // Hent sonens trailer_group og area (brukes i alle tiers)
-  let zoneArea: string | null = null
-  let zoneTrailerGroup: number | null = null
-
-  if (zoneId) {
-    const { data: zone } = await supabase
-      .from('zones')
-      .select('trailer_group, area')
-      .eq('id', zoneId)
-      .single()
-    if (zone) {
-      zoneArea = zone.area
-      zoneTrailerGroup = zone.trailer_group
-    }
   }
 
   // Tier 1: Finn sjåfør for spesifikk henger
