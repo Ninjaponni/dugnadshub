@@ -1,7 +1,8 @@
 // Klient-side wrapper som kaller server-side badge-evaluering
 // Server-ruten bruker service role key for å omgå RLS på user_badges
+// Evaluerer alltid den innloggede brukeren (ruten leser token-eieren).
 // Kaster ved feil — kall-stedene må håndtere det synlig i UI
-export async function evaluateBadges(userId: string): Promise<number[]> {
+export async function evaluateMyBadges(): Promise<number[]> {
   const { createClient } = await import('@/lib/supabase/client')
   const supabase = createClient()
   const { data: { session } } = await supabase.auth.getSession()

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import BrandLink from '@/components/layout/BrandLink'
-import { Users, Calendar, ChevronRight, ChevronDown, ChevronUp, Map, ArrowLeft, Bell, Zap, Check, AlertTriangle, Power } from 'lucide-react'
+import { Users, Calendar, ChevronRight, ChevronDown, ChevronUp, Map, ArrowLeft, Bell, Zap, Check, AlertTriangle, Power, X } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventStatus } from '@/lib/supabase/types'
@@ -25,6 +25,7 @@ export default function AdminOverviewPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deactivateConfirmId, setDeactivateConfirmId] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const supabaseRef = useRef(createClient())
 
   const loadData = useCallback(async () => {
@@ -63,8 +64,19 @@ export default function AdminOverviewPage() {
 
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
     setUpdatingId(eventId)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
+    setErrorMsg(null)
+    // Fullfør går alltid via mark_event_completed (merker, rollesynk, Førstemann,
+    // GPS-sletting og hjelpeforespørsler). Én fullføringsvei for hele appen.
+    const { error } = newStatus === 'completed'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? await (supabaseRef.current.rpc as any)('mark_event_completed', { p_event_id: eventId })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      : await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
+    if (error) {
+      setErrorMsg(`Kunne ikke endre status: ${error.message || 'ukjent feil'}`)
+      setUpdatingId(null)
+      return
+    }
 
     // Send push ved aktivering
     if (newStatus === 'active') {
@@ -138,6 +150,15 @@ export default function AdminOverviewPage() {
         </Link>
         <h1 className="text-[28px] font-bold text-accent font-[var(--font-display)]">Administrasjon</h1>
       </div>
+
+      {errorMsg && (
+        <div className="mb-4 p-3 rounded-2xl bg-danger/10 text-danger text-sm font-medium flex items-center justify-between">
+          <span>{errorMsg}</span>
+          <button onClick={() => setErrorMsg(null)} className="text-danger/60 ml-2" aria-label="Lukk">
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Skeleton */}
       {loading && (

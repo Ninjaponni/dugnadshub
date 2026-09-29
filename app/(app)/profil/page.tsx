@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import BrandLink from '@/components/layout/BrandLink'
 import type { Child, ChildGroup } from '@/lib/supabase/types'
 import { isPushSubscribed, subscribeToPush, saveSubscription, unsubscribeFromPush } from '@/lib/push/client'
-import { evaluateBadges } from '@/lib/badges/evaluator'
+import { evaluateMyBadges } from '@/lib/badges/evaluator'
 import type { Profile } from '@/lib/supabase/types'
 import Link from 'next/link'
 import { isMockMode } from '@/lib/mock/useMock'
@@ -295,7 +295,7 @@ export default function ProfilePage() {
 
     setSaveError(null)
     // Re-evaluer badges (tildeler Profil-proffen hvis kriteriene er møtt)
-    try { await evaluateBadges(user.id) } catch { /* noop — admin kan tildele manuelt */ }
+    try { await evaluateMyBadges() } catch { /* noop — admin kan tildele manuelt */ }
     setEditing(false)
     // Reload profil
     const { data } = await supabaseRef.current.from('profiles').select('*').eq('id', user.id).single()

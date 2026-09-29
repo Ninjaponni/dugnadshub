@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Recycle, FileText, Trash2, Music, Ticket, Cake, Calendar, ChevronDown, MapPin, Zap, Pencil, Bell, Power, Check, Download, Map as MapIcon } from 'lucide-react'
+import { Recycle, FileText, Trash2, Music, Ticket, Cake, Calendar, ChevronDown, MapPin, Zap, Pencil, Bell, Power, Check, Download, Award, Map as MapIcon } from 'lucide-react'
 import type { EventStatus, EventType } from '@/lib/supabase/types'
 import { typeLabels, areaLabels, type EventWithZones } from './shared'
 
@@ -181,6 +181,7 @@ export function DesktopEventCard({
   onEdit,
   onSendHelp,
   onExportCSV,
+  onReevaluate,
   onShowDetails,
   exporting,
   updatingId,
@@ -200,6 +201,7 @@ export function DesktopEventCard({
   onEdit: () => void
   onSendHelp: () => void
   onExportCSV: () => void
+  onReevaluate: () => void
   onShowDetails: () => void
   exporting: boolean
   updatingId: string | null
@@ -417,6 +419,9 @@ export function DesktopEventCard({
           <>
             <EventActionButton variant="secondary" icon={<Download size={14} />} onClick={onExportCSV} disabled={exporting}>
               {exporting ? 'Eksporterer...' : 'Eksporter CSV'}
+            </EventActionButton>
+            <EventActionButton variant="secondary" icon={<Award size={14} />} onClick={onReevaluate} disabled={updating}>
+              Oppdater merker
             </EventActionButton>
             <EventActionButton variant="ghost" icon={<Pencil size={14} />} onClick={onEdit}>
               Rediger

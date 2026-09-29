@@ -5,11 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import BrandLink from '@/components/layout/BrandLink'
-import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Users, Sparkles, Map as MapIcon, Power, Recycle, FileText, Music, Ticket, Cake, Zap, Check } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, MapPin, X, Pencil, Trash2, AlertTriangle, ArrowLeft, Bell, Download, CheckCircle, Upload, Award, Users, Sparkles, Map as MapIcon, Power, Recycle, FileText, Music, Ticket, Cake, Zap, Check } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DugnadEvent, EventType, EventStatus, EventArea, ZoneAssignment, Zone, MeetingPoint } from '@/lib/supabase/types'
-import { evaluateBadges } from '@/lib/badges/evaluator'
 import { localInputToISO, isoToLocalInput } from '@/lib/utils/date'
 import { fetchAll } from '@/lib/supabase/fetch-all'
 import { parseKmz } from '@/lib/plast/kmz-parser'
@@ -111,6 +110,7 @@ export default function EventsAdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [exporting, setExporting] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [noticeMsg, setNoticeMsg] = useState<string | null>(null)
 
   // Plastdugnad-import (per event)
   const [plastImporting, setPlastImporting] = useState<string | null>(null)
@@ -489,8 +489,8 @@ export default function EventsAdminPage() {
     setUpdatingId(eventId)
     setErrorMsg(null)
 
-    // Fullfør via RPC — status, sjåfør/stripser-merker, rolle-synk og
-    // Førstemann-recompute skjer atomisk i databasen
+    // Fullfør via RPC — status, sjåfør/stripser-merker, rolle-synk, Førstemann,
+    // terskelmerker og lukking av hjelpeforespørsler skjer atomisk i databasen
     if (newStatus === 'completed') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: rpcError } = await (supabaseRef.current.rpc as any)('mark_event_completed', { p_event_id: eventId })
@@ -499,19 +499,8 @@ export default function EventsAdminPage() {
         setUpdatingId(null)
         return
       }
-      // Personlig badge-evaluering for alle deltakere (Frøspire, Tre på rad osv.)
-      const { data: claims } = await supabaseRef.current
-        .from('zone_claims')
-        .select('user_id, zone_assignments!inner(event_id)')
-        .eq('zone_assignments.event_id', eventId) as unknown as { data: Array<{ user_id: string }> | null }
-      const userIds = [...new Set((claims || []).map(c => c.user_id))]
-      const failed: string[] = []
-      await Promise.all(userIds.map(async uid => {
-        try { await evaluateBadges(uid) } catch { failed.push(uid) }
-      }))
-      if (failed.length > 0) {
-        setErrorMsg(`Hendelsen er fullført, men ${failed.length} bruker(e) fikk ikke evaluert merkene sine. Sjekk admin/medlemmer.`)
-      }
+      // Terskelmerkene (Frøspire, Tre på rad osv.) deles ut i mark_event_completed
+      // for alle deltakere fra alle kilder. Ingen klient-evaluering her.
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabaseRef.current.from('events') as any).update({ status: newStatus }).eq('id', eventId)
@@ -571,6 +560,18 @@ export default function EventsAdminPage() {
   }
 
   // Nullstill alle claims og reset assignments for en hendelse
+  // Etterregistrering: sjåfør-/stripsermerker og terskelmerker for en fullført hendelse
+  async function handleReevaluate(eventId: string) {
+    setUpdatingId(eventId)
+    setErrorMsg(null)
+    setNoticeMsg(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabaseRef.current.rpc as any)('reevaluate_event_badges', { p_event_id: eventId })
+    if (error) setErrorMsg(`Kunne ikke oppdatere merker: ${error.message}`)
+    else setNoticeMsg(data === 0 ? 'Merkene var allerede oppdatert.' : `${data} nye merker delt ut.`)
+    setUpdatingId(null)
+  }
+
   async function handleResetClaims(eventId: string) {
     setResetting(true)
     setErrorMsg(null)
@@ -2045,6 +2046,20 @@ export default function EventsAdminPage() {
                         </Button>
                       )}
 
+                      {/* Oppdater merker — etterregistrering på fullført hendelse */}
+                      {event.status === 'completed' && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="w-full rounded-full"
+                          loading={updatingId === event.id}
+                          onClick={() => handleReevaluate(event.id)}
+                        >
+                          <Award size={14} />
+                          Oppdater merker
+                        </Button>
+                      )}
+
                       {/* Rediger + Slett */}
                       <div className="grid grid-cols-2 gap-2">
                         <Button
@@ -2218,6 +2233,15 @@ export default function EventsAdminPage() {
         </div>
       )}
 
+      {noticeMsg && (
+        <div className="mb-4 p-3 rounded-2xl bg-success/10 text-success text-sm font-medium flex items-center justify-between">
+          <span>{noticeMsg}</span>
+          <button onClick={() => setNoticeMsg(null)} className="text-success/60 ml-2">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Opprettskjema */}
       <AnimatePresence>
         {showForm && (
@@ -2326,6 +2350,7 @@ export default function EventsAdminPage() {
                   }}
                   onSendHelp={() => setDesktopConfirm({ kind: 'sendhelp', event })}
                   onExportCSV={() => handleExportCSV(event.id)}
+                  onReevaluate={() => handleReevaluate(event.id)}
                   onShowDetails={() => setDesktopExpandedId(event.id)}
                   exporting={exporting === event.id}
                   updatingId={updatingId}

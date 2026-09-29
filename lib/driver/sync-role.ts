@@ -1,6 +1,6 @@
 // Synker en brukers profiles.role basert på deres aktive driver_assignments.
-// Aldri tilbakestilt admin. Brukes både fra /api/driver/sync-role (klient-flyt)
-// og /api/events/finalize-drivers (admin-flyt).
+// Aldri tilbakestilt admin. Brukes fra /api/driver/sync-role (klient-flyt).
+// Ved fullføring gjør mark_event_completed samme synk i databasen.
 export async function syncRoleForUser(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,

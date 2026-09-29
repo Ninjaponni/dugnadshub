@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import type { EventMusician } from '@/lib/supabase/types'
 import dropPointsData from '@/lib/map/drop-points-data'
-import { evaluateBadges } from '@/lib/badges/evaluator'
+import { evaluateMyBadges } from '@/lib/badges/evaluator'
 
 interface ZoneClaimSheetProps {
   zone: ZoneWithStatus | null
@@ -106,7 +106,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     if (userId) {
-      try { await evaluateBadges(userId) } catch (e) {
+      try { await evaluateMyBadges() } catch (e) {
         setError(`Sone tatt, men merker ble ikke oppdatert: ${(e as Error).message}`)
       }
     }
@@ -144,7 +144,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
       return
     }
     if (userId) {
-      try { await evaluateBadges(userId) } catch (e) {
+      try { await evaluateMyBadges() } catch (e) {
         setError(`Markert ferdig, men merker ble ikke oppdatert: ${(e as Error).message}`)
       }
     }

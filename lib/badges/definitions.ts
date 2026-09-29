@@ -126,3 +126,13 @@ export const STACKABLE_BADGE_CATEGORIES: Set<BadgeCategory> = new Set([
   'komite',
   'vakt',
 ])
+
+// Merker i disse kategoriene teller som deltakelse når de er koblet til en hendelse.
+// Speiles i SQL: award_participation_badges, event_participant_ids og triggerfunksjonen
+// award_participation_on_badge_insert (scripts/migrate-deltakelsesmerker-i-db.sql).
+export const PARTICIPATION_CATEGORIES: ReadonlySet<BadgeCategory> = new Set<BadgeCategory>([
+  'aktivitet',
+  '17mai',
+  'sommerkonsert',
+  'seminar',
+])

@@ -46,6 +46,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Plastdugnad gir ikke Førstemann (samme regel som mark_event_completed).
+  // Eksisterende merker på plast røres ikke.
+  const { data: event } = await supabase.from('events').select('type').eq('id', eventId).maybeSingle()
+  if ((event as { type?: string } | null)?.type === 'plast') {
+    return NextResponse.json({ skipped: 'plast' })
+  }
+
   // Hent alle claims for hendelsen, sortert etter claimed_at (eldste først)
   const { data: claims } = await supabase
     .from('zone_claims')

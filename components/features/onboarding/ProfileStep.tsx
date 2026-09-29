@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Trash2, PlusCircle, Pencil, Users, Music, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { evaluateBadges } from '@/lib/badges/evaluator'
+import { evaluateMyBadges } from '@/lib/badges/evaluator'
 import Button from '@/components/ui/Button'
 import AvatarPicker, { getAvatarUrl, getRandomAvatarId } from '@/components/features/AvatarPicker'
 import type { Child, ChildGroup } from '@/lib/supabase/types'
@@ -89,7 +89,7 @@ export default function ProfileStep({ onProfileSaved }: ProfileStepProps) {
 
     if (!error) {
       // Hvis badge-evaluator feiler, gå videre — admin kan tildele manuelt
-      try { await evaluateBadges(user.id) } catch { /* noop */ }
+      try { await evaluateMyBadges() } catch { /* noop */ }
       setSaved(true)
       onProfileSaved()
     }
