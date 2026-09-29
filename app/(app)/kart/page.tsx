@@ -1,12 +1,13 @@
 'use client'
 
-import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeZones, type ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import { useActiveEvent, useActiveEvents } from '@/lib/hooks/useEvent'
 import ZoneClaimSheet from '@/components/features/ZoneClaimSheet'
+import UndoToast from '@/components/ui/UndoToast'
 import BaseSheet from '@/components/features/BaseSheet'
 import type { Base } from '@/components/features/BaseSheet'
 import MeetingPointSheet from '@/components/features/MeetingPointSheet'
@@ -102,7 +103,29 @@ function MapPageContent() {
   const hasActiveEvent = showAll || (!!overrideEventId && !!overrideEvent) || (!!event && event.status === 'active')
   const { zones: rawZones, loading: zonesLoading, refetch } = useRealtimeZones(effectiveEventId)
   const zones = hasActiveEvent ? rawZones : []
-  const [selectedZone, setSelectedZone] = useState<ZoneWithStatus | null>(null)
+  // Lagrer bare id-en og slår opp i zones, så et åpent ark oppdateres live via Realtime
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null)
+  const selectedZone: ZoneWithStatus | null = zones.find(z => z.id === selectedZoneId) ?? null
+  // Angre-toast etter "Jeg har tatt med alt selv"
+  const [undoInfo, setUndoInfo] = useState<{ assignmentId: string; asClaimer: boolean } | null>(null)
+  const clearUndo = useCallback(() => setUndoInfo(null), [])
+  async function handleUndoSelfDelivered() {
+    if (!undoInfo) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseRef.current.rpc as any)(
+      undoInfo.asClaimer ? 'uncomplete_zone' : 'admin_uncomplete_zone',
+      { p_assignment_id: undoInfo.assignmentId },
+    )
+    if (error) {
+      // Ikke la plukkeren tro at angringen gikk: åpne arket, der "Angre ferdigmelding" finnes
+      console.error('Angre tatt med selv feilet:', error)
+      const z = zones.find(zz => zz.assignment_id === undoInfo.assignmentId)
+      if (z) setSelectedZoneId(z.id)
+    }
+    refetch()
+  }
+  // ?sone= skal bare åpne arket én gang, ikke på nytt ved hver sanntidsoppdatering
+  const focusedOnceRef = useRef<string | null>(null)
   const [selectedBase, setSelectedBase] = useState<Base | null>(null)
   const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null)
   const [isSatellite, setIsSatellite] = useState(false)
@@ -135,10 +158,12 @@ function MapPageContent() {
   // Når soner er lastet og vi har en fokus-sone, åpne den og sentrer kartet
   useEffect(() => {
     if (!focusZoneId || zonesLoading || zones.length === 0) return
+    if (focusedOnceRef.current === focusZoneId) return
 
     const zone = zones.find((z) => z.id === focusZoneId)
     if (zone) {
-      setSelectedZone(zone)
+      focusedOnceRef.current = focusZoneId
+      setSelectedZoneId(zone.id)
 
       // Finn polygon-senter for kart-sentrering
       const feature = zonesGeoJson.features.find((f) => f.properties?.id === focusZoneId)
@@ -227,7 +252,7 @@ function MapPageContent() {
     <div className="fixed inset-0 z-0 lg:absolute">
       <DugnadMap
         zones={zones}
-        onZoneClick={(zone) => { setSelectedZone(zone); setSelectedBase(null); setSelectedMeetingPoint(null) }}
+        onZoneClick={(zone) => { setSelectedZoneId(zone.id); setSelectedBase(null); setSelectedMeetingPoint(null) }}
         selectedZoneId={selectedZone?.id}
         userId={userId}
         activeArea={activeArea}
@@ -239,9 +264,9 @@ function MapPageContent() {
         flyTarget={flyTarget}
         onFlyComplete={() => setFlyTarget(null)}
         mapStyle={isSatellite ? MAP_CONFIG.satelliteStyle : (isDark ? MAP_CONFIG.darkStyle : MAP_CONFIG.style)}
-        onBaseClick={(base) => { setSelectedBase(base); setSelectedZone(null); setSelectedMeetingPoint(null) }}
+        onBaseClick={(base) => { setSelectedBase(base); setSelectedZoneId(null); setSelectedMeetingPoint(null) }}
         meetingPoint={hasActiveEvent && event?.type === 'plast' ? event.meeting_point : null}
-        onMeetingPointClick={(p) => { setSelectedMeetingPoint(p); setSelectedZone(null); setSelectedBase(null) }}
+        onMeetingPointClick={(p) => { setSelectedMeetingPoint(p); setSelectedZoneId(null); setSelectedBase(null) }}
       />
 
       {/* Satellitt/kart-toggle */}
@@ -350,7 +375,7 @@ function MapPageContent() {
                   onClick={() => {
                     setSelectedEventIndex(i)
                     setShowEventPicker(false)
-                    setSelectedZone(null)
+                    setSelectedZoneId(null)
                   }}
                   className={`w-full text-left px-4 py-3 text-sm active:bg-surface-low ${
                     i === selectedEventIndex ? 'bg-accent/5 font-semibold' : ''
@@ -375,15 +400,24 @@ function MapPageContent() {
         zone={selectedZone}
         eventId={event?.id || null}
         userId={userId}
-        onClose={() => setSelectedZone(null)}
+        onClose={() => setSelectedZoneId(null)}
         onAction={() => {
           refetch()
-          setSelectedZone(null)
+          setSelectedZoneId(null)
         }}
         isAdmin={userRole === 'admin'}
         onFlyTo={(lng, lat, zoom) => {
           setFlyTarget({ lng, lat, zoom: zoom || 16 })
         }}
+        onSelfDelivered={setUndoInfo}
+      />
+
+      {/* Feiltrykk på "tatt med selv" er dyrest (sekker blir stående), så det kan angres herfra */}
+      <UndoToast
+        message={undoInfo ? 'Registrert: ingenting å hente.' : null}
+        actionLabel="Angre"
+        onAction={handleUndoSelfDelivered}
+        onDone={clearUndo}
       />
 
       <BaseSheet

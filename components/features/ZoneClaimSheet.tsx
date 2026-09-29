@@ -19,6 +19,8 @@ interface ZoneClaimSheetProps {
   onAction: () => void
   isAdmin?: boolean
   onFlyTo?: (lng: number, lat: number, zoom?: number) => void
+  // Kalles etter "Jeg har tatt med alt selv", så kartet kan vise angre-toast
+  onSelfDelivered?: (info: { assignmentId: string; asClaimer: boolean }) => void
 }
 
 // Finn oppsamlingspunkt for en sone basert på område og navn
@@ -32,14 +34,14 @@ function findDropPoint(zoneName: string, area: string) {
 function getDisplayStatus(zone: ZoneWithStatus): { label: string; color: string } {
   const isLapper = zone.zone_type === 'lapper'
   const isPlast = zone.zone_type === 'plast'
-  if (zone.status === 'picked_up') return { label: 'Hentet', color: 'bg-purple' }
+  if (zone.status === 'picked_up') return { label: zone.self_delivered ? 'Tatt med selv' : 'Hentet', color: 'bg-purple' }
   if (zone.status === 'completed') return { label: isLapper ? 'Ferdig levert' : isPlast ? 'Ferdig ryddet' : 'Ferdigplukket', color: 'bg-success' }
   if (zone.claims.length >= zone.collectors_needed) return { label: isPlast ? 'Voksne meldt' : 'Fullt bemannet', color: 'bg-accent' }
   if (zone.claims.length > 0) return { label: 'Delvis tatt', color: 'bg-warning' }
   return { label: 'Ledig', color: 'bg-zone-available' }
 }
 
-export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo }: ZoneClaimSheetProps) {
+export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onAction, isAdmin, onFlyTo, onSelfDelivered }: ZoneClaimSheetProps) {
   const [loading, setLoading] = useState(false)
   const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
@@ -132,12 +134,16 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     setLoading(false)
   }
 
-  async function handleComplete() {
+  // selfDelivered = plukkeren har tatt med alt selv, ingenting å hente (bare flaske)
+  async function handleComplete(selfDelivered = false) {
     if (!zone?.assignment_id) return
     setLoading(true)
     setError(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: rpcError } = await (supabaseRef.current.rpc as any)('mark_zone_complete', { p_assignment_id: zone.assignment_id })
+    const { error: rpcError } = await (supabaseRef.current.rpc as any)('mark_zone_complete', {
+      p_assignment_id: zone.assignment_id,
+      p_self_delivered: selfDelivered,
+    })
     if (rpcError) {
       setError('Kunne ikke markere som ferdig. Prøv igjen.')
       setLoading(false)
@@ -150,17 +156,20 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     }
     // Auto-push: sjåfører for flaskeinnsamling, admin for lapper
     // Plast: ingen push — voksne tar søppelet med seg til møteplassen
-    if (zone.zone_type === 'bottle') {
-      notifyDrivers(zone.name)
+    // Tatt med selv: ingen push — det er ingenting å hente
+    if (zone.zone_type === 'bottle' && !selfDelivered) {
+      notifyDrivers()
     } else if (zone.zone_type === 'lapper') {
       notifyAdmin(zone.name)
     }
+    if (selfDelivered) onSelfDelivered?.({ assignmentId: zone.assignment_id, asClaimer: userHasClaimed })
     setShowCompleteConfirm(false)
     onAction()
     setLoading(false)
   }
 
-  async function notifyDrivers(zoneName: string) {
+  // Serveren henter sonenavn og mottakere selv ut fra assignmentId
+  async function notifyDrivers() {
     try {
       const { data: { session } } = await supabaseRef.current.auth.getSession()
       if (!session) return
@@ -170,7 +179,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ zoneName, zoneId: zone!.id, eventId }),
+        body: JSON.stringify({ assignmentId: zone!.assignment_id, zoneId: zone!.id, eventId }),
       })
     } catch {
       // Push-feil er ikke kritisk — stille feil
@@ -511,7 +520,35 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               Marker som ferdig
             </button>
           )}
-          {showCompleteConfirm && (
+          {/* Flaske: plukkeren sier hvor panten er. Hovedvalget er det vanlige. */}
+          {showCompleteConfirm && zone.zone_type === 'bottle' && (
+            <div className="rounded-2xl border border-success/20 bg-success/5 p-4">
+              <p className="text-[15px] font-medium text-center mb-3">Hvor er panten nå?</p>
+              <button
+                onClick={() => handleComplete(false)}
+                disabled={loading}
+                className="w-full min-h-[44px] py-2.5 rounded-full bg-success text-white font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
+              >
+                {loading ? 'Sender...' : 'Klar for henting'}
+                <span className="block text-xs font-medium opacity-90">Sjåførene får beskjed.</span>
+              </button>
+              <button
+                onClick={() => handleComplete(true)}
+                disabled={loading}
+                className="w-full min-h-[44px] mt-3 py-2 rounded-full text-success font-semibold text-sm active:bg-success/10 disabled:opacity-40"
+              >
+                Jeg har tatt med alt selv
+                <span className="block text-xs font-medium text-text-secondary">Ingenting å hente.</span>
+              </button>
+              <button
+                onClick={() => setShowCompleteConfirm(false)}
+                className="w-full mt-1 py-2 text-xs text-text-tertiary active:opacity-70"
+              >
+                Avbryt
+              </button>
+            </div>
+          )}
+          {showCompleteConfirm && zone.zone_type !== 'bottle' && (
             <div className="rounded-2xl overflow-hidden border border-success/20">
               <div className="bg-success/5 p-4 text-center">
                 <CheckCircle size={32} className="text-success mx-auto mb-2" />
@@ -532,7 +569,7 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
                   Avbryt
                 </button>
                 <button
-                  onClick={handleComplete}
+                  onClick={() => handleComplete(false)}
                   disabled={loading}
                   className="flex-1 py-3 text-sm font-medium text-success active:bg-success/10"
                 >
@@ -577,8 +614,9 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
             </div>
           )}
 
-          {/* Angre ferdigmelding — kun for bruker som har claimed og sone er completed (ikke picked_up) */}
-          {zone.status === 'completed' && (userHasClaimed || isAdmin) && (
+          {/* Angre ferdigmelding — for plukker/admin når sonen er ferdig eller tatt med selv.
+              Aldri etter at en sjåfør har hentet (picked_up uten self_delivered). */}
+          {(zone.status === 'completed' || (zone.status === 'picked_up' && zone.self_delivered)) && (userHasClaimed || isAdmin) && (
             <Button size="md" loading={loading} onClick={handleUncomplete} className="w-full bg-warning/10 !text-warning hover:bg-warning/20">
               Angre ferdigmelding
             </Button>
