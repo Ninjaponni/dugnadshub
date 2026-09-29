@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
 import { Award, Check, Lock, Plus } from 'lucide-react'
-import { STACKABLE_BADGE_CATEGORIES, type BadgeCategory } from '@/lib/badges/definitions'
+import { STACKABLE_BADGE_CATEGORIES, PARTICIPATION_CATEGORIES, type BadgeCategory } from '@/lib/badges/definitions'
+import type { AwardEventOption } from './useMemberDetail'
 
 interface Props {
   open: boolean
@@ -17,7 +19,10 @@ interface Props {
   } | null
   count: number
   onClose: () => void
-  onAward: () => void
+  // eventId er null for merker utenfor deltakelseskategoriene, eller ved "Ingen hendelse"
+  onAward: (eventId: string | null) => void
+  events: AwardEventOption[]
+  defaultEventId: string | null
   onRemove: () => void
   // Sender videre til BottomSheet — true når sheeten åpnes i admin-overlay uten BottomNav
   pinToBottom?: boolean
@@ -25,13 +30,21 @@ interface Props {
 
 // Bottom sheet som viser merke-detaljer og lar admin gi eller fjerne merket.
 // Auto-merker er readonly siden de tildeles av systemet.
-export default function BadgeDetailSheet({ open, badge, count, onClose, onAward, onRemove, pinToBottom = false }: Props) {
+export default function BadgeDetailSheet({ open, badge, count, onClose, onAward, onRemove, events, defaultEventId, pinToBottom = false }: Props) {
+  // Valgt hendelse for deltakelsesmerker. Nullstilles til standardvalget hver gang arket åpnes.
+  const [eventId, setEventId] = useState<string | null>(defaultEventId)
+  useEffect(() => {
+    if (open) setEventId(defaultEventId)
+  }, [open, badge?.id, defaultEventId])
+
   // Hvis ingen merke er valgt, render tom sheet så AnimatePresence kan animere ut
   if (!badge) return <BottomSheet open={open} onClose={onClose} pinToBottom={pinToBottom}><div /></BottomSheet>
 
   const earned = count > 0
   const stackable = STACKABLE_BADGE_CATEGORIES.has(badge.category)
   const isAuto = badge.auto_criteria !== null
+  // Kake, kaffe o.l. til en dugnad teller som deltakelse på den dugnaden
+  const pickEvent = PARTICIPATION_CATEGORIES.has(badge.category)
 
   return (
     <BottomSheet open={open} onClose={onClose} pinToBottom={pinToBottom}>
@@ -88,12 +101,32 @@ export default function BadgeDetailSheet({ open, badge, count, onClose, onAward,
           </p>
         ) : (
           <>
+            {pickEvent && (
+              <div className="text-left mb-3">
+                <label htmlFor="award-event" className="block text-xs font-medium text-text-secondary mb-1.5 ml-1">
+                  Dugnad
+                </label>
+                <select
+                  id="award-event"
+                  value={eventId ?? ''}
+                  onChange={e => setEventId(e.target.value || null)}
+                  className="w-full appearance-none box-border min-h-[42px] px-3 rounded-[12px] bg-surface-low text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  {events.map(ev => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.title} · {new Date(`${ev.date}T12:00:00`).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}
+                    </option>
+                  ))}
+                  <option value="">Ingen hendelse</option>
+                </select>
+              </div>
+            )}
             <Button
               type="button"
               variant="primary"
               size="lg"
               className="w-full rounded-full"
-              onClick={onAward}
+              onClick={() => onAward(pickEvent ? eventId : null)}
               disabled={earned && !stackable}
             >
               {earned ? (

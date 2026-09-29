@@ -13,15 +13,24 @@ import type { Role, ChildGroup } from '@/lib/supabase/types'
 
 export type BadgeFilter = 'alle' | 'opptjent' | 'mangler'
 
+// Resultat av en merketildeling. 'duplicate' = samme merke finnes allerede på
+// samme hendelse (unik indeks user_badges_event_unique).
+export type AwardResult = 'ok' | 'duplicate' | 'error'
+
+// Hendelse som kan velges når et deltakelsesmerke deles ut
+export interface AwardEventOption { id: string; title: string; date: string; status: string }
+
 export function useMemberDetail({
+  memberName,
   badgeCounts,
   onAwardBadge,
   onRemoveBadge,
   onRoleChange,
   onTypeChange,
 }: {
+  memberName: string | null
   badgeCounts: Map<number, number>
-  onAwardBadge: (badgeId: number) => Promise<boolean>
+  onAwardBadge: (badgeId: number, eventId: string | null) => Promise<AwardResult>
   onRemoveBadge: (badgeId: number) => Promise<boolean>
   onRoleChange: (role: Role) => Promise<boolean>
   onTypeChange: (isMusician: boolean, group: ChildGroup | null) => Promise<boolean>
@@ -48,11 +57,16 @@ export function useMemberDetail({
 
   // Wrappere som kjører forelder-handler og viser toast etterpå.
   // Venter på DB-resultatet før suksess-toast — skal ikke lyve ved feil.
-  const handleAward = async (badgeId: number) => {
+  const handleAward = async (badgeId: number, eventId: string | null = null) => {
     const b = badgeDefinitions.find(bb => bb.id === badgeId)
     const c = badgeCounts.get(badgeId) ?? 0
-    const ok = await onAwardBadge(badgeId)
-    if (!ok) { showToast('Kunne ikke lagre merket — prøv igjen'); return }
+    const result = await onAwardBadge(badgeId, eventId)
+    if (result === 'duplicate') {
+      const firstName = memberName?.trim().split(/\s+/)[0] || 'Medlemmet'
+      showToast(`${firstName} har allerede dette merket for denne dugnaden`)
+      return
+    }
+    if (result === 'error') { showToast('Kunne ikke lagre merket — prøv igjen'); return }
     if (b) {
       if (c > 0) {
         // Bump ×N-pille når merket allerede er gitt en gang

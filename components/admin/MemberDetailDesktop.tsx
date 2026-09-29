@@ -14,6 +14,7 @@ import { getAvatarUrl } from '@/components/features/AvatarPicker'
 import BadgeTile from './BadgeTile'
 import RoleEditorSheet from './RoleEditorSheet'
 import BadgeDetailSheet from './BadgeDetailSheet'
+import type { AwardResult, AwardEventOption } from './useMemberDetail'
 import { useMemberDetail } from './useMemberDetail'
 import MemberToast from './MemberToast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
@@ -26,7 +27,10 @@ interface Props {
   onBack: () => void
   onRoleChange: (role: Role) => Promise<boolean>
   onTypeChange: (isMusician: boolean, group: ChildGroup | null) => Promise<boolean>
-  onAwardBadge: (badgeId: number) => Promise<boolean>
+  onAwardBadge: (badgeId: number, eventId: string | null) => Promise<AwardResult>
+  // Hendelser som kan velges ved utdeling av deltakelsesmerker
+  awardEvents: AwardEventOption[]
+  defaultAwardEventId: string | null
   onRemoveBadge: (badgeId: number) => Promise<boolean>
   onResetBadges: () => void
   onDeleteMember: () => void
@@ -63,6 +67,8 @@ export default function MemberDetailDesktop({
   onRoleChange,
   onTypeChange,
   onAwardBadge,
+  awardEvents,
+  defaultAwardEventId,
   onRemoveBadge,
   onResetBadges,
   onDeleteMember,
@@ -77,7 +83,7 @@ export default function MemberDetailDesktop({
     toast, showToast,
     handleAward, handleRemove, handleRoleChangeWrapped, handleTypeChangeWrapped,
     badges, visibleBadges, earnedTotal,
-  } = useMemberDetail({ badgeCounts, onAwardBadge, onRemoveBadge, onRoleChange, onTypeChange })
+  } = useMemberDetail({ memberName: profile?.full_name ?? null, badgeCounts, onAwardBadge, onRemoveBadge, onRoleChange, onTypeChange })
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
 
@@ -265,12 +271,14 @@ export default function MemberDetailDesktop({
       />
 
       <BadgeDetailSheet
+        events={awardEvents}
+        defaultEventId={defaultAwardEventId}
         open={selectedBadgeId !== null}
         badge={selectedBadge}
         count={selectedBadgeCount}
         onClose={() => setSelectedBadgeId(null)}
-        onAward={() => {
-          if (selectedBadgeId !== null) handleAward(selectedBadgeId)
+        onAward={(eventId) => {
+          if (selectedBadgeId !== null) handleAward(selectedBadgeId, eventId)
           setSelectedBadgeId(null)
         }}
         onRemove={() => {

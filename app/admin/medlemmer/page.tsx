@@ -10,6 +10,7 @@ import { Users, Search, ChevronRight, X, ArrowLeft, ArrowUpDown, ChevronDown, Mu
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { badgeDefinitions, STACKABLE_BADGE_CATEGORIES } from '@/lib/badges/definitions'
+import type { AwardResult, AwardEventOption } from '@/components/admin/useMemberDetail'
 import type { Child } from '@/lib/supabase/types'
 import type { Profile, Role, UserBadge, ZoneClaim, ChildGroup } from '@/lib/supabase/types'
 import { ROLE_LABELS } from '@/lib/roles'
@@ -75,21 +76,31 @@ export default function MembersAdminPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('alle')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  // Siste 10 aktive/fullførte hendelser, til valg ved utdeling av deltakelsesmerker
+  const [awardEvents, setAwardEvents] = useState<AwardEventOption[]>([])
   const supabaseRef = useRef(createClient())
 
   // Aktivt valgt medlem (vises i overlay). Slås opp på id for å holde data ferskt
   // etter mutasjoner (rolle, merker osv.) i samme render.
   const selectedProfile = profiles.find(p => p.id === selectedId) ?? null
 
+  // Standardvalg ved utdeling: aktiv hendelse, ellers siste fullførte. Aldri "Ingen hendelse".
+  const defaultAwardEventId =
+    awardEvents.find(e => e.status === 'active')?.id ?? awardEvents.find(e => e.status === 'completed')?.id ?? null
+
   async function loadData() {
     // fetchAll chunker i 1000-bolker (PostgREST-taket) — også profiles,
     // så nyeste medlemmer ikke forsvinner stille fra lista den dagen
     // korpset passerer 1000 profiler.
-    const [allProfiles, badges, claims, shiftClaims] = await Promise.all([
+    const [allProfiles, badges, claims, shiftClaims, eventsRes] = await Promise.all([
       fetchAll<Profile>(supabaseRef.current, 'profiles', '*'),
       fetchAll<UserBadge>(supabaseRef.current, 'user_badges', '*'),
       fetchAll<ZoneClaim>(supabaseRef.current, 'zone_claims', '*'),
       fetchAll<{ user_id: string }>(supabaseRef.current, 'shift_claims', 'user_id'),
+      supabaseRef.current.from('events').select('id, title, date, status')
+        .in('status', ['active', 'completed'])
+        .order('date', { ascending: false })
+        .limit(10) as unknown as Promise<{ data: AwardEventOption[] | null }>,
     ])
 
     // Sortér klient-side (fetchAll har ingen order-param)
@@ -98,6 +109,7 @@ export default function MembersAdminPage() {
     setUserBadges(badges)
     setAllClaims(claims)
     setAllShiftClaims(shiftClaims)
+    setAwardEvents(eventsRes.data || [])
     setLoading(false)
   }
 
@@ -208,27 +220,33 @@ export default function MembersAdminPage() {
     return true
   }
 
-  // Tildel merke — stable-bare kategorier kan gis flere ganger
-  async function handleAwardBadge(userId: string, badgeId: number): Promise<boolean> {
+  // Tildel merke — stable-bare kategorier kan gis flere ganger.
+  // Med eventId teller merket som deltakelse på dugnaden, og databasetriggeren
+  // deler ut eventuelle terskelmerker (Tre på rad o.l.) med en gang.
+  async function handleAwardBadge(userId: string, badgeId: number, eventId: string | null): Promise<AwardResult> {
     const badge = badgeDefinitions.find(b => b.id === badgeId)
     const canStack = badge ? STACKABLE_BADGE_CATEGORIES.has(badge.category) : false
 
     // Engangs-merker: blokker om allerede har
     if (!canStack) {
       const alreadyHas = userBadges.some(ub => ub.user_id === userId && ub.badge_id === badgeId)
-      if (alreadyHas) return false
+      if (alreadyHas) return 'error'
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseRef.current.from('user_badges') as any).insert({
+    const { error } = await (supabaseRef.current.from('user_badges') as any).insert({
       user_id: userId,
       badge_id: badgeId,
-      event_id: null,
-    }).select().single() as { data: UserBadge | null; error: unknown }
+      event_id: eventId,
+    }) as { error: { code?: string } | null }
 
-    if (error || !data) { console.error('Merke-tildeling feilet:', error); return false }
-    setUserBadges(prev => [...prev, data])
-    return true
+    if (error?.code === '23505') return 'duplicate'
+    if (error) { console.error('Merke-tildeling feilet:', error); return 'error' }
+
+    // Hent brukerens merker på nytt: triggeren kan ha lagt til terskelmerker
+    const { data: fresh } = await supabaseRef.current.from('user_badges').select('*').eq('user_id', userId) as unknown as { data: UserBadge[] | null }
+    if (fresh) setUserBadges(prev => [...prev.filter(ub => ub.user_id !== userId), ...fresh])
+    return 'ok'
   }
 
   // Fjern ett merke (siste instans)
@@ -321,7 +339,9 @@ export default function MembersAdminPage() {
             onBack={() => setSelectedId(null)}
             onRoleChange={(role) => handleRoleChange(selectedProfile.id, role)}
             onTypeChange={(isM, g) => handleTypeChange(selectedProfile.id, isM, g)}
-            onAwardBadge={(id) => handleAwardBadge(selectedProfile.id, id)}
+            onAwardBadge={(id, eventId) => handleAwardBadge(selectedProfile.id, id, eventId)}
+            awardEvents={awardEvents}
+            defaultAwardEventId={defaultAwardEventId}
             onRemoveBadge={(id) => handleRemoveBadge(selectedProfile.id, id)}
             onResetBadges={() => handleResetBadges(selectedProfile.id)}
             onDeleteMember={() => handleDeleteMember(selectedProfile.id)}
@@ -591,7 +611,9 @@ export default function MembersAdminPage() {
           onClose={() => setSelectedId(null)}
           onRoleChange={(role) => selectedProfile ? handleRoleChange(selectedProfile.id, role) : Promise.resolve(false)}
           onTypeChange={(isM, g) => selectedProfile ? handleTypeChange(selectedProfile.id, isM, g) : Promise.resolve(false)}
-          onAwardBadge={(id) => selectedProfile ? handleAwardBadge(selectedProfile.id, id) : Promise.resolve(false)}
+          onAwardBadge={(id, eventId) => selectedProfile ? handleAwardBadge(selectedProfile.id, id, eventId) : Promise.resolve('error' as const)}
+          awardEvents={awardEvents}
+          defaultAwardEventId={defaultAwardEventId}
           onRemoveBadge={(id) => selectedProfile ? handleRemoveBadge(selectedProfile.id, id) : Promise.resolve(false)}
           onResetBadges={() => { if (selectedProfile) handleResetBadges(selectedProfile.id) }}
           onDeleteMember={() => { if (selectedProfile) handleDeleteMember(selectedProfile.id) }}
