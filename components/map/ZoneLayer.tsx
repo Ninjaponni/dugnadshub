@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import zonesGeoJson from '@/lib/map/combined-zones-data'
-import { ZONE_COLORS } from '@/lib/map/zone-colors'
+import { ZONE_COLORS, isHelpOpen } from '@/lib/map/zone-colors'
 
 // GeoJSON-feature struktur for soner — beholder samme form som combined-zones-data
 type ZoneFeature = {
@@ -84,6 +84,8 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
           colorKey,
           isMine,
           isSelected: zoneId === selectedZoneId,
+          // Åpen "be om en ekstra hånd": tynt, statisk oransje omriss (eget lag under)
+          helpOpen: zone ? isHelpOpen(zone) : false,
         },
       }
     })
@@ -141,6 +143,18 @@ export default function ZoneLayer({ zones, selectedZoneId, userId }: ZoneLayerPr
             1.5,
           ] as unknown as number,
           'line-opacity': 0.9,
+        }}
+      />
+
+      {/* Hjelp ønskes: tynt statisk omriss. Fyllfargen er uendret. */}
+      <Layer
+        id="zone-help-line"
+        type="line"
+        filter={['==', ['get', 'helpOpen'], true]}
+        paint={{
+          'line-color': ZONE_COLORS.help,
+          'line-width': 2.5,
+          'line-opacity': 1,
         }}
       />
 

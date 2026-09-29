@@ -121,7 +121,7 @@ export default function DugnadMap({ zones, onZoneClick, selectedZoneId, userId, 
           {eventType === 'plast' && meetingPoint && (
             <MeetingPointMarker point={meetingPoint} onClick={onMeetingPointClick} />
           )}
-          <ZoneMarkers zones={zones} userId={userId || null} />
+          <ZoneMarkers zones={zones} userId={userId || null} onZoneClick={onZoneClick} />
           {eventType === 'bottle_collection' && drivers.length > 0 && (
             <DriverMarker drivers={drivers} />
           )}

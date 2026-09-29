@@ -34,6 +34,7 @@
   --color-zone-full: #5C9CE6;
   --color-zone-complete: #6B8F71;
   --color-zone-picked-up: #9C7DB8;
+  --color-zone-help: #EF7A1A;
 
   /* Fonter */
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -81,6 +82,7 @@ body {
   --color-zone-full: #7db8f0;
   --color-zone-complete: #8bb491;
   --color-zone-picked-up: #c4a8d8;
+  --color-zone-help: #EF7A1A;
 }
 
 /* System-preferanse (når brukeren har valgt "System") */
@@ -110,6 +112,7 @@ body {
     --color-zone-partial: #ffe082;
     --color-zone-complete: #8bb491;
     --color-zone-picked-up: #c4a8d8;
+    --color-zone-help: #EF7A1A;
   }
 }
 

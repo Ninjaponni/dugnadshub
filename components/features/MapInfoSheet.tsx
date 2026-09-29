@@ -11,7 +11,8 @@ const bottleColors = [
   { color: ZONE_COLORS.partial, label: 'Delvis tatt — trenger flere' },
   { color: ZONE_COLORS.full, label: 'Fullt bemannet' },
   { color: ZONE_COLORS.completed, label: 'Ferdigplukket' },
-  { color: ZONE_COLORS.pickedUp, label: 'Hentet' },
+  { color: ZONE_COLORS.pickedUp, label: 'Hentet eller tatt med selv' },
+  { color: ZONE_COLORS.help, label: 'Hjelp ønskes: oransje kant, bli gjerne med', outline: true },
 ]
 
 const flyerColors = [
@@ -53,11 +54,11 @@ export default function MapInfoSheet({ open, onClose, eventType, contactPhone }:
         <div>
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-3">Fargekoder</p>
           <div className="space-y-3">
-            {colorItems.map(({ color, label }) => (
+            {colorItems.map(({ color, label, outline }: { color: string; label: string; outline?: boolean }) => (
               <div key={color + label} className="flex items-center gap-3 text-[14px] text-text-primary font-medium">
                 <span
                   className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: color }}
+                  style={outline ? { boxShadow: `inset 0 0 0 2px ${color}` } : { backgroundColor: color }}
                 />
                 <span>{label}</span>
               </div>
