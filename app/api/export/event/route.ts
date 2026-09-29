@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   // Hent assignments med soner
   const { data: assignments } = await supabase
     .from('zone_assignments')
-    .select('id, zone_id, status')
+    .select('id, zone_id, status, self_delivered')
     .eq('event_id', eventId)
 
   if (!assignments) return NextResponse.json({ error: 'No data' }, { status: 500 })
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
       totalCollectors += collectorsNeeded
 
       const ferdig = a.status === 'completed' || a.status === 'picked_up' ? 'Ja' : ''
-      const hentet = a.status === 'picked_up' ? 'Ja' : ''
+      const hentet = a.status === 'picked_up' ? (a.self_delivered ? 'Tatt med selv' : 'Ja') : ''
 
       return [
         zone?.trailer_group || '',

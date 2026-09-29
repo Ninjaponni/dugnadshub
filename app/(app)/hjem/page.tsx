@@ -33,6 +33,11 @@ interface MyZone {
   partnerName: string | null
 }
 
+// Ferdig for plukkeren: ferdigmeldt, hentet av sjåfør eller tatt med selv
+function isZoneDone(status: string) {
+  return status === 'completed' || status === 'picked_up'
+}
+
 export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [events, setEvents] = useState<EventWithProgress[]>([])
@@ -349,9 +354,9 @@ export default function HomePage() {
                         <div className="flex items-center justify-between p-5 bg-surface-low rounded-[1.5rem] hover:bg-surface-low/70 transition-colors group">
                           <div className="flex items-center gap-4">
                             <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 ${
-                              zone.status === 'completed' ? 'bg-success/10' : 'bg-card'
+                              isZoneDone(zone.status) ? 'bg-success/10' : 'bg-card'
                             }`}>
-                              {zone.status === 'completed'
+                              {isZoneDone(zone.status)
                                 ? <Check size={18} className="text-success" />
                                 : <MapPin size={18} className="text-accent" />
                               }
@@ -364,7 +369,7 @@ export default function HomePage() {
                               )}
                             </div>
                           </div>
-                          {zone.status === 'completed' ? (
+                          {isZoneDone(zone.status) ? (
                             <div className="flex items-center gap-1.5 text-success">
                               <span className="text-sm font-bold">Ferdig</span>
                               <Check size={16} />

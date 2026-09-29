@@ -19,6 +19,8 @@ interface DriverZone {
   zoneName: string
   area: string
   status: string
+  // picked_up + selfDelivered = plukkeren tok med alt selv, sjåføren har ikke hentet
+  selfDelivered: boolean
   households: number
   trailerGroup: number
   collectors: Array<{ full_name: string | null; phone: string | null; notes: string | null }>
@@ -202,10 +204,10 @@ export default function DriverPage() {
       bottleEvents.length > 0
         ? (sb
             .from('zone_assignments')
-            .select('id, event_id, zone_id, status')
+            .select('id, event_id, zone_id, status, self_delivered')
             .in('event_id', eventIds)
             .in('status', ['completed', 'picked_up']) as unknown as Promise<{
-              data: Array<{ id: string; event_id: string; zone_id: string; status: string }> | null
+              data: Array<{ id: string; event_id: string; zone_id: string; status: string; self_delivered: boolean }> | null
             }>)
         : Promise.resolve({ data: null }),
     ])
@@ -295,6 +297,7 @@ export default function DriverPage() {
         zoneName: zone?.name || a.zone_id,
         area: zone?.area || '',
         status: a.status,
+        selfDelivered: a.self_delivered ?? false,
         households: zone?.households || 0,
         trailerGroup: zone?.trailer_group || 1,
         collectors: zoneClaims.map(c => ({
@@ -600,10 +603,10 @@ export default function DriverPage() {
               {pickedZones.length > 0 && (
                 <div className="bg-surface-low rounded-2xl p-4 opacity-60">
                   {pickedZones.map(zone => (
-                    <div key={zone.assignmentId} className="flex items-center gap-2 py-1">
-                      <Check size={14} className="text-success shrink-0" />
+                    <div key={zone.assignmentId} className={`flex items-center gap-2 py-1 ${zone.selfDelivered ? 'opacity-60' : ''}`}>
+                      <Check size={14} className={`shrink-0 ${zone.selfDelivered ? 'text-text-tertiary' : 'text-success'}`} />
                       <span className="text-sm text-text-primary">{zone.zoneName}</span>
-                      <span className="text-xs text-text-tertiary ml-auto">Hentet</span>
+                      <span className="text-xs text-text-tertiary ml-auto">{zone.selfDelivered ? 'Tatt med av plukker' : 'Hentet'}</span>
                     </div>
                   ))}
                 </div>
