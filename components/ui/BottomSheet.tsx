@@ -117,7 +117,7 @@ export default function BottomSheet({ open, onClose, children, title, pinToBotto
             >
               {/* Drag-håndtak — kun dette området trigger drag-to-close */}
               <div
-                className="flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0"
+                className="flex justify-center py-4 touch-none cursor-grab active:cursor-grabbing shrink-0"
                 onPointerDown={(e) => dragControls.start(e)}
               >
                 <div className="w-9 h-1 rounded-full bg-text-tertiary/40" />
