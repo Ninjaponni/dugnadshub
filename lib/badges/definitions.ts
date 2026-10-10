@@ -46,6 +46,7 @@ export const badgeDefinitions = [
   { id: 71, name: 'Reiseleder', icon: '/badges/reiseleder.png', category: 'aktivitet' as const, description: 'Reiseleder på korpstur', auto_criteria: null },
   { id: 72, name: 'Nattevakta', icon: '/badges/nattevakta.png', category: 'aktivitet' as const, description: 'Tok nattevakta på korpstur', auto_criteria: null },
   { id: 73, name: 'Bussjåføren', icon: '/badges/bussjaforen.png', category: 'aktivitet' as const, description: 'Kjørte korpset trygt på tur', auto_criteria: null },
+  { id: 85, name: 'Bidro på Tillerdagen', icon: '/badges/tillerdagen.png', category: 'aktivitet' as const, description: 'Bidro på Tillerdagen i Tillerparken', auto_criteria: null },
 
   // Sommerkonsert-merker (gjentagende arrangement — deles ut på nytt hvert år med event_id)
   { id: 74, name: 'Sommerkonserten', icon: '/badges/sommerkonserten.png', category: 'sommerkonsert' as const, description: 'Bidro på korpsets sommerkonsert', auto_criteria: null },
