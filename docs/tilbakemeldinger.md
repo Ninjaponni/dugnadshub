@@ -46,3 +46,14 @@ Beslutninger (Tor Martin 10.10):
 - Bare flaskeinnsamling. Stripsere (`trailer_group = 0`) er ikke knyttet til soner og vises ikke.
 
 Notat: ingen databaseendring. Koblingen er `zones.trailer_group` + `zones.area` mot `driver_assignments` (event_id, area, trailer_group, role = 'driver'), samme kobling som `app/api/push/notify-drivers/route.ts` bruker. Vises i `components/features/ZoneClaimSheet.tsx`.
+
+## 2026-10-10 - Tor Martin, om bunnarket på iPhone
+
+### 6. Dra-håndtaket på bunnark lar seg ikke dra ned
+Status: gjort (v10.42.1, 10.10)
+
+Problem: på iPhone (appen lagt på hjemskjermen) reagerte den grå streken øverst på sonekortet så vidt på fingeren, men kortet lot seg aldri dra ned. Eneste måte å lukke på var å trykke på kartet over kortet.
+
+Årsak: håndtaket starter dra-bevegelsen manuelt (`dragControls.start`), men manglet `touch-action: none`. iOS Safari tolket berøringen som scroll, tok den over og avbrøt dra-bevegelsen. Treffflaten var også bare rundt 28 px høy.
+
+Tiltak: `touch-none` og `py-4` (i stedet for `py-3`) på håndtaket i `components/ui/BottomSheet.tsx`. Gjelder alle bunnark i appen. Testet og bekreftet av Tor Martin på iPhone 10.10.
