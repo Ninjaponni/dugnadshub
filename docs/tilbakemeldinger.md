@@ -31,3 +31,18 @@ Status: ny
 Innsender så at en annen forelder hadde appen på hjemskjermen, men fikk det ikke til selv. Trolig tolkning (Tor Martin): det handler om å legge Dugnadshub til på hjemskjermen, ikke om et merke. Signal om at installasjonen ikke er lett nok å finne.
 
 Notat: installasjonsveiledningen finnes bare som steg 3 i onboarding (`components/features/onboarding/InstallStep.tsx`, brukt kun i `OnboardingWizard.tsx`). Hopper man forbi der, er det ingen vei tilbake til den. Mulig tiltak: gjenbruk `InstallStep` fra profilsiden, skjult når `isStandalone` er sann.
+
+## 2026-10-10 - Tor Martin, om sjåfør i sonearket
+
+### 5. Vis henter (sjåfør) for sonen i sonearket
+Status: gjort (v10.41.11, 10.10)
+
+Ønske: når man trykker på en flaskesone, skal man under "Samlere" også se hvem som henter sonen (sjåføren på hengeren), med mulighet til å ringe.
+
+Beslutninger (Tor Martin 10.10):
+- Telefon/ring: samme regel som for medplukkere. Plukkerne på sonen og admin kan ringe, andre ser bare navnet.
+- Ingen sjåfør på hengeren ennå: skjul seksjonen.
+- Flere sjåfører på samme henger: vis alle.
+- Bare flaskeinnsamling. Stripsere (`trailer_group = 0`) er ikke knyttet til soner og vises ikke.
+
+Notat: ingen databaseendring. Koblingen er `zones.trailer_group` + `zones.area` mot `driver_assignments` (event_id, area, trailer_group, role = 'driver'), samme kobling som `app/api/push/notify-drivers/route.ts` bruker. Vises i `components/features/ZoneClaimSheet.tsx`.

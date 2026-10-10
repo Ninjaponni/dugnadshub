@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import BottomSheet from '@/components/ui/BottomSheet'
 import Button from '@/components/ui/Button'
-import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus, Phone, Music } from 'lucide-react'
+import { StickyNote, Navigation, CheckCircle, MessageSquare, Pencil, X as XIcon, UserPlus, Phone, Music, Truck } from 'lucide-react'
 import MemberPicker from '@/components/features/MemberPicker'
 import { createClient } from '@/lib/supabase/client'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
@@ -11,6 +11,8 @@ import type { EventMusician } from '@/lib/supabase/types'
 import dropPointsData from '@/lib/map/drop-points-data'
 import { evaluateMyBadges } from '@/lib/badges/evaluator'
 import { isHelpOpen } from '@/lib/map/zone-colors'
+import { isMockMode } from '@/lib/mock/useMock'
+import { mockTrailerGroups } from '@/lib/mock/data'
 
 interface ZoneClaimSheetProps {
   zone: ZoneWithStatus | null
@@ -80,6 +82,38 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
     setNotice(null)
     setError(null)
   }, [zone?.id])
+
+  // Sjåfør(er) på hengeren som henter denne flaskesonen. Samme kobling som
+  // notify-drivers: sonens område + hengernummer mot driver_assignments (role = driver).
+  const [drivers, setDrivers] = useState<Array<{ user_id: string; full_name: string | null; phone: string | null }>>([])
+  const isBottleZone = zone?.zone_type === 'bottle'
+  useEffect(() => {
+    if (!isBottleZone || !eventId || !zone?.trailer_group) {
+      setDrivers([])
+      return
+    }
+    if (isMockMode()) {
+      const g = mockTrailerGroups.find(tg => tg.area === zone.area && tg.trailerGroup === zone.trailer_group)
+      setDrivers(g?.driverName ? [{ user_id: 'mock-driver', full_name: g.driverName, phone: '900 00 000' }] : [])
+      return
+    }
+    let cancelled = false
+    setDrivers([])  // ikke vis forrige sones sjåfør mens oppslaget pågår
+    supabaseRef.current
+      .from('driver_assignments')
+      .select('user_id, slot_number, profiles(full_name, phone)')
+      .eq('event_id', eventId)
+      .eq('area', zone.area)
+      .eq('trailer_group', zone.trailer_group)
+      .eq('role', 'driver')
+      .order('slot_number')
+      .then(({ data }) => {
+        if (cancelled) return
+        const rows = (data || []) as unknown as Array<{ user_id: string; profiles: { full_name: string | null; phone: string | null } | null }>
+        setDrivers(rows.map(r => ({ user_id: r.user_id, full_name: r.profiles?.full_name ?? null, phone: r.profiles?.phone ?? null })))
+      })
+    return () => { cancelled = true }
+  }, [isBottleZone, eventId, zone?.id, zone?.area, zone?.trailer_group])
 
   // Hent musikanter for plast-soner
   const isPlastZone = zone?.zone_type === 'plast'
@@ -561,6 +595,38 @@ export default function ZoneClaimSheet({ zone, eventId, userId, onClose, onActio
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Henter: sjåfør(er) på hengeren for sonen. Skjules når ingen har meldt seg.
+          Ring-knapp med samme regel som for medplukkere: plukkerne på sonen og admin. */}
+      {drivers.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide">
+            {drivers.length > 1 ? 'Hentere' : 'Henter'} · henger {zone.trailer_group}
+          </p>
+          <div className="space-y-2">
+            {drivers.map(d => (
+              <div key={d.user_id} className="flex items-center gap-2 text-sm">
+                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Truck size={12} className="text-accent" />
+                </div>
+                <span className="flex-1 min-w-0">{d.full_name || 'Ukjent'}</span>
+                {(isAdmin || userHasClaimed) && d.phone && d.user_id !== userId && (
+                  <a
+                    href={`tel:${d.phone}`}
+                    className="p-1 rounded-full active:bg-surface-low"
+                    aria-label={`Ring ${d.full_name}`}
+                  >
+                    <Phone size={14} className="text-accent" />
+                  </a>
+                )}
+                {d.user_id === userId && (
+                  <span className="text-[11px] font-medium text-white bg-accent px-1.5 py-0.5 rounded-full">deg</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
