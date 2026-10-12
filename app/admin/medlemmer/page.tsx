@@ -249,10 +249,11 @@ export default function MembersAdminPage() {
     return 'ok'
   }
 
-  // Fjern ett merke (siste instans)
+  // Fjern ett merke: helst et uten sone, fordi sonemerker deles ut på nytt av
+  // "Oppdater merker" (reevaluate_event_badges)
   async function handleRemoveBadge(userId: string, badgeId: number): Promise<boolean> {
     const badges = userBadges.filter(ub => ub.user_id === userId && ub.badge_id === badgeId)
-    const badge = badges[badges.length - 1]
+    const badge = [...badges].reverse().find(b => !b.zone_assignment_id) ?? badges[badges.length - 1]
     if (!badge) return false
 
     const { error } = await supabaseRef.current.from('user_badges').delete().eq('id', badge.id)
