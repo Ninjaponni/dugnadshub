@@ -21,7 +21,8 @@ export interface KorpsBidragData {
 }
 
 export const korpsBidrag: KorpsBidragData = {
-  sekkerPant: 126,
+  // 70 (Nord 13.04) + 56 (Sør 27.04) + 60 (Sør 28.09) + 73 (NORD 12.10)
+  sekkerPant: 259,
   // 3400 etter vårens utdelinger + 1404 (Sør 21.09.2026), rundet av Tor Martin
   lapperDeltUt: 4800,
   kakerBakt: 125,
@@ -34,6 +35,6 @@ export const korpsBidrag: KorpsBidragData = {
   kakestykkerSolgt: 1255,
   brusSolgt: 938,
   literSoppel: 300,
-  // 232 385 + 13 650 (Fotball-VM Clarion, 91 t) + 8 400 (Neonfestivalen, 56 t)
-  kronerOpptjent: 254435,
+  // 232 385 + 13 650 (Fotball-VM Clarion, 91 t) + 8 400 (Neonfestivalen, 56 t) + 53 200 (pant: 133 sekker høsten 2026 × 400 kr)
+  kronerOpptjent: 307635,
 }
