@@ -1,3 +1,4 @@
+-- Kjørt i prod 2026-10-12 kl 21:57 (steg 2, ub_totalt 1272 → 1415, 0 nye terskelmerker).
 -- Tilbakefylling (2026-10-12): sonemerker for alle fullførte lappeutdelinger og
 -- flaskeinnsamlinger. Krever migrate-merke-per-sone.sql. Ingen sletting. Idempotent.
 -- Kjøres i samme begin ... commit som migreringen.

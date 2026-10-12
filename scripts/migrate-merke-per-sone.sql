@@ -1,3 +1,4 @@
+-- Kjørt i prod 2026-10-12 kl 21:56 (steg 1, ub_totalt 1272 uendret). Backup før: ~/Backups/dugnadshub/2026-10-12T19-55-26.
 -- Migrering C (2026-10-12): ett merke per sone.
 -- Lappeutdeling gir Lappemester Nord (18) / Sør (20) per sone etter zones.area.
 -- Flaskeinnsamling gir Pantejeger (86) per sone. Plast er ikke med.

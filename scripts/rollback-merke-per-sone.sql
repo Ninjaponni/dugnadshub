@@ -1,3 +1,4 @@
+-- NB: Etter tilbakefyllingen 2026-10-12 finnes sonemerker, så denne fila stopper av seg selv.
 -- Angrer migrate-merke-per-sone.sql UTEN sletting i user_badges. Bare gyldig før
 -- tilbakefyllingen, og så lenge ingen sonemerker er delt ut (stopper ellers).
 -- Merke 86 i badges blir stående (ufarlig, ingen har det).
