@@ -187,6 +187,8 @@ export interface UserBadge {
   badge_id: number
   awarded_at: string
   event_id: string | null
+  // Satt for sonemerker (Lappemester Nord/Sør, Pantejeger): sonen merket ble tjent på
+  zone_assignment_id: string | null
 }
 
 export interface PushSubscription {
@@ -211,7 +213,7 @@ export interface Database {
       driver_assignments: { Row: DriverAssignment; Insert: Omit<DriverAssignment, 'id'>; Update: Partial<DriverAssignment> }
       participation_log: { Row: ParticipationLog; Insert: Omit<ParticipationLog, 'id'>; Update: Partial<ParticipationLog> }
       badges: { Row: Badge; Insert: Omit<Badge, 'id'>; Update: Partial<Badge> }
-      user_badges: { Row: UserBadge; Insert: Omit<UserBadge, 'id'>; Update: Partial<UserBadge> }
+      user_badges: { Row: UserBadge; Insert: Omit<UserBadge, 'id' | 'zone_assignment_id'> & { zone_assignment_id?: string | null }; Update: Partial<UserBadge> }
       event_musicians: { Row: EventMusician; Insert: Omit<EventMusician, 'id' | 'created_at'>; Update: Partial<EventMusician> }
     }
   }

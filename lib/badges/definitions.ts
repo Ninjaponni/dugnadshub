@@ -29,9 +29,9 @@ export const badgeDefinitions = [
 
   // Aktivitetsmerker (kan gis flere ganger — vises som ×N)
   { id: 17, name: 'Kakeboss', icon: '/badges/kakeboss.png', category: 'aktivitet' as const, description: 'Bakte kake til dugnad', auto_criteria: null },
-  { id: 18, name: 'Lappemester Nord', icon: '/badges/lappemester-nord.png', category: 'aktivitet' as const, description: 'Delte ut lapper i Nord', auto_criteria: null },
+  { id: 18, name: 'Lappemester Nord', icon: '/badges/lappemester-nord.png', category: 'aktivitet' as const, description: 'Tok en lappesone i Nord', auto_criteria: null },
   { id: 19, name: 'Lykkehjulet', icon: '/badges/lykkehjulet.png', category: 'aktivitet' as const, description: 'Solgte loddbøker', auto_criteria: null },
-  { id: 20, name: 'Lappemester Sør', icon: '/badges/lappemester-sor.png', category: 'aktivitet' as const, description: 'Delte ut lapper i Sør', auto_criteria: null },
+  { id: 20, name: 'Lappemester Sør', icon: '/badges/lappemester-sor.png', category: 'aktivitet' as const, description: 'Tok en lappesone i Sør', auto_criteria: null },
   { id: 21, name: 'Saftansen', icon: '/badges/saftansen.png', category: 'aktivitet' as const, description: 'Laget saft til dugnad', auto_criteria: null },
   { id: 22, name: 'Kaffansen', icon: '/badges/kaffansen.png', category: 'aktivitet' as const, description: 'Kokte kaffe til dugnad', auto_criteria: null },
   { id: 23, name: 'Premieskaffer', icon: '/badges/premieskaffer.png', category: 'aktivitet' as const, description: 'Skaffet premier til lotteri', auto_criteria: null },
@@ -47,6 +47,7 @@ export const badgeDefinitions = [
   { id: 72, name: 'Nattevakta', icon: '/badges/nattevakta.png', category: 'aktivitet' as const, description: 'Tok nattevakta på korpstur', auto_criteria: null },
   { id: 73, name: 'Bussjåføren', icon: '/badges/bussjaforen.png', category: 'aktivitet' as const, description: 'Kjørte korpset trygt på tur', auto_criteria: null },
   { id: 85, name: 'Bidro på Tillerdagen', icon: '/badges/tillerdagen.png', category: 'aktivitet' as const, description: 'Bidro på Tillerdagen i Tillerparken', auto_criteria: null },
+  { id: 86, name: 'Pantejeger', icon: '/badges/pantejeger.png', category: 'aktivitet' as const, description: 'Tok en flaskesone', auto_criteria: null },
 
   // Sommerkonsert-merker (gjentagende arrangement — deles ut på nytt hvert år med event_id)
   { id: 74, name: 'Sommerkonserten', icon: '/badges/sommerkonserten.png', category: 'sommerkonsert' as const, description: 'Bidro på korpsets sommerkonsert', auto_criteria: null },
@@ -137,3 +138,8 @@ export const PARTICIPATION_CATEGORIES: ReadonlySet<BadgeCategory> = new Set<Badg
   'sommerkonsert',
   'seminar',
 ])
+
+// Ett eksemplar per sone deles ut automatisk når dugnaden fullføres
+// (award_zone_badges i scripts/migrate-merke-per-sone.sql). auto_criteria er null
+// fordi admin fortsatt skal kunne gi dem manuelt.
+export const ZONE_BADGE_IDS: ReadonlySet<number> = new Set([18, 20, 86])

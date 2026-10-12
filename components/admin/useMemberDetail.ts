@@ -13,8 +13,8 @@ import type { Role, ChildGroup } from '@/lib/supabase/types'
 
 export type BadgeFilter = 'alle' | 'opptjent' | 'mangler'
 
-// Resultat av en merketildeling. 'duplicate' = samme merke finnes allerede på
-// samme hendelse (unik indeks user_badges_event_unique).
+// Resultat av en merketildeling. 'duplicate' = samme merke uten sone finnes allerede
+// på samme hendelse (unik indeks user_badges_event_unique, gjelder bare rader uten sone).
 export type AwardResult = 'ok' | 'duplicate' | 'error'
 
 // Hendelse som kan velges når et deltakelsesmerke deles ut
