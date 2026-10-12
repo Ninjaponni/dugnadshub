@@ -31,8 +31,8 @@ update public.badges set description = 'Tok en lappesone i Nord' where id = 18;
 update public.badges set description = 'Tok en lappesone i Sør' where id = 20;
 
 -- 5. Sonemerker for én hendelse. Bare soner meldt ferdig (completed/picked_up, også tatt med selv).
--- Lodd per person: alle på sonen får ett hver, også hjelpere og foreldre i samme familie. Kalles av mark_event_completed, reevaluate_event_badges
--- og tilbakefyllingen. Idempotent. Sletter aldri. Returnerer antall nye rader.
+-- Lodd per person: alle på sonen får ett hver, også hjelpere og foreldre i samme familie.
+-- Kalles av mark_event_completed, reevaluate_event_badges og tilbakefyllingen. Idempotent. Sletter aldri. Returnerer antall nye rader.
 -- Først kobles en eksisterende rad uten sone (samme bruker, merke og hendelse) til en
 -- sone, så manuelle tildelinger ikke blir dobbelt. Den gamle hendelsesindeksen sikrer
 -- at det finnes høyst én slik rad per bruker og merke.
