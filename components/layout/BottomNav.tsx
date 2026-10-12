@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { isMockMode } from '@/lib/mock/useMock'
+import { countByBadge, loadSeenCounts, unseenTotal } from '@/lib/badges/earned'
 
 const baseTabs = [
   { href: '/hjem', label: 'Hjem', icon: Home },
@@ -46,17 +47,14 @@ export default function BottomNav() {
 
       const { data } = await supabaseRef.current
         .from('user_badges')
-        .select('badge_id')
-        .eq('user_id', user.id) as unknown as { data: Array<{ badge_id: number }> | null }
+        .select('badge_id, awarded_at')
+        .eq('user_id', user.id) as unknown as { data: Array<{ badge_id: number; awarded_at: string }> | null }
 
       if (!data) return
 
-      const seenKey = `seen_badges_${user.id}`
-      const seenRaw = localStorage.getItem(seenKey)
-      const seen = seenRaw ? new Set(JSON.parse(seenRaw) as number[]) : new Set<number>()
-
-      const unseen = data.filter(b => !seen.has(b.badge_id)).length
-      setUnseenBadges(unseen)
+      // Teller eksemplarer, så et nytt Pantejeger-merke gir prikk selv om man har ett fra før.
+      // BottomNav skriver aldri sett-status, det gjør bare merkesiden.
+      setUnseenBadges(unseenTotal(countByBadge(data), loadSeenCounts(user.id, data)))
     }
 
     check()
