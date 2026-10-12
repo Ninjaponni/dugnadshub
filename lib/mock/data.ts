@@ -2,6 +2,7 @@
 import type { Profile, DugnadEvent, HomeEvent } from '@/lib/supabase/types'
 import type { ZoneWithStatus } from '@/lib/hooks/useRealtimeZones'
 import { MOCK_USER_ID } from './useMock'
+import { countByBadge, type EarnedBadgeRow } from '@/lib/badges/earned'
 
 // --- Profil ---
 export const mockProfile: Profile = {
@@ -321,12 +322,22 @@ export const mockTrailerGroups: MockTrailerGroup[] = [
 
 // --- Badges ---
 // Badge-IDer som brukeren har opptjent (matcher badgeDefinitions)
-export const mockBadgeCounts = new Map<number, number>([
-  [16, 1], // Profil fullført
-  [2, 1],  // Første sone
-  [1, 1],  // Første dugnad fullført
-  [3, 1],  // Sonemakker
-])
+// Opptjente merker i mock-modus. Viser ×N for sonemerker og et gjentatt 17. mai-merke.
+export const mockEarnedBadgeRows: EarnedBadgeRow[] = [
+  { badge_id: 16, awarded_at: '2026-03-01T10:00:00Z', event_title: null, event_date: null, zone_name: null },
+  { badge_id: 2, awarded_at: '2026-03-15T10:00:00Z', event_title: null, event_date: null, zone_name: null },
+  { badge_id: 1, awarded_at: '2026-03-15T12:00:00Z', event_title: null, event_date: null, zone_name: null },
+  { badge_id: 3, awarded_at: '2026-03-15T12:00:00Z', event_title: null, event_date: null, zone_name: null },
+  { badge_id: 18, awarded_at: '2026-04-07T18:00:00Z', event_title: 'Lappeutdeling Nord', event_date: '2026-04-07', zone_name: 'Sone N1' },
+  { badge_id: 18, awarded_at: '2026-09-29T18:00:00Z', event_title: 'Lappeutdeling Nord', event_date: '2026-09-29', zone_name: 'Sone N2' },
+  { badge_id: 86, awarded_at: '2026-04-13T18:00:00Z', event_title: 'Flaskeinnsamling Nord', event_date: '2026-04-13', zone_name: 'Sone N1' },
+  { badge_id: 86, awarded_at: '2026-10-12T18:00:00Z', event_title: 'Flaskeinnsamling NORD', event_date: '2026-10-12', zone_name: 'Sone N1' },
+  { badge_id: 86, awarded_at: '2026-10-12T18:00:00Z', event_title: 'Flaskeinnsamling NORD', event_date: '2026-10-12', zone_name: 'Sone N3' },
+  { badge_id: 30, awarded_at: '2026-05-17T18:00:00Z', event_title: '17. mai 2026', event_date: '2026-05-17', zone_name: null },
+  { badge_id: 30, awarded_at: '2025-05-17T18:00:00Z', event_title: '17. mai 2025', event_date: '2025-05-17', zone_name: null },
+]
+
+export const mockBadgeCounts = countByBadge(mockEarnedBadgeRows)
 
 // --- Profilhistorikk ---
 export const mockHistory = [
