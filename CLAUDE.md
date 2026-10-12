@@ -23,6 +23,20 @@
   `lib/badges/definitions.ts`.
 - Kilde: `scripts/migrate-deltakelsesmerker-i-db.sql`. Reserve: `scripts/backfill-deltakelse-merker.sql`.
 
+## Sonemerker (siden 2026-10-12)
+
+- Ett merke per `zone_claims`-rad på ferdige soner (`completed`/`picked_up`) på fullførte hendelser:
+  `lapper` gir Lappemester Nord (18) / Sør (20) etter `zones.area`, `bottle_collection` gir
+  Pantejeger (86). Plast er ikke med. Lodd per person: alle på sonen får ett hver, også hjelpere.
+- `award_zone_badges(p_event_id)` (intern) kalles av `mark_event_completed` og
+  `reevaluate_event_badges`, før terskelmerkene. Kobler først en rad uten sone på samme
+  hendelse, så setter den inn resten. Idempotent, sletter aldri.
+- `user_badges.zone_assignment_id` (FK `on delete restrict`). Indekser: `user_badges_zone_uniq`
+  (bruker, merke, sone) og `user_badges_event_unique`, som nå bare gjelder rader uten sone.
+- `auto_criteria` er `null` for 18/20/86 så admin kan gi dem manuelt som reserve. UI bruker
+  `ZONE_BADGE_IDS` i `lib/badges/definitions.ts`. Målet er helautomatiske merker.
+- Kilde: `scripts/migrate-merke-per-sone.sql`, tilbakefylling `scripts/backfill-merke-per-sone.sql`.
+
 ## Soner
 
 - `zone_claims` skrives bare via RPC-er. Bare `notes` kan oppdateres direkte.

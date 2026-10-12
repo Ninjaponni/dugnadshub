@@ -7,7 +7,7 @@ Status: `ny` / `vurderes` / `planlagt` / `gjort` / `avvist`
 ## 2026-10-07 - forelder, om merker
 
 ### 1. Samme merke flere ganger, med oppgradering
-Status: planlagt (×N-delen), se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`. Nivåer på enkeltmerker er ikke med.
+Status: gjort (×N-delen, v10.43.x, 12.10), se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`. Nivåer på enkeltmerker er ikke med.
 
 Ønske: merker som kan tas flere ganger i året (lappeutdeling, kakebaking, sjåfør o.l.) bør kunne tjenes på nytt, og eventuelt "oppgraderes" i nivå.
 
@@ -19,7 +19,7 @@ Status: ny
 Spørsmål om det kommer merker for lørdagens dugnad på Tillerdagen. Tillerdagen er et nytt arrangement, så det er ikke laget merker til det ennå. Tidligere arrangement har fått egne merker via migrasjon (17. mai, sommerkonsert, seminar, korpstur).
 
 ### 3. Merke for mer enn én sone på samme flaskeinnsamling
-Status: planlagt, løst som ett merke per sone, se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
+Status: gjort (v10.43.x, 12.10), løst som ett merke per sone (Pantejeger), se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
 
 Ønske: eget merke for å ha tatt flere soner i én innsamling.
 
@@ -61,12 +61,12 @@ Tiltak: `touch-none` og `py-4` (i stedet for `py-3`) på håndtaket i `component
 ## 2026-10-12 - soneleder og foreldre, om merker etter Flaskeinnsamling Nord
 
 ### 7. Lappeutdelere i Nord fikk ikke Lappemester Nord
-Status: planlagt, se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
+Status: gjort (v10.43.x, 12.10), se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
 
 Problem: de 6 som delte ut lapper i Nord 29.09 fikk ikke merket. Lappemester Nord og Sør deles aldri ut automatisk, og har vært gitt manuelt og ulikt (våren uten `event_id`, Sør høst med, Nord høst ikke i det hele tatt).
 
 ### 8. Ett merke per sone, og se hvor mange av samme merke man har
-Status: planlagt, se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
+Status: gjort (v10.43.x, 12.10), se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
 
 Ønske: å ta en sone er krevende, så hver sone skal gi et merke, både på lappeutdeling og flaskeinnsamling. Man vil også se hvor mange av samme merke man har. ×N vises i dag bare for aktivitetsmerker på mobil.
 
