@@ -7,7 +7,7 @@ Status: `ny` / `vurderes` / `planlagt` / `gjort` / `avvist`
 ## 2026-10-07 - forelder, om merker
 
 ### 1. Samme merke flere ganger, med oppgradering
-Status: ny
+Status: planlagt (×N-delen), se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`. Nivåer på enkeltmerker er ikke med.
 
 Ønske: merker som kan tas flere ganger i året (lappeutdeling, kakebaking, sjåfør o.l.) bør kunne tjenes på nytt, og eventuelt "oppgraderes" i nivå.
 
@@ -19,7 +19,7 @@ Status: ny
 Spørsmål om det kommer merker for lørdagens dugnad på Tillerdagen. Tillerdagen er et nytt arrangement, så det er ikke laget merker til det ennå. Tidligere arrangement har fått egne merker via migrasjon (17. mai, sommerkonsert, seminar, korpstur).
 
 ### 3. Merke for mer enn én sone på samme flaskeinnsamling
-Status: ny
+Status: planlagt, løst som ett merke per sone, se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
 
 Ønske: eget merke for å ha tatt flere soner i én innsamling.
 
@@ -57,3 +57,25 @@ Problem: på iPhone (appen lagt på hjemskjermen) reagerte den grå streken øve
 Årsak: håndtaket starter dra-bevegelsen manuelt (`dragControls.start`), men manglet `touch-action: none`. iOS Safari tolket berøringen som scroll, tok den over og avbrøt dra-bevegelsen. Treffflaten var også bare rundt 28 px høy.
 
 Tiltak: `touch-none` og `py-4` (i stedet for `py-3`) på håndtaket i `components/ui/BottomSheet.tsx`. Gjelder alle bunnark i appen. Testet og bekreftet av Tor Martin på iPhone 10.10.
+
+## 2026-10-12 - soneleder og foreldre, om merker etter Flaskeinnsamling Nord
+
+### 7. Lappeutdelere i Nord fikk ikke Lappemester Nord
+Status: planlagt, se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
+
+Problem: de 6 som delte ut lapper i Nord 29.09 fikk ikke merket. Lappemester Nord og Sør deles aldri ut automatisk, og har vært gitt manuelt og ulikt (våren uten `event_id`, Sør høst med, Nord høst ikke i det hele tatt).
+
+### 8. Ett merke per sone, og se hvor mange av samme merke man har
+Status: planlagt, se `docs/superpowers/specs/2026-10-12-merke-per-sone-design.md`
+
+Ønske: å ta en sone er krevende, så hver sone skal gi et merke, både på lappeutdeling og flaskeinnsamling. Man vil også se hvor mange av samme merke man har. ×N vises i dag bare for aktivitetsmerker på mobil.
+
+
+## 2026-10-12 - Tor Martin, om menyen og medlemsvisningen på iPhone
+
+### 9. Bunnmenyen flytter seg ved scrolling, og medlemsdetaljen vises bak medlemslista
+Status: vurderes (12.10: borte etter at appen ble lukket helt og åpnet igjen, trolig iOS-feilen. Følg med om den kommer tilbake.)
+
+Problem: på iPhone (appen på hjemskjermen) flytter bunnmenyen seg opp på skjermen når man scroller, f.eks. på Merker. I admin under Medlemmer vises detaljvisningen for en person bak lista i stedet for over.
+
+Notat: koden for `BottomNav`, `MemberDetailOverlay` og layoutene er ikke endret siden 29.09, og strukturen er riktig (menyen ligger utenfor alt som kan forskyve den, overlayet er `fixed inset-0 z-[45]` og låser scroll). Trolig WebKit-feilen i iOS 26 der `position: fixed`-elementer forskyves når man scroller (WebKit bug 297779, flyttet til Apple). Test først: lukk appen helt og åpne igjen. Er feilen borte en stund og kommer tilbake, er det iOS-feilen. Mulig tiltak i appen hvis den varer: la innholdet scrolle i en egen container (`h-dvh overflow-y-auto`) i stedet for hele dokumentet, så `fixed`-elementene ikke påvirkes av dokumentscroll.
