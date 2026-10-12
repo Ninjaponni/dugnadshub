@@ -3,12 +3,17 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { badgeDefinitions } from '@/lib/badges/definitions'
+import { badgeDefinitions, STACKABLE_BADGE_CATEGORIES, ZONE_BADGE_IDS } from '@/lib/badges/definitions'
+import {
+  EARNED_BADGE_SELECT, toEarnedRow, countByBadge, sourcesByBadge, hasEventSources,
+  loadSeenCounts, saveSeenCounts, unseenBadgeIds, formatBadgeDate,
+  type RawEarnedBadgeRow, type EarnedBadgeRow, type BadgeSource,
+} from '@/lib/badges/earned'
 import { getBadgeLevel } from '@/lib/badges/levels'
 import { Check, Lock, X, Sparkles } from 'lucide-react'
 import BrandLink from '@/components/layout/BrandLink'
 import { isMockMode } from '@/lib/mock/useMock'
-import { mockBadgeCounts } from '@/lib/mock/data'
+import { mockEarnedBadgeRows } from '@/lib/mock/data'
 import MerkerDesktop from '@/components/merker/MerkerDesktop'
 
 const categoryLabels: Record<string, string> = {
@@ -69,8 +74,10 @@ function Confetti() {
 }
 
 export default function BadgesPage() {
-  // Map: badge_id → count (for aktivitetsmerker som kan gis flere ganger)
+  // Map: badge_id → antall eksemplarer (stable-bare merker kan gis flere ganger)
   const [badgeCounts, setBadgeCounts] = useState<Map<number, number>>(new Map())
+  // Map: badge_id → hvilke dugnader (og soner) eksemplarene kommer fra
+  const [badgeSources, setBadgeSources] = useState<Map<number, BadgeSource[]>>(new Map())
   const [loading, setLoading] = useState(true)
   const [selectedBadge, setSelectedBadge] = useState<typeof badgeDefinitions[0] | null>(null)
   const [revealBadge, setRevealBadge] = useState<typeof badgeDefinitions[0] | null>(null)
@@ -78,8 +85,12 @@ export default function BadgesPage() {
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
+    function apply(rows: EarnedBadgeRow[]) {
+      setBadgeCounts(countByBadge(rows))
+      setBadgeSources(sourcesByBadge(rows))
+    }
     if (isMockMode()) {
-      setBadgeCounts(mockBadgeCounts)
+      apply(mockEarnedBadgeRows)
       setLoading(false)
       return
     }
@@ -87,40 +98,30 @@ export default function BadgesPage() {
       const { data: { user } } = await supabaseRef.current.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const { data } = await supabaseRef.current
+      const { data, error } = await supabaseRef.current
         .from('user_badges')
-        .select('badge_id')
-        .eq('user_id', user.id) as unknown as { data: Array<{ badge_id: number }> | null }
+        .select(EARNED_BADGE_SELECT)
+        .eq('user_id', user.id) as unknown as { data: RawEarnedBadgeRow[] | null; error: unknown }
 
-      // Tell antall per badge
-      const counts = new Map<number, number>()
-      for (const b of (data || [])) {
-        counts.set(b.badge_id, (counts.get(b.badge_id) || 0) + 1)
-      }
-      setBadgeCounts(counts)
+      // Feilet hentingen: ikke skriv sett-status, ellers blir alt "nytt" neste gang
+      if (error || !data) { setLoading(false); return }
 
-      const ids = new Set((data || []).map(b => b.badge_id))
+      const rows = data.map(toEarnedRow)
+      const counts = countByBadge(rows)
+      apply(rows)
 
-      // Sjekk om det er nye merker brukeren ikke har sett
-      const seenKey = `seen_badges_${user.id}`
-      const seenRaw = localStorage.getItem(seenKey)
-      const seen = seenRaw ? new Set(JSON.parse(seenRaw) as number[]) : new Set<number>()
-
-      const unseen = new Set<number>()
-      ids.forEach(id => { if (!seen.has(id)) unseen.add(id) })
-      setNewBadgeIds(unseen)
-
-      // Vis reveal for første usette badge
-      if (unseen.size > 0) {
-        const firstUnseen = [...unseen][0]
-        const badge = badgeDefinitions.find(b => b.id === firstUnseen)
+      // Nye eksemplarer (også av merker man har fra før) gir prikk og reveal
+      const unseen = unseenBadgeIds(counts, loadSeenCounts(user.id, rows))
+      setNewBadgeIds(new Set(unseen))
+      if (unseen.length > 0) {
+        const badge = badgeDefinitions.find(b => b.id === unseen[0])
         if (badge) {
           setTimeout(() => setRevealBadge(badge), 500)
         }
       }
 
       // Marker alle som sett
-      localStorage.setItem(seenKey, JSON.stringify([...ids]))
+      saveSeenCounts(user.id, counts)
 
       setLoading(false)
     }
@@ -157,6 +158,7 @@ export default function BadgesPage() {
           <MerkerDesktop
             loading={loading}
             badgeCounts={badgeCounts}
+            badgeSources={badgeSources}
             earnedBadgeIds={earnedBadgeIds}
             newBadgeIds={newBadgeIds}
           />
@@ -248,7 +250,7 @@ export default function BadgesPage() {
                     const earned = earnedBadgeIds.has(badge.id)
                     const isNew = newBadgeIds.has(badge.id)
                     const count = badgeCounts.get(badge.id) || 0
-                    const isActivity = badge.category === 'aktivitet'
+                    const isStackable = STACKABLE_BADGE_CATEGORIES.has(badge.category)
 
                     return (
                       <motion.button
@@ -274,13 +276,13 @@ export default function BadgesPage() {
                             />
                           </div>
                           {/* Grønn checkmark i nedre høyre hjørne */}
-                          {earned && (!isActivity || count <= 1) && (
+                          {earned && (!isStackable || count <= 1) && (
                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-success text-white rounded-full flex items-center justify-center border-2 border-bg shadow-sm">
                               <Check size={14} strokeWidth={3} />
                             </div>
                           )}
-                          {/* Teller for aktivitetsmerker */}
-                          {earned && isActivity && count > 1 && (
+                          {/* Teller for merker som kan gis flere ganger */}
+                          {earned && isStackable && count > 1 && (
                             <div className="absolute -bottom-1 -right-1 min-w-[24px] h-6 px-1 bg-accent text-white rounded-full flex items-center justify-center border-2 border-bg shadow-sm">
                               <span className="text-[10px] font-bold">×{count}</span>
                             </div>
@@ -349,7 +351,7 @@ export default function BadgesPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className={`fixed left-6 right-6 top-1/3 z-50 rounded-2xl p-6 shadow-xl max-w-sm mx-auto ${
+              className={`fixed left-6 right-6 top-1/2 -translate-y-1/2 max-h-[calc(100dvh-7rem)] overflow-y-auto z-50 rounded-2xl p-6 shadow-xl max-w-sm mx-auto ${
                 earnedBadgeIds.has(selectedBadge.id)
                   ? 'bg-card ring-2 ring-amber-400'
                   : 'bg-card'
@@ -390,11 +392,35 @@ export default function BadgesPage() {
                   {selectedBadge.description}
                 </p>
 
-                {selectedBadge.auto_criteria === null && (
+                {ZONE_BADGE_IDS.has(selectedBadge.id) ? (
+                  <p className="text-xs text-text-tertiary mt-2">
+                    Deles ut automatisk for hver sone du tar
+                  </p>
+                ) : selectedBadge.auto_criteria === null && (
                   <p className="text-xs text-text-tertiary mt-2">
                     Tildeles av admin
                   </p>
                 )}
+
+                {(() => {
+                  const sources = badgeSources.get(selectedBadge.id) ?? []
+                  if (!hasEventSources(sources)) return null
+                  return (
+                    <ul className="mt-4 text-left max-h-48 overflow-y-auto rounded-xl bg-surface-low px-3 py-1">
+                      {sources.map((s, i) => (
+                        <li key={i} className="flex justify-between gap-3 py-2 text-sm border-b border-card last:border-b-0">
+                          <span className="text-text-primary">
+                            {s.eventTitle ?? 'Tildelt'}
+                            {s.zoneName && <span className="text-text-secondary"> · {s.zoneName}</span>}
+                          </span>
+                          <span className="text-text-secondary shrink-0">
+                            {formatBadgeDate(s.eventDate ?? s.awardedAt)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )
+                })()}
               </div>
             </motion.div>
           </>

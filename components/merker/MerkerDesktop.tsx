@@ -12,7 +12,8 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, Sparkles } from 'lucide-react'
-import { badgeDefinitions } from '@/lib/badges/definitions'
+import { badgeDefinitions, ZONE_BADGE_IDS } from '@/lib/badges/definitions'
+import { hasEventSources, formatBadgeDate, type BadgeSource } from '@/lib/badges/earned'
 import { BADGE_LEVELS } from '@/lib/badges/levels'
 
 // Kategori-rekkefølge + etiketter — speiler mobil-siden
@@ -45,6 +46,7 @@ type DBadge = {
   earned: boolean
   count: number
   fresh: boolean
+  sources: BadgeSource[]
 }
 
 // Animert sirkulær progress-ring
@@ -203,11 +205,12 @@ function MiniBadge({ b, onClick }: { b: DBadge; onClick: () => void }) {
 type Props = {
   loading: boolean
   badgeCounts: Map<number, number>
+  badgeSources: Map<number, BadgeSource[]>
   earnedBadgeIds: Set<number>
   newBadgeIds: Set<number>
 }
 
-export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, newBadgeIds }: Props) {
+export default function MerkerDesktop({ loading, badgeCounts, badgeSources, earnedBadgeIds, newBadgeIds }: Props) {
   const [sel, setSel] = useState<DBadge | null>(null)
   const [filter, setFilter] = useState<'all' | 'earned' | 'missing'>('all')
   const [tracked, setTracked] = useState(false)
@@ -222,6 +225,7 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
     earned: earnedBadgeIds.has(d.id),
     count: badgeCounts.get(d.id) || 0,
     fresh: newBadgeIds.has(d.id),
+    sources: badgeSources.get(d.id) ?? [],
   }))
 
   const total = all.length
@@ -402,6 +406,22 @@ export default function MerkerDesktop({ loading, badgeCounts, earnedBadgeIds, ne
                     ? <Pill tone="success"><Check size={12} strokeWidth={3} />Opptjent{sel.count > 1 ? ` ×${sel.count}` : ''}</Pill>
                     : <Pill tone="neutral"><Lock size={12} />Ikke opptjent ennå</Pill>}
                   <p style={{ fontSize: 14.5, color: 'var(--color-text-secondary)', margin: '18px 4px 0', lineHeight: 1.55 }}>{sel.desc}</p>
+                  {ZONE_BADGE_IDS.has(sel.id) && (
+                    <p style={{ fontSize: 12.5, color: 'var(--color-text-tertiary)', margin: '8px 4px 0' }}>Deles ut automatisk for hver sone du tar</p>
+                  )}
+                  {hasEventSources(sel.sources) && (
+                    <ul style={{ listStyle: 'none', margin: '18px 0 0', padding: '4px 14px', textAlign: 'left', maxHeight: 220, overflowY: 'auto', borderRadius: 16, background: 'var(--color-surface-low)' }}>
+                      {sel.sources.map((s, i) => (
+                        <li key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', fontSize: 13.5, borderBottom: i < sel.sources.length - 1 ? '1px solid var(--color-card)' : 'none' }}>
+                          <span style={{ color: 'var(--color-text-primary)' }}>
+                            {s.eventTitle ?? 'Tildelt'}
+                            {s.zoneName && <span style={{ color: 'var(--color-text-secondary)' }}> · {s.zoneName}</span>}
+                          </span>
+                          <span style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>{formatBadgeDate(s.eventDate ?? s.awardedAt)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </motion.div>
