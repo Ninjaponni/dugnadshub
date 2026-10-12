@@ -464,10 +464,20 @@ export default function EventsAdminPage() {
     })
   }
 
-  // Slett hendelse (og tilhorende zone_assignments)
+  // Slett hendelse (og tilhorende zone_assignments). Hendelser med merker kan ikke
+  // slettes: merkene er lodd, og databasen nekter (user_badges.event_id og zone_assignment_id).
   async function handleDelete(eventId: string) {
     setDeleting(true)
     setErrorMsg(null)
+    const { count: badgeCount } = await supabaseRef.current
+      .from('user_badges')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+    if (badgeCount && badgeCount > 0) {
+      setErrorMsg(`Hendelsen har ${badgeCount} merker og kan ikke slettes`)
+      setDeleting(false)
+      return
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: assignErr } = await (supabaseRef.current.from('zone_assignments') as any).delete().eq('event_id', eventId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
